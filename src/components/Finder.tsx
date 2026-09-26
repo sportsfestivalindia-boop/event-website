@@ -1,170 +1,148 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { CHAMPIONSHIPS, EVENT, championshipTotal, registerHref, type Championship } from "@/data/festival";
 import { inr, inrShort, ordinal, prizeLabel } from "@/lib/format";
-import { Icon, Pictogram } from "./icons";
+import { Icon } from "./icons";
 import { Tbc, WhatsAppLink } from "./ui";
 
-const pick = (c: Championship) => ({ d: c.divisions[0]?.id ?? "", k: c.divisions[0]?.classes[Math.min(4, c.divisions[0].classes.length - 1)] ?? "" });
+const defaultClass = (classes: string[]) => classes[Math.min(4, classes.length - 1)] ?? "";
+type Sel = { sport: string; div: string; cls: string };
+const selFor = (c: Championship): Sel => ({ sport: c.id, div: c.divisions[0]?.id ?? "", cls: defaultClass(c.divisions[0]?.classes ?? []) });
+const noSub = () => () => {};
 
 export function Finder() {
-  const [sport, setSport] = useState("bodybuilding");
-  const [div, setDiv] = useState("mens-bb");
-  const [cls, setCls] = useState("75 kg");
-
-  // deep links from poster QR codes: /?sport=powerlifting#arena
-  useEffect(() => {
-    const s = new URLSearchParams(location.search).get("sport");
-    const c = CHAMPIONSHIPS.find((x) => x.id === s);
-    if (c) choose(c);
-  }, []);
-
-  function choose(c: Championship) {
-    const p = pick(c);
-    setSport(c.id);
-    setDiv(p.d);
-    setCls(p.k);
-  }
+  // deep links from poster QR codes: /?sport=powerlifting (null on the server)
+  const urlSport = useSyncExternalStore(noSub, () => new URLSearchParams(location.search).get("sport"), () => null);
+  const [picked, setPicked] = useState<Sel | null>(null);
+  const sel = picked ?? selFor(CHAMPIONSHIPS.find((x) => x.id === urlSport) ?? CHAMPIONSHIPS[0]);
+  const { sport, div, cls } = sel;
+  const choose = (c: Championship) => setPicked(selFor(c));
 
   const champ = CHAMPIONSHIPS.find((c) => c.id === sport)!;
   const division = champ.divisions.find((d) => d.id === div);
   const fee = division?.fee ?? EVENT.fee;
-  const minCash = Math.min(...(division?.prizes.filter((p): p is number => typeof p === "number") ?? [0]));
+  const cash = division?.prizes.filter((p): p is number => typeof p === "number") ?? [];
+  const hasClasses = (division?.classes.length ?? 0) > 1;
 
   return (
-    <div>
-      {/* 1 · sport */}
-      <div className="-mx-5 md:mx-0">
-        <ul className="rail pb-2 md:grid md:grid-cols-4 md:gap-3 md:px-0 lg:grid-cols-7" role="list">
-          {CHAMPIONSHIPS.map((c) => {
-            const on = c.id === sport;
-            const total = championshipTotal(c);
-            return (
-              <li key={c.id} className="w-[42vw] max-w-[190px] md:w-auto md:max-w-none">
-                <button
-                  onClick={() => choose(c)}
-                  aria-pressed={on}
-                  className={`group flex h-full w-full flex-col items-start gap-3 rounded-[10px] border p-4 text-left transition-[border-color,background-color,transform] duration-150 hover:-translate-y-1 ${on ? "border-gold bg-gold/10" : "border-line bg-stone hover:border-gold/60"}`}
-                >
-                  <Pictogram id={c.pictogram} className={`size-9 ${on ? "text-molten" : "text-gold"}`} />
-                  <span className="display text-[1.35rem] leading-[.95]">{c.sport}</span>
-                  <span className="mt-auto text-xs text-mute">{total ? `Up to ${inrShort(total)} in prizes` : "Categories soon"}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+    <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+      {/* sport index */}
+      <ol className="border-b border-line lg:col-span-5">
+        {CHAMPIONSHIPS.map((c, i) => {
+          const on = c.id === sport;
+          const total = championshipTotal(c);
+          return (
+            <li key={c.id} className="border-t border-line">
+              <button onClick={() => choose(c)} aria-pressed={on} className="group grid w-full grid-cols-[2.5rem_1fr_auto] items-baseline gap-2 py-4 text-left md:py-5">
+                <span className={`mono text-xs ${on ? "text-signal" : "text-muted"}`}>0{i + 1}</span>
+                <span className={`text-[1.35rem] leading-tight font-bold tracking-[-0.02em] transition-colors md:text-[1.7rem] ${on ? "text-fg" : "text-muted group-hover:text-fg"}`}>
+                  {c.sport}
+                </span>
+                <span className={`mono text-xs ${on ? "text-fg" : "text-muted"}`}>{total ? inrShort(total) : "TBA"}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
-        {/* 2 · division + class */}
-        <div className="min-w-0 space-y-6">
-          <div>
-            <p className="eyebrow mb-1">{champ.level}</p>
-            <h3 className="display text-4xl">
-              {champ.name}
-              {champ.tbc && <Tbc note={champ.tbc} />}
-            </h3>
-            <p className="mt-2 text-ivory/70">{champ.tagline}</p>
+      <div className="min-w-0 lg:col-span-7">
+        <p className="label text-muted">
+          {champ.level}
+          {champ.tbc && <Tbc note={champ.tbc} />}
+        </p>
+        <h3 className="mt-2 text-3xl font-bold tracking-[-0.03em] md:text-4xl">{champ.name}</h3>
+
+        {champ.divisions.length > 1 && (
+          <div className="rail -mx-5 mt-6 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Division">
+            {champ.divisions.map((d) => (
+              <button
+                key={d.id}
+                className="chip"
+                aria-pressed={d.id === div}
+                onClick={() => setPicked({ ...sel, div: d.id, cls: defaultClass(d.classes) })}
+              >
+                {d.name}
+              </button>
+            ))}
           </div>
-          {champ.divisions.length > 1 && (
-            <fieldset className="min-w-0">
-              <legend className="mb-3 text-sm font-semibold text-ivory/80">Division</legend>
-              <div className="rail -mx-5 !gap-2 md:mx-0 md:flex-wrap md:!px-0">
-                {champ.divisions.map((d) => (
-                  <button
-                    key={d.id}
-                    className="chip"
-                    aria-pressed={d.id === div}
-                    onClick={() => {
-                      setDiv(d.id);
-                      setCls(d.classes[Math.min(4, d.classes.length - 1)]);
-                    }}
-                  >
-                    {d.name}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          )}
-          {division && division.classes.length > 1 && (
-            <fieldset className="min-w-0">
-              <legend className="mb-3 text-sm font-semibold text-ivory/80">Class</legend>
-              <div className="rail -mx-5 !gap-2 md:mx-0 md:flex-wrap md:!px-0">
-                {division.classes.map((k) => (
-                  <button key={k} className="chip tnum" aria-pressed={k === cls} onClick={() => setCls(k)}>
-                    {k}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          )}
-        </div>
+        )}
+        {division && hasClasses && (
+          <div className="rail -mx-5 mt-3 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Class">
+            {division.classes.map((k) => (
+              <button key={k} className="chip mono !font-medium" aria-pressed={k === cls} onClick={() => setPicked({ ...sel, cls: k })}>
+                {k}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* 3 · result */}
-        <div className="card relative min-w-0 overflow-hidden p-5 md:p-7" aria-live="polite">
-          <div aria-hidden className="absolute -top-24 -right-24 size-64 rounded-full bg-[radial-gradient(closest-side,#d4a53740,transparent)]" />
+        {/* the bib */}
+        <div className="t-paper relative mt-8 overflow-hidden rounded-[3px] px-6 pt-8 pb-0 md:px-9 md:pt-10" aria-live="polite">
+          {["top-3.5 left-3.5", "top-3.5 right-3.5", "bottom-16 left-3.5", "bottom-16 right-3.5"].map((p) => (
+            <span key={p} aria-hidden className={`absolute ${p} size-2.5 rounded-full bg-ink`} />
+          ))}
+          <div className="label flex justify-between gap-4 !text-[9px] text-muted">
+            <span>IBSF 2026 · {champ.name}</span>
+            <span>Entry</span>
+          </div>
+
           {division ? (
             <>
-              <p className="eyebrow">Your category</p>
-              <p className="display mt-2 text-[2.6rem]">
-                {division.name}
-                {division.classes.length > 1 && <span className="block text-gold">{cls}</span>}
+              <p className="display-c mt-4 text-[clamp(4.5rem,17vw,9rem)] uppercase">{hasClasses ? cls : division.name}</p>
+              <p className="mt-3 text-lg font-bold tracking-tight">
+                {hasClasses ? division.name : champ.sport}
                 {division.tbc && <Tbc note={division.tbc} />}
               </p>
-              {division.note && <p className="mt-1 text-sm text-molten">{division.note}</p>}
+              {division.note && <p className="text-sm text-muted">{division.note}</p>}
 
-              <ol className="mt-5 divide-y divide-line border-y border-line">
+              <ol className="mt-6 border-t border-dashed border-line">
                 {division.prizes.map((p, i) => (
-                  <li key={i} className="flex items-baseline justify-between py-2.5">
-                    <span className={`text-sm font-semibold ${i === 0 ? "text-molten" : "text-ivory/70"}`}>{ordinal(i)} place</span>
-                    <span className={`display tnum ${i === 0 ? "text-4xl text-gold" : "text-2xl"}`}>{prizeLabel(p)}</span>
+                  <li key={i} className="flex items-baseline justify-between border-b border-dashed border-line py-2.5">
+                    <span className="mono text-xs text-muted">{ordinal(i)}</span>
+                    <span className={`mono ${i === 0 ? "text-2xl font-semibold md:text-3xl" : "text-base md:text-lg"}`}>{prizeLabel(p)}</span>
                   </li>
                 ))}
               </ol>
-
               {division.extras && (
-                <div className="mt-4 rounded-md border border-gold/30 bg-gold/5 p-3 text-sm">
-                  <p className="font-semibold text-molten">Also competing for</p>
+                <div className="py-4">
+                  <p className="label !text-[9px] text-muted">Winners also contest</p>
                   {division.extras.map((e) => (
-                    <p key={e.label} className="mt-1 flex justify-between gap-3">
-                      <span className="text-ivory/80">{e.label}</span>
-                      <b className="tnum">{prizeLabel(e.prize)}</b>
+                    <p key={e.label} className="mt-1.5 flex justify-between gap-3 text-sm">
+                      <span className="font-semibold">{e.label}</span>
+                      <span className="mono">{prizeLabel(e.prize)}</span>
                     </p>
                   ))}
                 </div>
               )}
-
-              <ul className="mt-4 space-y-1.5 text-sm text-ivory/80">
-                {fee > 0 && minCash >= fee && (
-                  <li className="flex gap-2">
-                    <Icon name="check" className="size-5 shrink-0 text-gold" /> Every paid place wins back at least your {inr(fee)} entry.
-                  </li>
-                )}
-                <li className="flex gap-2">
-                  <Icon name="calendar" className="size-5 shrink-0 text-gold" /> Session day confirmed on your athlete pass
-                  <Tbc note="Per-category session schedule" />
-                </li>
-              </ul>
-
-              <Link href={registerHref(champ.id, division.id, cls)} className="btn btn-gold mt-6 w-full" data-cta="finder">
-                {fee === 0 ? "Register free" : `Enter ${division.classes.length > 1 ? cls : division.name} — ${inr(fee)}`}
-                <Icon name="arrow" className="size-5" />
-              </Link>
             </>
           ) : (
             <>
-              <p className="eyebrow">Coming soon</p>
-              <p className="display mt-2 text-[2.6rem]">{champ.sport}</p>
-              <p className="mt-3 text-ivory/75">Categories and the prize table for {champ.name} are being finalised. Get them on WhatsApp the moment they’re published.</p>
-              <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn btn-ghost mt-6 w-full">
-                <Icon name="whatsapp" className="size-5 text-[#3ecf6e]" /> Notify me on WhatsApp
-              </a>
+              <p className="display-c mt-4 text-[clamp(4.5rem,17vw,9rem)] uppercase">TBA</p>
+              <p className="mt-3 max-w-md pb-8 text-muted">Categories and the prize table for {champ.name} are being finalised. Get them on WhatsApp the moment they’re published.</p>
             </>
           )}
-          <WhatsAppLink className="mt-4 w-full justify-center" label="Not sure which category? Ask us" />
+
+          <div className="t-signal -mx-6 mt-4 flex h-12 items-center justify-between px-6 md:-mx-9 md:px-9">
+            <span className="label !text-[9px]">{fee > 0 && cash.length && Math.min(...cash) >= fee ? `Every paid place returns your ${inr(fee)}` : "India’s Biggest Sports Festival"}</span>
+            <span className="mono hidden text-xs sm:inline">04—06.12.26</span>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {division ? (
+            <Link href={registerHref(champ.id, division.id, cls)} className="btn btn-signal w-full sm:w-auto sm:min-w-[320px]" data-cta="finder">
+              {fee === 0 ? "Register free" : `Enter ${hasClasses ? cls : division.name} — ${inr(fee)}`}
+              <Icon name="arrow" className="arr size-5" />
+            </Link>
+          ) : (
+            <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn btn-signal w-full sm:w-auto">
+              Notify me on WhatsApp
+              <Icon name="arrow" className="arr size-5" />
+            </a>
+          )}
+          <WhatsAppLink label="Not sure which category? Ask us" />
         </div>
       </div>
     </div>

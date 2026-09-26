@@ -19,19 +19,9 @@ export type Championship = {
   name: string;
   level: string;
   tagline: string;
-  pictogram: Pictogram;
   divisions: Division[];
   tbc?: string;
 };
-export type Pictogram =
-  | "bodybuilding"
-  | "powerlifting"
-  | "weightlifting"
-  | "armwrestling"
-  | "boxing"
-  | "dangal"
-  | "marathon";
-
 export const EVENT = {
   name: "India’s Biggest Sports Festival",
   year: 2026,
@@ -70,7 +60,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Anil Gochhikar Classic",
     level: "International",
     tagline: "The flagship. Seven divisions, one Champion of Champions.",
-    pictogram: "bodybuilding",
     divisions: [
       {
         id: "mens-bb",
@@ -122,7 +111,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Ranu National Powerlifting Championship",
     level: "National",
     tagline: "Sixteen classes. Strong Man and Strong Woman titles.",
-    pictogram: "powerlifting",
     divisions: [
       {
         id: "pl-men",
@@ -147,7 +135,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "All India Open Arm Wrestling",
     level: "National",
     tagline: "Nine weight classes. One overall champion.",
-    pictogram: "armwrestling",
     divisions: [
       {
         id: "aw-open",
@@ -165,7 +152,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Utkal Kesari 2026",
     level: "Heritage",
     tagline: "After 25 years, the Dangal returns.",
-    pictogram: "dangal",
     divisions: [
       { id: "kesari", name: "Utkal Kesari", classes: ["Open"], prizes: ["Royal Enfield Bullet", 100000] },
     ],
@@ -176,7 +162,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "AOGA Boxing Championship",
     level: "National & International",
     tagline: "Elite and amateur. Men and women.",
-    pictogram: "boxing",
     divisions: [],
     tbc: "Categories and prize table not published",
   },
@@ -186,7 +171,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Weightlifting Championship",
     level: "National",
     tagline: "Snatch. Clean & jerk. Lift the nation.",
-    pictogram: "weightlifting",
     divisions: [],
     tbc: "Named in the deck; no categories or prizes published",
   },
@@ -196,7 +180,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Dutee Marathon",
     level: "National",
     tagline: "Run with the spirit of champions.",
-    pictogram: "marathon",
     divisions: [],
     tbc: "Distances conflict (5K/21K/42K vs 2K/5K/10K/21.1K); fee and prizes not published",
   },

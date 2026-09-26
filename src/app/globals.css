@@ -1,231 +1,267 @@
 @import "tailwindcss";
 
-/* ───────── Design tokens ───────── */
+/*
+  Sun Temple Modernism.
+  One flat sun, black and paper, one grotesk, hairlines, broadcast data.
+  Sections pick a theme (t-ink / t-paper / t-signal); every component reads the theme vars.
+*/
+
 @theme {
-  --color-ink: #0b0a08; /* temple black */
-  --color-stone: #16120e; /* khondalite surface */
-  --color-stone-2: #211a14;
-  --color-line: #3a2e22;
-  --color-gold: #d4a537; /* crown gold — CTA + prize figures */
-  --color-molten: #f6d27a; /* highlights only */
-  --color-sindoor: #c8241c; /* urgency only */
-  --color-ivory: #f3ebdd;
-  --color-mute: #a8998a;
+  --color-ink: #0b0b0c;
+  --color-paper: #eeebe4;
+  --color-signal: #ff4f1f; /* the sun — CTA, the disc, live states. Nothing else. */
 
-  --font-display: var(--font-shoulders), "Arial Narrow", sans-serif;
-  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-mona), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --ease-iron: cubic-bezier(0.2, 0.9, 0.1, 1.02); /* heavy: fast attack, hard stop, tiny settle */
-  --ease-light: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-iron: cubic-bezier(0.2, 0.9, 0.1, 1.02);
+}
 
-  --animate-spin-slow: spin 140s linear infinite;
+/* theme-driven colours: bg-bg, text-fg, text-muted, border-line, bg-raise */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-raise: var(--raise);
+}
+
+.t-ink {
+  --bg: #0b0b0c;
+  --fg: #f4f2ee;
+  --muted: #8e8b86;
+  --line: #ffffff1c;
+  --raise: #151517;
+}
+.t-paper {
+  --bg: #eeebe4;
+  --fg: #0b0b0c;
+  --muted: #69655e;
+  --line: #0b0b0c21;
+  --raise: #e5e1d8;
+}
+.t-signal {
+  --bg: #ff4f1f;
+  --fg: #0b0b0c;
+  --muted: #0b0b0cb0;
+  --line: #0b0b0c38;
+  --raise: #ff6a40;
+}
+.t-ink,
+.t-paper,
+.t-signal {
+  background: var(--bg);
+  color: var(--fg);
 }
 
 html {
-  background: var(--color-ink);
-  color: var(--color-ivory);
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  background: #0b0b0c;
 }
 body {
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.55;
   overflow-x: clip;
+  font-feature-settings: "ss01";
 }
 ::selection {
-  background: var(--color-gold);
+  background: var(--color-signal);
   color: var(--color-ink);
 }
 :focus-visible {
-  outline: 2px solid var(--color-molten);
+  outline: 2px solid var(--color-signal);
   outline-offset: 3px;
-  border-radius: 4px;
-}
-
-/* film grain over everything — 1 tiny inline SVG */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 100;
-  opacity: 0.07;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 @layer components {
-/* ───────── Type ───────── */
-.display {
-  font-family: var(--font-display);
-  font-weight: 900;
-  text-transform: uppercase;
-  line-height: 0.86;
-  letter-spacing: -0.005em;
-  font-variation-settings: "opsz" 72;
-}
-.eyebrow {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-gold);
-}
-.tnum {
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-/* gold foil text — gold used like stage light, not wallpaper */
-.foil {
-  background: linear-gradient(172deg, #fff3cf 0%, #f6d27a 22%, #d4a537 48%, #8a6414 78%, #d4a537 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ───────── Buttons ───────── */
-.btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  min-height: 3.5rem;
-  padding: 0 1.6rem;
-  border-radius: 6px;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1;
-  overflow: hidden;
-  isolation: isolate;
-  transition:
-    transform 150ms var(--ease-iron),
-    background-color 150ms,
-    box-shadow 150ms;
-  font-variation-settings: "opsz" 72;
-}
-.btn:active {
-  transform: scale(0.97);
-}
-.btn-gold {
-  background: var(--color-gold);
-  color: var(--color-ink);
-  box-shadow:
-    0 0 0 1px #f6d27a55 inset,
-    0 10px 40px -12px #d4a53799;
-}
-.btn-gold:hover {
-  background: #e0b243;
-}
-/* foil shimmer: a light sweep every ~6s */
-.btn-gold::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(105deg, transparent 35%, #fff6d8cc 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: shimmer 6s var(--ease-light) 2s infinite;
-}
-@keyframes shimmer {
-  0%,
-  82% {
-    transform: translateX(-120%);
+  /* ── type ── */
+  .display {
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.9;
+    text-wrap: balance;
   }
-  100% {
-    transform: translateX(120%);
+  .display-c {
+    /* condensed display for giant numerals */
+    font-weight: 800;
+    font-variation-settings: "wdth" 75;
+    letter-spacing: -0.035em;
+    line-height: 0.84;
   }
-}
-.btn-ghost {
-  border: 1px solid var(--color-line);
-  color: var(--color-ivory);
-  background: #ffffff05;
-}
-.btn-ghost:hover {
-  border-color: var(--color-gold);
-}
+  .label {
+    font-size: 11px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-variation-settings: "wdth" 125;
+  }
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+    line-height: 1.45;
+    color: var(--muted);
+    max-width: 38ch;
+  }
 
-/* ───────── Surfaces ───────── */
-.card {
-  background: linear-gradient(180deg, var(--color-stone-2), var(--color-stone));
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
-}
-/* Pattachitra-inspired divider: line · diamond · line */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-gold);
-}
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.35;
-}
+  /* ── buttons: flat, square, decisive ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 3.75rem;
+    padding: 0 1.4rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variation-settings: "wdth" 112;
+    border-radius: 2px;
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms,
+      transform 150ms var(--ease-iron);
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn .arr {
+    transition: transform 300ms var(--ease-out);
+  }
+  .btn:hover .arr {
+    transform: translateX(5px);
+  }
+  .btn-signal {
+    background: var(--color-signal);
+    color: var(--color-ink);
+  }
+  .btn-signal:hover {
+    background: #ff6a40;
+  }
+  .btn-ink {
+    background: var(--color-ink);
+    color: #f4f2ee;
+  }
+  .btn-ink:hover {
+    background: #26262a;
+  }
 
-/* chips (finder) */
-.chip {
-  min-height: 3rem;
-  padding: 0 1.1rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-line);
-  background: #ffffff06;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition:
-    background-color 150ms,
-    border-color 150ms,
-    color 150ms;
-}
-.chip[aria-pressed="true"] {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
-  color: var(--color-ink);
-}
-.chip:hover {
-  border-color: var(--color-gold);
-}
+  /* ── chips (finder) ── */
+  .chip {
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      background-color 150ms,
+      color 150ms,
+      border-color 150ms;
+  }
+  .chip:hover {
+    border-color: var(--fg);
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
 
-/* horizontal snap rail (mobile) */
-.rail {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  padding-inline: 20px;
-  scroll-padding-inline: 20px;
-}
-.rail::-webkit-scrollbar {
-  display: none;
-}
-.rail > * {
-  scroll-snap-align: start;
-  flex: none;
-}
+  /* ── horizontal rail (mobile) ── */
+  .rail {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-inline: 20px;
+    scroll-padding-inline: 20px;
+  }
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+  .rail > * {
+    scroll-snap-align: start;
+    flex: none;
+  }
 
+  /* ── the sun ── */
+  .sun {
+    border-radius: 9999px;
+    background: var(--color-signal);
+  }
+
+  /* viewfinder corners for art-directed image slots */
+  .finder-frame {
+    background:
+      linear-gradient(var(--fg), var(--fg)) top left / 18px 1px,
+      linear-gradient(var(--fg), var(--fg)) top left / 1px 18px,
+      linear-gradient(var(--fg), var(--fg)) top right / 18px 1px,
+      linear-gradient(var(--fg), var(--fg)) top right / 1px 18px,
+      linear-gradient(var(--fg), var(--fg)) bottom left / 18px 1px,
+      linear-gradient(var(--fg), var(--fg)) bottom left / 1px 18px,
+      linear-gradient(var(--fg), var(--fg)) bottom right / 18px 1px,
+      linear-gradient(var(--fg), var(--fg)) bottom right / 1px 18px,
+      var(--raise);
+    background-repeat: no-repeat;
+  }
 }
 
 /* ───────── Motion ───────── */
-/* reveal only when JS is present, so content never hides without it */
+
+/* sunrise: the hero disc lifts into place on load */
+.sunrise {
+  animation: sunrise 1800ms var(--ease-out) both;
+}
+@keyframes sunrise {
+  from {
+    transform: translateY(28%);
+    opacity: 0;
+  }
+}
+
+/* hero entrance — pure CSS so the LCP text never waits for JS */
+.rise {
+  animation: rise 900ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 250ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* scroll reveals (JS adds .in) */
 .js [data-reveal] {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(20px);
   transition:
-    opacity 500ms var(--ease-light),
-    transform 600ms var(--ease-iron);
-  transition-delay: calc(var(--i, 0) * 80ms);
+    opacity 700ms var(--ease-out),
+    transform 900ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
 }
 .js [data-reveal].in {
   opacity: 1;
+  transform: none;
+}
+/* hairlines draw themselves in */
+.js [data-rule] {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1200ms var(--ease-out);
+}
+.js [data-rule].in {
   transform: none;
 }
 
@@ -237,27 +273,40 @@ body::after {
   transform: none;
 }
 .odo.run .strip {
-  transition: transform 1100ms var(--ease-iron);
-  transition-delay: calc(var(--k) * 70ms);
+  transition: transform 1400ms var(--ease-out);
+  transition-delay: calc(var(--k) * 60ms);
 }
 
-/* light shafts through the wheel's spokes */
-.rays {
-  background: repeating-conic-gradient(from 11deg, #f6d27a1f 0deg 2.2deg, transparent 2.2deg 22.5deg);
-  mask-image: radial-gradient(closest-side, #000 20%, transparent 100%);
-  filter: blur(6px);
+/* marquee */
+.marquee {
+  animation: marquee 38s linear infinite;
 }
-
-/* haze drifting through the hero light */
-.haze {
-  background:
-    radial-gradient(40% 30% at 30% 60%, #d4a53722, transparent 70%),
-    radial-gradient(35% 25% at 70% 40%, #f6d27a18, transparent 70%);
-  animation: haze 18s var(--ease-light) infinite alternate;
-}
-@keyframes haze {
+@keyframes marquee {
   to {
-    transform: translate3d(4%, -3%, 0) scale(1.08);
+    transform: translateX(-50%);
+  }
+}
+
+/* final sun rises with scroll where supported */
+@supports (animation-timeline: view()) {
+  .sun-scroll {
+    animation: sunup linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 55%;
+  }
+  @keyframes sunup {
+    from {
+      transform: translateY(45%) scale(0.8);
+    }
+  }
+}
+
+.live-dot {
+  animation: pulse 1.6s var(--ease-out) infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
   }
 }
 
@@ -269,20 +318,9 @@ body::after {
     transition: none !important;
     scroll-behavior: auto !important;
   }
-  .js [data-reveal] {
+  .js [data-reveal],
+  .js [data-rule] {
     opacity: 1;
     transform: none;
-  }
-}
-
-/* hero entrance: pure CSS so the LCP text never waits for JS */
-.rise {
-  animation: rise 700ms var(--ease-iron) both;
-  animation-delay: calc(var(--i, 0) * 90ms + 80ms);
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
   }
 }

@@ -1,70 +1,87 @@
-import { EVENT, topPrize } from "@/data/festival";
-import { inr } from "@/lib/format";
-import { Icon, Wheel } from "../icons";
+import { CHAMPIONSHIPS, EVENT, topPrize } from "@/data/festival";
+import { inr, inrShort } from "@/lib/format";
+import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
 import { Cta, Tbc } from "../ui";
 
+const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
+
 export function Hero() {
   return (
-    <section id="top" className="relative isolate flex min-h-[100svh] flex-col overflow-hidden px-5 pt-24 pb-10 md:pt-28">
-      {/* ── light: wheel backlit through haze (placeholder for the Walk-Out film) ── */}
-      <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute top-[-6%] right-[-58%] size-[150vw] md:top-[-10%] md:right-[-14%] md:size-[min(92vw,1000px)]">
-          <div className="absolute inset-[-25%] rounded-full bg-[radial-gradient(closest-side,#d4a53755,#d4a53718_45%,transparent_72%)]" />
-          <div className="rays absolute inset-[-40%] animate-spin-slow" />
-          <Wheel className="relative size-full animate-spin-slow text-gold/45" strokeWidth={0.9} />
-        </div>
-        <div className="haze absolute inset-0" />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink via-ink/85 to-transparent md:h-1/2" />
-        <div className="absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r from-ink via-ink/70 to-transparent md:block" />
+    <section id="top" className="t-ink relative isolate flex min-h-[100svh] flex-col overflow-hidden px-5 pt-20 pb-8 md:px-10 md:pt-24 md:pb-12">
+      {/* the sun — one flat disc. The Walk-Out film will later sit inside it. */}
+      <div aria-hidden className="absolute top-[13svh] right-[-52vw] -z-10 size-[118vw] md:top-[132px] md:right-[-10vw] md:size-[min(54vw,820px)]">
+        <div className="sun sunrise size-full" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end md:justify-center">
-        <p className="eyebrow rise mb-5">
-          {EVENT.name} · {EVENT.year}
-        </p>
-
-        <h1 className="display rise" style={{ "--i": 1 } as React.CSSProperties}>
-          <span className="foil block text-[clamp(8.5rem,44vw,17rem)] leading-[.8] lg:inline lg:text-[clamp(8rem,11vw,12rem)] lg:leading-[.84]">₹1.5</span>
-          <span className="block text-[clamp(5.2rem,27vw,10.5rem)] leading-[.84] lg:ml-6 lg:inline lg:text-[clamp(8rem,11vw,12rem)]">Crore</span>
-          <span className="sr-only">prize pool</span>
-        </h1>
-
-        <div className="mt-5 flex flex-wrap items-baseline gap-x-4 gap-y-1 rise" style={{ "--i": 2 } as React.CSSProperties}>
-          <span className="eyebrow !text-ivory/70">Prize pool</span>
-          <Odometer value={inr(EVENT.prizePool)} className="display text-[clamp(1.9rem,8vw,3rem)] text-molten" />
-        </div>
-
-        <div className="mt-7 grid max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-3 border-y border-line py-4 rise" style={{ "--i": 3 } as React.CSSProperties}>
-          <div>
-            <p className="text-[11px] font-semibold tracking-[.16em] text-mute uppercase">Your entry</p>
-            <p className="display tnum text-4xl">{inr(EVENT.fee)}</p>
-          </div>
-          <Icon name="arrow" className="size-6 text-gold" />
-          <div>
-            <p className="text-[11px] font-semibold tracking-[.16em] text-mute uppercase">Win up to</p>
-            <p className="display tnum text-4xl text-gold">{inr(topPrize)}</p>
-          </div>
-        </div>
-
-        <div className="mt-7 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-start rise" style={{ "--i": 4 } as React.CSSProperties}>
-          <Cta id="hero-cta" />
-          <a href="#arena" className="btn btn-ghost w-full sm:w-auto">
-            Find my category <Icon name="down" className="size-5" />
-          </a>
-        </div>
-
-        <div className="mt-7 flex flex-col gap-2 text-sm text-ivory/85 sm:flex-row sm:flex-wrap sm:gap-x-6 rise" style={{ "--i": 5 } as React.CSSProperties}>
-          <Countdown />
-          <span className="inline-flex items-center gap-2">
-            <Icon name="calendar" className="size-4" /> {EVENT.dateLabel}
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <Icon name="pin" className="size-4" /> {EVENT.venue}, Bhubaneswar
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 flex-col">
+        <div className="label rise flex justify-between gap-4 border-b border-line pb-4 text-muted" style={d(0)}>
+          <span>
+            {EVENT.venue}, Bhubaneswar
             <Tbc note={EVENT.tbc.venue} />
           </span>
+          <span className="shrink-0">04—06 Dec 2026</span>
+        </div>
+
+        <div className="flex-1" />
+
+        <p className="label rise mb-4 md:mb-6" style={d(1)}>
+          {EVENT.name} {EVENT.year} · Prize pool
+        </p>
+        <h1 className="display-c rise" style={d(2)}>
+          <span className="block text-[clamp(8rem,46vw,20rem)] md:inline md:text-[clamp(8rem,13.5vw,15rem)]">₹1.5</span>
+          <span className="block text-[clamp(5.5rem,31vw,20rem)] md:ml-[0.14em] md:inline md:text-[clamp(8rem,13.5vw,15rem)]">Crore</span>
+        </h1>
+        <p className="rise mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 md:mt-7" style={d(3)}>
+          <Odometer value={inr(EVENT.prizePool)} className="mono text-[clamp(1.35rem,3vw,2rem)] font-medium" />
+          <span className="text-sm text-muted">in cash prizes across {CHAMPIONSHIPS.length} championships</span>
+        </p>
+
+        <dl className="rise mt-8 grid grid-cols-3 border-y border-line md:mt-12 md:max-w-[740px] md:grid-cols-4" style={d(4)}>
+          {[
+            ["Entry", inr(EVENT.fee)],
+            ["Top prize", inrShort(topPrize)],
+            ["Championships", String(CHAMPIONSHIPS.length)],
+          ].map(([k, v], i) => (
+            <div key={k} className={`py-4 pr-3 ${i ? "border-l border-line pl-3 md:pl-5" : ""} ${i === 2 ? "hidden md:block" : ""}`}>
+              <dt className="label !text-[9px] text-muted md:!text-[10px]">{k}</dt>
+              <dd className="mt-1.5 text-xl font-bold tracking-tight md:text-3xl">{v}</dd>
+            </div>
+          ))}
+          <div className="border-l border-line py-4 pl-3 md:pl-5">
+            <dt className="label !text-[9px] text-muted md:!text-[10px]">Registration closes</dt>
+            <dd className="mt-2 text-[13px] md:text-lg">
+              <Countdown />
+            </dd>
+          </div>
+        </dl>
+
+        <div className="rise mt-6 flex flex-col gap-5 md:mt-10 md:flex-row md:items-start md:gap-10" style={d(5)}>
+          <Cta id="hero-cta" />
+          <a href="#arena" className="group inline-flex items-center gap-3 self-start text-sm font-semibold md:mt-5">
+            Find your category
+            <Icon name="down" className="size-4 transition-transform duration-300 group-hover:translate-y-1" />
+          </a>
         </div>
       </div>
     </section>
+  );
+}
+
+/** Signal-orange marquee of the seven championships. */
+export function Ticker() {
+  const names = CHAMPIONSHIPS.map((c) => c.sport.replace(" & Physique", "").replace(" (Wrestling)", ""));
+  const run = [...names, ...names];
+  return (
+    <div className="t-signal overflow-hidden border-y border-ink py-4 md:py-5" aria-label={names.join(", ")}>
+      <div className="marquee flex w-max items-center" aria-hidden>
+        {run.map((n, i) => (
+          <span key={i} className="flex items-center text-[clamp(1.4rem,3.2vw,2.6rem)] font-extrabold tracking-[-0.02em] uppercase [font-variation-settings:'wdth'_125]">
+            <span className="px-6 md:px-10">{n}</span>
+            <span className="size-3 rounded-full bg-ink md:size-4" />
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
