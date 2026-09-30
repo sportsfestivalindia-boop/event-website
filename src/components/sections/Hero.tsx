@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces, topPrize } from "@/data/festival";
-import { inr, inrShort } from "@/lib/format";
+import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces } from "@/data/festival";
+import { inr } from "@/lib/format";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
 import { Cta, Tbc } from "../ui";
@@ -42,14 +42,6 @@ export function Hero() {
               <div>
                 <p className="label !text-[11px] text-muted">Your entry</p>
                 <p className="display text-[clamp(1.5rem,7.5vw,2.25rem)]">{inr(EVENT.fee)}</p>
-              </div>
-            </div>
-            <span className="w-px bg-line" />
-            <div className="flex items-center gap-3">
-              <Icon name="trophy" className="size-7 shrink-0 text-gold sm:size-9" />
-              <div>
-                <p className="label !text-[11px] text-muted">Win up to</p>
-                <p className="display text-[clamp(1.5rem,7.5vw,2.25rem)] text-gold">{inrShort(topPrize)}</p>
               </div>
             </div>
           </div>
