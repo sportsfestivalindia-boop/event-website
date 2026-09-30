@@ -58,20 +58,23 @@ export function Champions() {
     <Section id="champions">
       <SectionHead title={<>India’s champions are <Gold>behind this festival.</Gold></>} />
       {legends.length > 0 && (
-        <ul className="grid gap-4 md:grid-cols-3">
+        <ul className="rail -mx-5 !gap-3 md:mx-0 md:grid md:grid-cols-3 md:!gap-4 md:px-0">
           {legends.map((l, n) => (
-            <li key={l.name} className="card flex items-center gap-5 p-5 md:p-6" data-reveal style={i(n)}>
-              <span className="relative size-20 shrink-0 overflow-hidden rounded-full ring-2 ring-gold md:size-24">
-                <Image src={l.face} alt={l.name} fill sizes="96px" className="object-cover" />
-              </span>
-              <span>
-                <span className="display block text-2xl md:text-3xl">
-                  {l.name}
-                  <Tbc note="Written consent needed (N3)" />
-                </span>
-                <span className="block text-sm text-muted">{l.title}</span>
-                <span className="mt-1 block text-xs font-semibold text-gold">{l.line}</span>
-              </span>
+            <li key={l.name} className="group card w-[78vw] overflow-hidden md:w-auto" data-reveal style={i(n)}>
+              <div className="relative aspect-[4/5] overflow-hidden">
+                <Image src={l.face} alt={l.name} fill sizes="(min-width: 768px) 33vw, 78vw" className="object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink via-ink/70 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+                  <p className="display text-3xl md:text-4xl">
+                    {l.name}
+                    <Tbc note="Written consent needed (N3)" />
+                  </p>
+                  <p className="mt-1 text-sm text-white/80">{l.title}</p>
+                </div>
+              </div>
+              <p className="flex items-center gap-2 border-t border-line bg-gold px-5 py-3 text-sm font-semibold text-ink md:px-6">
+                <Icon name="trophy" className="size-4" /> {l.line}
+              </p>
             </li>
           ))}
         </ul>

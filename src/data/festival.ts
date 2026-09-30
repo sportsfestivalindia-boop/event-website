@@ -244,9 +244,9 @@ export const ORGANISERS = [
 ];
 
 export const LEGENDS = [
-  { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/face-anil.webp", tbc: true },
-  { name: "Ranu Mohanty", title: "Powerlifting champion", line: "Ranu National Powerlifting", face: "/img/face-ranu.webp", tbc: true },
-  { name: "Dutee Chand", title: "Asian Games silver medallist · Pride of India", line: "Dutee Marathon", face: "/img/face-dutee.webp", tbc: true },
+  { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/pfp-anil.webp", tbc: true },
+  { name: "Ranu Mohanty", title: "Powerlifting champion", line: "Ranu National Powerlifting", face: "/img/pfp-ranu.webp", tbc: true },
+  { name: "Dutee Chand", title: "Asian Games silver medallist · Pride of India", line: "Dutee Marathon", face: "/img/pfp-dutee.webp", tbc: true },
 ];
 
 export const FAQ: { q: string; a: string; tbc?: boolean }[] = [
