@@ -32,7 +32,7 @@ export function Prizes() {
           <li key={h.label + h.sub} className="card relative overflow-hidden p-5 md:p-6" data-reveal style={i(n)}>
             <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gold" />
             <Icon name={typeof h.prize === "number" ? "trophy" : "flame"} className="size-7 text-amber-600" />
-            <p className={`display mt-4 leading-none ${typeof h.prize === "number" ? "text-[clamp(1.9rem,4.5vw,3rem)]" : "text-[clamp(1.4rem,3vw,2.1rem)]"}`}>{prizeLabel(h.prize)}</p>
+            <p className={`display mt-4 leading-none ${typeof h.prize === "number" ? "text-[clamp(1.4rem,6.4vw,3rem)] whitespace-nowrap lg:text-[clamp(1.9rem,2.6vw,3rem)]" : "text-[clamp(1.3rem,5.5vw,2.1rem)]"}`}>{prizeLabel(h.prize)}</p>
             <p className="mt-2 text-sm font-semibold">{h.label}</p>
             <p className="text-xs text-muted">{h.sub}</p>
           </li>
@@ -350,7 +350,7 @@ export function FinalCall() {
   return (
     <section id="final" className="t-ink relative isolate overflow-hidden px-5 py-24 md:px-10 md:py-32">
       <div aria-hidden className="slash absolute inset-0 -z-10 opacity-35 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]" />
-      <div className="mx-auto max-w-[1680px] text-center">
+      <div className="mx-auto max-w-[1920px] text-center">
         <p className="label text-gold">Last call · 4–6 December 2026</p>
         <h2 className="display mx-auto mt-4 max-w-[16ch] text-[clamp(3rem,9vw,7.5rem)]">
           <span className="text-gold">₹1.5 Crore.</span> One stage. Your name.
@@ -380,7 +380,7 @@ export function Footer() {
   ];
   return (
     <footer className="t-ink border-t border-line px-5 pt-14 pb-32 md:px-10 md:pb-14">
-      <div className="mx-auto grid max-w-[1680px] gap-10 md:grid-cols-12">
+      <div className="mx-auto grid max-w-[1920px] gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <Wordmark />
           <div className="mt-6 flex items-center gap-4">
@@ -411,7 +411,7 @@ export function Footer() {
           ))}
         </ul>
       </div>
-      <div className="mx-auto mt-12 flex max-w-[1680px] flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
+      <div className="mx-auto mt-12 flex max-w-[1920px] flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
         <span>© {EVENT.year} {EVENT.organiser} · sportsfestival</span>
         <span>
           Jai Hind · Jai Odisha

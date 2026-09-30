@@ -75,7 +75,7 @@ export const Gold = ({ children }: { children: React.ReactNode }) => <span class
 export function Section({ id, theme = "ink", children, className = "" }: { id?: string; theme?: "ink" | "paper" | "gold"; children: React.ReactNode; className?: string }) {
   return (
     <section id={id} className={`t-${theme} relative scroll-mt-16 px-5 py-20 md:px-10 md:py-28 ${className}`}>
-      <div className="mx-auto max-w-[1680px]">{children}</div>
+      <div className="mx-auto max-w-[1920px]">{children}</div>
     </section>
   );
 }
