@@ -142,7 +142,7 @@ export function Chrome() {
   return (
     <>
       <header className={`t-ink fixed inset-x-0 top-0 z-50 !bg-transparent transition-[background-color,border-color] duration-300 ${past ? "border-b border-line !bg-ink/85 backdrop-blur-xl" : "border-b border-transparent"}`}>
-        <div className="mx-auto flex h-16 max-w-[1920px] items-center gap-8 px-5 md:h-20 md:px-10">
+        <div className="mx-auto flex h-16 w-full items-center gap-8 px-5 md:h-20 md:px-10">
           <Link href="#top" aria-label="Sports Festival — back to top">
             <Wordmark />
           </Link>

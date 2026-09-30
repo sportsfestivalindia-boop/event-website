@@ -19,7 +19,7 @@ export function Hero() {
       </div>
       <span className="sr-only">Anil Gochhikar, Ranu Mohanty and Dutee Chand</span>
 
-      <div className="mx-auto -mt-10 w-full max-w-[1920px] px-5 pb-12 md:px-10 lg:mt-0 lg:pt-24 lg:pb-10">
+      <div className="mx-auto -mt-10 w-full px-5 pb-12 md:px-10 lg:mt-0 lg:pt-24 lg:pb-10">
         <div className="max-w-[640px] lg:max-w-[52%]">
           <h1 className="rise" style={d(0)}>
             <span className="display block text-[clamp(2.2rem,9vw,3.6rem)] lg:text-[min(3.4vw,6.2vh)]">India’s Biggest</span>
@@ -111,7 +111,7 @@ export function Glance() {
   ];
   return (
     <div className="t-ink border-b border-line px-5 py-12 md:px-10 md:py-16">
-      <ul className="mx-auto grid max-w-[1920px] grid-cols-2 gap-3 md:gap-4 lg:grid-cols-6">
+      <ul className="mx-auto grid w-full grid-cols-2 gap-3 md:gap-4 lg:grid-cols-6">
         {stats.map((s, i) => (
           <li key={s.l} className={`card p-5 md:p-6 ${i === 0 ? "col-span-2" : ""}`} data-reveal style={d(i)}>
             <Icon name={s.icon} className="size-7 text-gold" />

@@ -61,7 +61,7 @@ export function Champions() {
         <ul className="rail -mx-5 !gap-3 md:mx-0 md:grid md:grid-cols-3 md:!gap-4 md:px-0">
           {legends.map((l, n) => (
             <li key={l.name} className="group card w-[78vw] overflow-hidden md:w-auto" data-reveal style={i(n)}>
-              <div className="relative aspect-[4/5] overflow-hidden">
+              <div className="relative aspect-[4/5] overflow-hidden 2xl:aspect-square">
                 <Image src={l.face} alt={l.name} fill sizes="(min-width: 768px) 33vw, 78vw" className="object-cover object-top transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink via-ink/70 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
@@ -353,7 +353,7 @@ export function FinalCall() {
   return (
     <section id="final" className="t-ink relative isolate overflow-hidden px-5 py-24 md:px-10 md:py-32">
       <div aria-hidden className="slash absolute inset-0 -z-10 opacity-35 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]" />
-      <div className="mx-auto max-w-[1920px] text-center">
+      <div className="mx-auto w-full text-center">
         <p className="label text-gold">Last call · 4–6 December 2026</p>
         <h2 className="display mx-auto mt-4 max-w-[16ch] text-[clamp(3rem,9vw,7.5rem)]">
           <span className="text-gold">₹1.5 Crore.</span> One stage. Your name.
@@ -383,7 +383,7 @@ export function Footer() {
   ];
   return (
     <footer className="t-ink border-t border-line px-5 pt-14 pb-32 md:px-10 md:pb-14">
-      <div className="mx-auto grid max-w-[1920px] gap-10 md:grid-cols-12">
+      <div className="mx-auto grid w-full gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <Wordmark />
           <div className="mt-6 flex items-center gap-4">
@@ -414,7 +414,7 @@ export function Footer() {
           ))}
         </ul>
       </div>
-      <div className="mx-auto mt-12 flex max-w-[1920px] flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
+      <div className="mx-auto mt-12 flex w-full flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
         <span>© {EVENT.year} {EVENT.organiser} · sportsfestival</span>
         <span>
           Jai Hind · Jai Odisha
