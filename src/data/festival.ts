@@ -208,12 +208,12 @@ export const HEADLINE_PRIZES: { label: string; sub: string; prize: Prize }[] = [
 ];
 
 export const VALUE: { title: string; body: string; icon: string; tbc?: boolean }[] = [
-  { title: "Official accreditation", body: "Athlete ID and access to the athlete zone for your competition day.", icon: "badge" },
-  { title: "Medal + certificate", body: "The festival medal (Konark wheel), a participation certificate and athlete kit.", icon: "medal", tbc: true },
-  { title: "Your stage moment, filmed", body: "10 professional stage photos and a 15-second vertical reel, delivered within 72 hours.", icon: "camera", tbc: true },
-  { title: "Live-stream presence", body: "Your category on the official broadcast and festival channels.", icon: "broadcast", tbc: true },
-  { title: "Athlete lounge", body: "Warm-up / pump-up area, water and medical cover on site.", icon: "shield", tbc: true },
-  { title: "Stay, sorted", body: "Partner-hotel rates in Bhubaneswar and travel help from our team.", icon: "hotel", tbc: true },
+  { title: "Official athlete ID", body: "Your entry pass and access to the athlete zone on your competition day.", icon: "badge" },
+  { title: "Medal, certificate & T-shirt", body: "Festival medal, participation certificate and official athlete T-shirt.", icon: "medal", tbc: true },
+  { title: "Your photos & reel", body: "10 professional stage photos + a 15-second Instagram reel of you, within 72 hours.", icon: "camera", tbc: true },
+  { title: "Live on stream", body: "Your category is broadcast live — family and friends can watch from home.", icon: "broadcast", tbc: true },
+  { title: "Warm-up zone & medical", body: "Pump-up area, drinking water, and doctors on site all 3 days.", icon: "shield", tbc: true },
+  { title: "Hotel & travel help", body: "Special athlete rates at partner hotels in Bhubaneswar.", icon: "hotel", tbc: true },
 ];
 
 export const DAYS = [
@@ -244,9 +244,9 @@ export const ORGANISERS = [
 ];
 
 export const LEGENDS = [
-  { name: "Anil Gochhikar", title: "The Classic’s namesake", line: "Bodybuilding · Odisha", tbc: true },
-  { name: "Ranu Mohanty", title: "National Powerlifting", line: "The championship carries her name", tbc: true },
-  { name: "Dutee Chand", title: "Asian Games silver medallist", line: "The Dutee Marathon", tbc: true },
+  { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/face-anil.webp", tbc: true },
+  { name: "Ranu Mohanty", title: "Powerlifting champion", line: "Ranu National Powerlifting", face: "/img/face-ranu.webp", tbc: true },
+  { name: "Dutee Chand", title: "Asian Games silver medallist · Pride of India", line: "Dutee Marathon", face: "/img/face-dutee.webp", tbc: true },
 ];
 
 export const FAQ: { q: string; a: string; tbc?: boolean }[] = [

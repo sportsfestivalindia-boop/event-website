@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
 /*
-  Sun Temple Modernism.
-  One flat sun, black and paper, one grotesk, hairlines, broadcast data.
-  Sections pick a theme (t-ink / t-paper / t-signal); every component reads the theme vars.
+  Sports Festival — brand system (from the client's homepage visual + logo).
+  Black stage, one amber (the lightning bolt), white type. Anton for impact, Poppins for reading.
+  Sections pick a theme (t-ink / t-paper / t-gold); components read the theme vars.
 */
 
 @theme {
-  --color-ink: #0b0b0c;
-  --color-paper: #eeebe4;
-  --color-signal: #ff4f1f; /* the sun — CTA, the disc, live states. Nothing else. */
+  --color-ink: #0a0a0a;
+  --color-gold: #ffb81c; /* the bolt — CTAs, prize numbers, highlights */
+  --color-gold-deep: #f59e0b;
+  --color-cream: #f6f1e7;
+  --color-wa: #25d366; /* WhatsApp green — instantly recognised */
+  --color-medal-1: #f5c542;
+  --color-medal-2: #c9ccd3;
+  --color-medal-3: #d08a4c;
 
-  --font-sans: var(--font-mona), "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-anton), Impact, "Arial Narrow", sans-serif;
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-iron: cubic-bezier(0.2, 0.9, 0.1, 1.02);
 }
 
-/* theme-driven colours: bg-bg, text-fg, text-muted, border-line, bg-raise */
 @theme inline {
   --color-bg: var(--bg);
   --color-fg: var(--fg);
@@ -28,29 +32,29 @@
 }
 
 .t-ink {
-  --bg: #0b0b0c;
-  --fg: #f4f2ee;
-  --muted: #8e8b86;
-  --line: #ffffff1c;
-  --raise: #151517;
+  --bg: #0a0a0a;
+  --fg: #ffffff;
+  --muted: #a3a3a3;
+  --line: #ffffff1f;
+  --raise: #151515;
 }
 .t-paper {
-  --bg: #eeebe4;
-  --fg: #0b0b0c;
-  --muted: #69655e;
-  --line: #0b0b0c21;
-  --raise: #e5e1d8;
+  --bg: #f6f1e7;
+  --fg: #0a0a0a;
+  --muted: #5c574f;
+  --line: #0a0a0a1f;
+  --raise: #ffffff;
 }
-.t-signal {
-  --bg: #ff4f1f;
-  --fg: #0b0b0c;
-  --muted: #0b0b0cb0;
-  --line: #0b0b0c38;
-  --raise: #ff6a40;
+.t-gold {
+  --bg: #ffb81c;
+  --fg: #0a0a0a;
+  --muted: #0a0a0ab3;
+  --line: #0a0a0a33;
+  --raise: #ffc84a;
 }
 .t-ink,
 .t-paper,
-.t-signal {
+.t-gold {
   background: var(--bg);
   color: var(--fg);
 }
@@ -58,80 +62,79 @@
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
-  background: #0b0b0c;
+  background: #0a0a0a;
 }
 body {
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   overflow-x: clip;
-  font-feature-settings: "ss01";
 }
 ::selection {
-  background: var(--color-signal);
+  background: var(--color-gold);
   color: var(--color-ink);
 }
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid var(--color-gold);
   outline-offset: 3px;
 }
 
 @layer components {
-  /* ── type ── */
   .display {
-    font-weight: 800;
-    letter-spacing: -0.045em;
-    line-height: 0.9;
-    text-wrap: balance;
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: 0.005em;
   }
-  .display-c {
-    /* condensed display for giant numerals */
-    font-weight: 800;
-    font-variation-settings: "wdth" 75;
-    letter-spacing: -0.035em;
-    line-height: 0.84;
+  .tracked {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.42em;
   }
   .label {
-    font-size: 11px;
-    line-height: 1.3;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    font-variation-settings: "wdth" 125;
   }
-  .mono {
-    font-family: var(--font-mono);
+  .hindi {
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--color-gold);
+  }
+  .t-paper .hindi,
+  .t-gold .hindi {
+    color: #b45309;
+  }
+  .t-gold .hindi {
+    color: #0a0a0a;
+  }
+  .tnum {
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
-  }
-  .lede {
-    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
-    line-height: 1.45;
-    color: var(--muted);
-    max-width: 38ch;
   }
 
-  /* ── buttons: flat, square, decisive ── */
+  /* ── buttons: solid, tactile, obvious ── */
   .btn {
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    min-height: 3.75rem;
-    padding: 0 1.4rem;
-    font-size: 0.9rem;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    padding: 0 1.75rem;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    font-variation-settings: "wdth" 112;
-    border-radius: 2px;
+    border-radius: 6px;
     transition:
-      background-color 200ms var(--ease-out),
-      color 200ms,
-      transform 150ms var(--ease-iron);
+      transform 150ms var(--ease-iron),
+      box-shadow 200ms,
+      filter 200ms,
+      background-color 200ms;
   }
   .btn:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
   }
   .btn .arr {
     transition: transform 300ms var(--ease-out);
@@ -139,27 +142,47 @@ body {
   .btn:hover .arr {
     transform: translateX(5px);
   }
-  .btn-signal {
-    background: var(--color-signal);
-    color: var(--color-ink);
+  .btn-gold {
+    background: linear-gradient(180deg, #ffc93d, #f5a300);
+    color: #0a0a0a;
+    box-shadow:
+      0 1px 0 #fff4 inset,
+      0 10px 30px -10px #f5a30099;
   }
-  .btn-signal:hover {
-    background: #ff6a40;
+  .btn-gold:hover {
+    filter: brightness(1.06);
+    box-shadow:
+      0 1px 0 #fff4 inset,
+      0 14px 36px -10px #f5a300cc;
   }
   .btn-ink {
-    background: var(--color-ink);
-    color: #f4f2ee;
+    background: #0a0a0a;
+    color: #fff;
   }
   .btn-ink:hover {
-    background: #26262a;
+    background: #262626;
+  }
+  .btn-line {
+    border: 1.5px solid var(--line);
+    border-color: color-mix(in srgb, var(--fg) 45%, transparent);
+    color: var(--fg);
+  }
+  .btn-line:hover {
+    border-color: var(--color-gold);
+    color: var(--color-gold);
   }
 
-  /* ── chips (finder) ── */
+  /* ── surfaces ── */
+  .card {
+    background: var(--raise);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
   .chip {
     min-height: 2.75rem;
     padding: 0 1rem;
     border: 1px solid var(--line);
-    border-radius: 2px;
+    border-radius: 999px;
     font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
@@ -169,15 +192,14 @@ body {
       border-color 150ms;
   }
   .chip:hover {
-    border-color: var(--fg);
+    border-color: var(--color-gold);
   }
   .chip[aria-pressed="true"] {
-    background: var(--fg);
-    border-color: var(--fg);
-    color: var(--bg);
+    background: var(--color-gold);
+    border-color: var(--color-gold);
+    color: #0a0a0a;
   }
 
-  /* ── horizontal rail (mobile) ── */
   .rail {
     display: flex;
     gap: 8px;
@@ -195,13 +217,33 @@ body {
     flex: none;
   }
 
-  /* ── the sun ── */
-  .sun {
-    border-radius: 9999px;
-    background: var(--color-signal);
+  /* the lightning slash — the brand's diagonal energy */
+  .slash {
+    background: linear-gradient(115deg, transparent 49.6%, var(--color-gold) 50%, #f59e0b 58%, transparent 58.4%);
   }
 
-  /* viewfinder corners for art-directed image slots */
+  /* medal dots for 1st/2nd/3rd */
+  .medal {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0a0a0a;
+    background: var(--line);
+  }
+  .medal-1 {
+    background: var(--color-medal-1);
+  }
+  .medal-2 {
+    background: var(--color-medal-2);
+  }
+  .medal-3 {
+    background: var(--color-medal-3);
+  }
+
   .finder-frame {
     background:
       linear-gradient(var(--fg), var(--fg)) top left / 18px 1px,
@@ -219,21 +261,10 @@ body {
 
 /* ───────── Motion ───────── */
 
-/* sunrise: the hero disc lifts into place on load */
-.sunrise {
-  animation: sunrise 1800ms var(--ease-out) both;
-}
-@keyframes sunrise {
-  from {
-    transform: translateY(28%);
-    opacity: 0;
-  }
-}
-
-/* hero entrance — pure CSS so the LCP text never waits for JS */
+/* hero entrance — pure CSS so the LCP never waits for JS */
 .rise {
-  animation: rise 900ms var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 90ms + 250ms);
+  animation: rise 800ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 150ms);
 }
 @keyframes rise {
   from {
@@ -241,8 +272,17 @@ body {
     transform: translateY(24px);
   }
 }
+/* hero art slides in from the right like the bolt */
+.strike {
+  animation: strike 1100ms var(--ease-out) both 100ms;
+}
+@keyframes strike {
+  from {
+    opacity: 0;
+    transform: translateX(6%) scale(1.03);
+  }
+}
 
-/* scroll reveals (JS adds .in) */
 .js [data-reveal] {
   opacity: 0;
   transform: translateY(20px);
@@ -255,17 +295,15 @@ body {
   opacity: 1;
   transform: none;
 }
-/* hairlines draw themselves in */
 .js [data-rule] {
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 1200ms var(--ease-out);
+  transition: transform 1100ms var(--ease-out);
 }
 .js [data-rule].in {
   transform: none;
 }
 
-/* odometer: server renders final digits; with JS they start at 0 and roll in */
 .odo .strip {
   transform: translateY(calc(var(--d) * -1em));
 }
@@ -277,27 +315,12 @@ body {
   transition-delay: calc(var(--k) * 60ms);
 }
 
-/* marquee */
 .marquee {
-  animation: marquee 38s linear infinite;
+  animation: marquee 36s linear infinite;
 }
 @keyframes marquee {
   to {
     transform: translateX(-50%);
-  }
-}
-
-/* final sun rises with scroll where supported */
-@supports (animation-timeline: view()) {
-  .sun-scroll {
-    animation: sunup linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 55%;
-  }
-  @keyframes sunup {
-    from {
-      transform: translateY(45%) scale(0.8);
-    }
   }
 }
 
@@ -307,6 +330,20 @@ body {
 @keyframes pulse {
   50% {
     opacity: 0.25;
+  }
+}
+
+/* WhatsApp button breathes once every few seconds */
+.wa-pulse {
+  animation: wapulse 3.2s ease-out infinite;
+}
+@keyframes wapulse {
+  0%,
+  70% {
+    box-shadow: 0 0 0 0 #25d36699;
+  }
+  100% {
+    box-shadow: 0 0 0 16px #25d36600;
   }
 }
 

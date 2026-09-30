@@ -5,10 +5,10 @@ const fmt = new Intl.NumberFormat("en-IN");
 /** ₹1,50,00,000 — Indian grouping */
 export const inr = (n: number) => "₹" + fmt.format(n);
 
-/** ₹1.5 Cr · ₹20 L · ₹50,000 */
+/** ₹1.5 Crore · ₹20 Lakh · ₹50,000 — words Indian readers use */
 export const inrShort = (n: number) => {
-  if (n >= 1_00_00_000) return `₹${+(n / 1_00_00_000).toFixed(2)} Cr`;
-  if (n >= 1_00_000) return `₹${+(n / 1_00_000).toFixed(2)} L`;
+  if (n >= 1_00_00_000) return `₹${+(n / 1_00_00_000).toFixed(2)} Crore`;
+  if (n >= 1_00_000) return `₹${+(n / 1_00_000).toFixed(2)} Lakh`;
   return inr(n);
 };
 

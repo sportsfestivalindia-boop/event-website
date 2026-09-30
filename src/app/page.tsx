@@ -1,6 +1,6 @@
 import { Chrome, Reveal } from "@/components/live";
-import { Hero, Ticker } from "@/components/sections/Hero";
-import { Arena, Days, Faq, FinalCall, Footer, Prizes, Register, Stage, Trust, Value, Venue } from "@/components/sections/Sections";
+import { Glance, Hero, Ticker } from "@/components/sections/Hero";
+import { Arena, Champions, Days, Faq, FinalCall, Footer, Prizes, Register, Trust, Value, Venue } from "@/components/sections/Sections";
 
 export default function Home() {
   return (
@@ -9,10 +9,11 @@ export default function Home() {
       <main>
         <Hero />
         <Ticker />
+        <Glance />
         <Arena />
         <Prizes />
+        <Champions />
         <Value />
-        <Stage />
         <Days />
         <Trust />
         <Register />

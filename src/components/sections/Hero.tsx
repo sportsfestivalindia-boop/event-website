@@ -1,4 +1,5 @@
-import { CHAMPIONSHIPS, EVENT, topPrize } from "@/data/festival";
+import Image from "next/image";
+import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces, topPrize } from "@/data/festival";
 import { inr, inrShort } from "@/lib/format";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
@@ -8,80 +9,117 @@ const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export function Hero() {
   return (
-    <section id="top" className="t-ink relative isolate flex min-h-[100svh] flex-col overflow-hidden px-5 pt-20 pb-8 md:px-10 md:pt-24 md:pb-12">
-      {/* the sun — one flat disc. The Walk-Out film will later sit inside it. */}
-      <div aria-hidden className="absolute top-[13svh] right-[-52vw] -z-10 size-[118vw] md:top-[132px] md:right-[-10vw] md:size-[min(54vw,820px)]">
-        <div className="sun sunrise size-full" />
+    <section id="top" className="t-ink relative isolate overflow-hidden lg:flex lg:min-h-[100svh] lg:items-center">
+      {/* athletes + bolt (client artwork). Mobile: square crop on top. Desktop: right side, fading into black. */}
+      <div aria-hidden className="strike relative mt-14 md:mt-0 -z-10 aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:w-[74%]">
+        <Image src="/img/hero-athletes.webp" alt="" fill priority sizes="100vw" className="object-cover lg:hidden" />
+        <Image src="/img/hero-desktop.webp" alt="" fill priority sizes="74vw" className="hidden object-cover object-right [mask-image:linear-gradient(to_right,transparent,#000_28%)] lg:block" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink to-transparent lg:hidden" />
+        <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-ink to-transparent lg:block" />
       </div>
+      <span className="sr-only">Anil Gochhikar, Ranu Mohanty and Dutee Chand</span>
 
-      <div className="mx-auto flex w-full max-w-[1360px] flex-1 flex-col">
-        <div className="label rise flex justify-between gap-4 border-b border-line pb-4 text-muted" style={d(0)}>
-          <span>
-            {EVENT.venue}, Bhubaneswar
-            <Tbc note={EVENT.tbc.venue} />
-          </span>
-          <span className="shrink-0">04—06 Dec 2026</span>
-        </div>
+      <div className="mx-auto -mt-10 w-full max-w-[1280px] px-5 pb-12 md:px-10 lg:mt-0 lg:pt-28 lg:pb-16">
+        <div className="max-w-[640px]">
+          <h1 className="rise" style={d(0)}>
+            <span className="display block text-[clamp(2.2rem,9vw,3.6rem)] lg:text-[clamp(2.4rem,3.6vw,3.6rem)]">India’s Biggest</span>
+            <span className="display block text-[clamp(3.4rem,14.5vw,6rem)] lg:text-[clamp(3.6rem,5.8vw,6rem)]">
+              <span className="text-gold">Sports</span> Festival
+            </span>
+          </h1>
+          <span className="rise mt-5 block h-[3px] w-40 bg-gold md:w-56" style={d(1)} />
 
-        <div className="flex-1" />
+          <p className="rise mt-6 md:mt-8" style={d(2)}>
+            <span className="display block text-[clamp(5rem,24vw,10rem)] leading-[0.9] lg:text-[clamp(6rem,10.5vw,10rem)]">
+              <span className="text-gold">₹1.5</span> Crore
+            </span>
+            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[clamp(1.5rem,2.4vw,2.4rem)]">Prizepool</span>
+          </p>
 
-        <p className="label rise mb-4 md:mb-6" style={d(1)}>
-          {EVENT.name} {EVENT.year} · Prize pool
-        </p>
-        <h1 className="display-c rise" style={d(2)}>
-          <span className="block text-[clamp(8rem,46vw,20rem)] md:inline md:text-[clamp(8rem,13.5vw,15rem)]">₹1.5</span>
-          <span className="block text-[clamp(5.5rem,31vw,20rem)] md:ml-[0.14em] md:inline md:text-[clamp(8rem,13.5vw,15rem)]">Crore</span>
-        </h1>
-        <p className="rise mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 md:mt-7" style={d(3)}>
-          <Odometer value={inr(EVENT.prizePool)} className="mono text-[clamp(1.35rem,3vw,2rem)] font-medium" />
-          <span className="text-sm text-muted">in cash prizes across {CHAMPIONSHIPS.length} championships</span>
-        </p>
-
-        <dl className="rise mt-8 grid grid-cols-3 border-y border-line md:mt-12 md:max-w-[740px] md:grid-cols-4" style={d(4)}>
-          {[
-            ["Entry", inr(EVENT.fee)],
-            ["Top prize", inrShort(topPrize)],
-            ["Championships", String(CHAMPIONSHIPS.length)],
-          ].map(([k, v], i) => (
-            <div key={k} className={`py-4 pr-3 ${i ? "border-l border-line pl-3 md:pl-5" : ""} ${i === 2 ? "hidden md:block" : ""}`}>
-              <dt className="label !text-[9px] text-muted md:!text-[10px]">{k}</dt>
-              <dd className="mt-1.5 text-xl font-bold tracking-tight md:text-3xl">{v}</dd>
+          <div className="rise mt-8 flex items-stretch gap-5 md:mt-10" style={d(3)}>
+            <div className="flex items-center gap-3">
+              <Icon name="ticket" className="size-9 text-gold" />
+              <div>
+                <p className="label !text-[11px] text-muted">Your entry</p>
+                <p className="display text-3xl md:text-4xl">{inr(EVENT.fee)}</p>
+              </div>
             </div>
-          ))}
-          <div className="border-l border-line py-4 pl-3 md:pl-5">
-            <dt className="label !text-[9px] text-muted md:!text-[10px]">Registration closes</dt>
-            <dd className="mt-2 text-[13px] md:text-lg">
-              <Countdown />
-            </dd>
+            <span className="w-px bg-line" />
+            <div className="flex items-center gap-3">
+              <Icon name="trophy" className="size-9 text-gold" />
+              <div>
+                <p className="label !text-[11px] text-muted">Win up to</p>
+                <p className="display text-3xl text-gold md:text-4xl">{inrShort(topPrize)}</p>
+              </div>
+            </div>
           </div>
-        </dl>
 
-        <div className="rise mt-6 flex flex-col gap-5 md:mt-10 md:flex-row md:items-start md:gap-10" style={d(5)}>
-          <Cta id="hero-cta" />
-          <a href="#arena" className="group inline-flex items-center gap-3 self-start text-sm font-semibold md:mt-5">
-            Find your category
-            <Icon name="down" className="size-4 transition-transform duration-300 group-hover:translate-y-1" />
-          </a>
+          <div className="rise mt-8 flex flex-col gap-3 sm:flex-row" style={d(4)}>
+            <Cta id="hero-cta" micro={false} />
+            <a href="#arena" className="btn btn-line w-full sm:w-auto">
+              Find my category <Icon name="down" className="size-5" />
+            </a>
+          </div>
+          <p className="rise mt-3 text-xs text-muted" style={d(4)}>
+            2-min signup · UPI enabled · Instant WhatsApp confirmation
+          </p>
+
+          <ul className="rise mt-8 flex flex-col gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6" style={d(5)}>
+            <li className="flex items-center gap-2.5">
+              <Icon name="calendar" className="size-5 text-gold" /> <b className="font-semibold">4–6 DEC 2026</b>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Icon name="pin" className="size-5 text-gold" /> {EVENT.venue}, Bhubaneswar
+              <Tbc note={EVENT.tbc.venue} />
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Icon name="users" className="size-5 text-gold" /> Registrations close in <Countdown className="font-semibold text-gold" />
+            </li>
+          </ul>
         </div>
       </div>
     </section>
   );
 }
 
-/** Signal-orange marquee of the seven championships. */
+/** Gold marquee of the seven championships, separated by the bolt. */
 export function Ticker() {
   const names = CHAMPIONSHIPS.map((c) => c.sport.replace(" & Physique", "").replace(" (Wrestling)", ""));
   const run = [...names, ...names];
   return (
-    <div className="t-signal overflow-hidden border-y border-ink py-4 md:py-5" aria-label={names.join(", ")}>
+    <div className="t-gold overflow-hidden py-3.5 md:py-4" aria-label={names.join(", ")}>
       <div className="marquee flex w-max items-center" aria-hidden>
         {run.map((n, i) => (
-          <span key={i} className="flex items-center text-[clamp(1.4rem,3.2vw,2.6rem)] font-extrabold tracking-[-0.02em] uppercase [font-variation-settings:'wdth'_125]">
-            <span className="px-6 md:px-10">{n}</span>
-            <span className="size-3 rounded-full bg-ink md:size-4" />
+          <span key={i} className="display flex items-center text-[clamp(1.4rem,3vw,2.2rem)]">
+            <span className="px-5 md:px-8">{n}</span>
+            <Icon name="bolt" className="size-6 fill-ink stroke-none md:size-7" />
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Festival at a glance — four big numbers anyone can read in one second. */
+export function Glance() {
+  const stats = [
+    { icon: "rupee", v: <Odometer value={inr(EVENT.prizePool)} />, l: "Total prize pool" },
+    { icon: "trophy", v: String(CHAMPIONSHIPS.length), l: "Championships" },
+    { icon: "medal", v: `${paidPlaces}+`, l: "Cash prizes to be won" },
+    { icon: "users", v: `${categoryCount}+`, l: "Categories" },
+    { icon: "calendar", v: "3 Days", l: "4–6 December 2026" },
+  ];
+  return (
+    <div className="t-ink border-b border-line px-5 py-12 md:px-10 md:py-16">
+      <ul className="mx-auto grid max-w-[1280px] grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
+        {stats.map((s, i) => (
+          <li key={s.l} className={`card p-5 md:p-6 ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`} data-reveal style={d(i)}>
+            <Icon name={s.icon} className="size-7 text-gold" />
+            <p className="display mt-4 text-[clamp(2rem,5vw,2.8rem)] leading-none">{s.v}</p>
+            <p className="mt-2 text-sm text-muted">{s.l}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

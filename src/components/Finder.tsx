@@ -12,6 +12,15 @@ type Sel = { sport: string; div: string; cls: string };
 const selFor = (c: Championship): Sel => ({ sport: c.id, div: c.divisions[0]?.id ?? "", cls: defaultClass(c.divisions[0]?.classes ?? []) });
 const noSub = () => () => {};
 
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <p className="mb-3 flex items-center gap-3 text-sm font-semibold">
+      <span className="grid size-7 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{n}</span>
+      {children}
+    </p>
+  );
+}
+
 export function Finder() {
   // deep links from poster QR codes: /?sport=powerlifting (null on the server)
   const urlSport = useSyncExternalStore(noSub, () => new URLSearchParams(location.search).get("sport"), () => null);
@@ -27,122 +36,125 @@ export function Finder() {
   const hasClasses = (division?.classes.length ?? 0) > 1;
 
   return (
-    <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-      {/* sport index */}
-      <ol className="border-b border-line lg:col-span-5">
-        {CHAMPIONSHIPS.map((c, i) => {
-          const on = c.id === sport;
-          const total = championshipTotal(c);
-          return (
-            <li key={c.id} className="border-t border-line">
-              <button onClick={() => choose(c)} aria-pressed={on} className="group grid w-full grid-cols-[2.5rem_1fr_auto] items-baseline gap-2 py-4 text-left md:py-5">
-                <span className={`mono text-xs ${on ? "text-signal" : "text-muted"}`}>0{i + 1}</span>
-                <span className={`text-[1.35rem] leading-tight font-bold tracking-[-0.02em] transition-colors md:text-[1.7rem] ${on ? "text-fg" : "text-muted group-hover:text-fg"}`}>
-                  {c.sport}
-                </span>
-                <span className={`mono text-xs ${on ? "text-fg" : "text-muted"}`}>{total ? inrShort(total) : "TBA"}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-
-      <div className="min-w-0 lg:col-span-7">
-        <p className="label text-muted">
-          {champ.level}
-          {champ.tbc && <Tbc note={champ.tbc} />}
-        </p>
-        <h3 className="mt-2 text-3xl font-bold tracking-[-0.03em] md:text-4xl">{champ.name}</h3>
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+      <div className="min-w-0 space-y-8 lg:col-span-7">
+        <div>
+          <Step n={1}>Choose your sport</Step>
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
+            {CHAMPIONSHIPS.map((c) => {
+              const on = c.id === sport;
+              const total = championshipTotal(c);
+              return (
+                <li key={c.id}>
+                  <button
+                    onClick={() => choose(c)}
+                    aria-pressed={on}
+                    className={`flex h-full w-full flex-col items-start gap-2 rounded-xl border p-4 text-left transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 ${on ? "border-gold bg-gold/10" : "border-line bg-raise hover:border-gold/60"}`}
+                  >
+                    <span className="display text-xl leading-tight md:text-2xl">{c.sport}</span>
+                    <span className={`mt-auto text-xs font-semibold ${total ? "text-gold" : "text-muted"}`}>{total ? `Prizes up to ${inrShort(total)}` : "Details coming soon"}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
         {champ.divisions.length > 1 && (
-          <div className="rail -mx-5 mt-6 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Division">
-            {champ.divisions.map((d) => (
-              <button
-                key={d.id}
-                className="chip"
-                aria-pressed={d.id === div}
-                onClick={() => setPicked({ ...sel, div: d.id, cls: defaultClass(d.classes) })}
-              >
-                {d.name}
-              </button>
-            ))}
+          <div>
+            <Step n={2}>Choose your division</Step>
+            <div className="rail -mx-5 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Division">
+              {champ.divisions.map((d) => (
+                <button key={d.id} className="chip" aria-pressed={d.id === div} onClick={() => setPicked({ ...sel, div: d.id, cls: defaultClass(d.classes) })}>
+                  {d.name}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {division && hasClasses && (
-          <div className="rail -mx-5 mt-3 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Class">
-            {division.classes.map((k) => (
-              <button key={k} className="chip mono !font-medium" aria-pressed={k === cls} onClick={() => setPicked({ ...sel, cls: k })}>
-                {k}
-              </button>
-            ))}
+          <div>
+            <Step n={champ.divisions.length > 1 ? 3 : 2}>Choose your weight / height class</Step>
+            <div className="rail -mx-5 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Class">
+              {division.classes.map((k) => (
+                <button key={k} className="chip tnum" aria-pressed={k === cls} onClick={() => setPicked({ ...sel, cls: k })}>
+                  {k}
+                </button>
+              ))}
+            </div>
           </div>
         )}
+      </div>
 
-        {/* the bib */}
-        <div className="t-paper relative mt-8 overflow-hidden rounded-[3px] px-6 pt-8 pb-0 md:px-9 md:pt-10" aria-live="polite">
-          {["top-3.5 left-3.5", "top-3.5 right-3.5", "bottom-16 left-3.5", "bottom-16 right-3.5"].map((p) => (
-            <span key={p} aria-hidden className={`absolute ${p} size-2.5 rounded-full bg-ink`} />
-          ))}
-          <div className="label flex justify-between gap-4 !text-[9px] text-muted">
-            <span>IBSF 2026 · {champ.name}</span>
-            <span>Entry</span>
-          </div>
-
-          {division ? (
-            <>
-              <p className="display-c mt-4 text-[clamp(4.5rem,17vw,9rem)] uppercase">{hasClasses ? cls : division.name}</p>
-              <p className="mt-3 text-lg font-bold tracking-tight">
-                {hasClasses ? division.name : champ.sport}
-                {division.tbc && <Tbc note={division.tbc} />}
-              </p>
-              {division.note && <p className="text-sm text-muted">{division.note}</p>}
-
-              <ol className="mt-6 border-t border-dashed border-line">
-                {division.prizes.map((p, i) => (
-                  <li key={i} className="flex items-baseline justify-between border-b border-dashed border-line py-2.5">
-                    <span className="mono text-xs text-muted">{ordinal(i)}</span>
-                    <span className={`mono ${i === 0 ? "text-2xl font-semibold md:text-3xl" : "text-base md:text-lg"}`}>{prizeLabel(p)}</span>
-                  </li>
-                ))}
-              </ol>
-              {division.extras && (
-                <div className="py-4">
-                  <p className="label !text-[9px] text-muted">Winners also contest</p>
-                  {division.extras.map((e) => (
-                    <p key={e.label} className="mt-1.5 flex justify-between gap-3 text-sm">
-                      <span className="font-semibold">{e.label}</span>
-                      <span className="mono">{prizeLabel(e.prize)}</span>
-                    </p>
-                  ))}
-                </div>
+      {/* the result: an entry card that reads like a race bib */}
+      <div className="min-w-0 lg:col-span-5">
+        <div className="lg:sticky lg:top-28">
+          <div className="t-paper relative overflow-hidden rounded-2xl shadow-[0_30px_80px_-30px_#ffb81c55]" aria-live="polite">
+            <div className="flex items-center justify-between bg-ink px-6 py-3 text-white">
+              <span className="text-xs font-semibold tracking-[0.18em] uppercase">Your category</span>
+              <span className="text-xs text-gold">{champ.name}{champ.tbc && <Tbc note={champ.tbc} />}</span>
+            </div>
+            <div className="relative px-6 pt-6 pb-2 md:px-8">
+              {["top-3 left-3", "top-3 right-3"].map((p) => (
+                <span key={p} aria-hidden className={`absolute ${p} size-2.5 rounded-full bg-ink/80`} />
+              ))}
+              {division ? (
+                <>
+                  <p className="display text-[clamp(3.6rem,13vw,5.5rem)] leading-none">{hasClasses ? cls : division.name}</p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {hasClasses ? division.name : champ.sport}
+                    {division.tbc && <Tbc note={division.tbc} />}
+                  </p>
+                  {division.note && <p className="text-sm font-medium text-amber-700">{division.note}</p>}
+                  <ol className="mt-5 divide-y divide-line border-y border-line">
+                    {division.prizes.map((p, i) => (
+                      <li key={i} className="flex items-center justify-between py-2.5">
+                        <span className="flex items-center gap-3 text-sm font-medium">
+                          <span className={`medal ${i < 3 ? `medal-${i + 1}` : ""}`}>{i + 1}</span>
+                          {ordinal(i)} place
+                        </span>
+                        <span className={`display tnum ${i === 0 ? "text-3xl" : "text-xl"}`}>{prizeLabel(p)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {division.extras && (
+                    <div className="mt-4 rounded-lg bg-ink/5 p-3">
+                      <p className="text-xs font-semibold text-muted uppercase">Winners also compete for</p>
+                      {division.extras.map((e) => (
+                        <p key={e.label} className="mt-1.5 flex justify-between gap-3 text-sm">
+                          <span className="font-semibold">{e.label}</span>
+                          <span className="display tnum text-lg">{prizeLabel(e.prize)}</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="display text-[clamp(3.6rem,13vw,5.5rem)] leading-none">Coming soon</p>
+                  <p className="mt-3 pb-6 text-muted">Categories and prizes for {champ.name} will be announced shortly. Get them on WhatsApp first.</p>
+                </>
               )}
-            </>
-          ) : (
-            <>
-              <p className="display-c mt-4 text-[clamp(4.5rem,17vw,9rem)] uppercase">TBA</p>
-              <p className="mt-3 max-w-md pb-8 text-muted">Categories and the prize table for {champ.name} are being finalised. Get them on WhatsApp the moment they’re published.</p>
-            </>
-          )}
-
-          <div className="t-signal -mx-6 mt-4 flex h-12 items-center justify-between px-6 md:-mx-9 md:px-9">
-            <span className="label !text-[9px]">{fee > 0 && cash.length && Math.min(...cash) >= fee ? `Every paid place returns your ${inr(fee)}` : "India’s Biggest Sports Festival"}</span>
-            <span className="mono hidden text-xs sm:inline">04—06.12.26</span>
+            </div>
+            <div className="t-gold mt-4 flex items-center gap-2 px-6 py-3 text-sm font-semibold md:px-8">
+              <Icon name="check" className="size-5 shrink-0" />
+              {fee === 0 ? "Free registration for this category" : cash.length && Math.min(...cash) >= fee ? `Every prize place pays at least your ${inr(fee)} entry back` : "India’s Biggest Sports Festival · 4–6 Dec 2026"}
+            </div>
           </div>
-        </div>
 
-        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {division ? (
-            <Link href={registerHref(champ.id, division.id, cls)} className="btn btn-signal w-full sm:w-auto sm:min-w-[320px]" data-cta="finder">
-              {fee === 0 ? "Register free" : `Enter ${hasClasses ? cls : division.name} — ${inr(fee)}`}
-              <Icon name="arrow" className="arr size-5" />
-            </Link>
-          ) : (
-            <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn btn-signal w-full sm:w-auto">
-              Notify me on WhatsApp
-              <Icon name="arrow" className="arr size-5" />
-            </a>
-          )}
-          <WhatsAppLink label="Not sure which category? Ask us" />
+          <div className="mt-5 flex flex-col gap-4">
+            {division ? (
+              <Link href={registerHref(champ.id, division.id, cls)} className="btn btn-gold w-full" data-cta="finder">
+                {fee === 0 ? "Register free" : `Register now — ${inr(fee)}`}
+                <Icon name="arrow" className="arr size-5" />
+              </Link>
+            ) : (
+              <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">
+                Notify me on WhatsApp
+              </a>
+            )}
+            <WhatsAppLink className="justify-center" label="Not sure which category? Ask us on WhatsApp" />
+          </div>
         </div>
       </div>
     </div>

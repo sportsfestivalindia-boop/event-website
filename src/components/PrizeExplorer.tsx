@@ -26,7 +26,7 @@ export function PrizeExplorer() {
               onMouseLeave={() => setHover(null)}
               title={`${c.sport}: ${inr(championshipTotal(c))}`}
               style={{ width: `${pct(championshipTotal(c))}%` }}
-              className={`h-full transition-colors duration-300 ${hot === c.id ? "bg-signal" : "bg-ink"}`}
+              className={`h-full transition-colors duration-300 ${hot === c.id ? "bg-gold" : "bg-ink"}`}
             >
               <span className="sr-only">{c.sport}</span>
             </button>
@@ -35,18 +35,18 @@ export function PrizeExplorer() {
         {PREVIEW && unallocated > 0 && (
           <div
             style={{ width: `${pct(unallocated)}%` }}
-            className="mono grid h-full place-items-center border border-dashed border-signal bg-[repeating-linear-gradient(135deg,#ff4f1f1c_0_6px,transparent_6px_12px)] px-2 text-center text-[10px] text-signal"
+            className="grid h-full place-items-center rounded-sm border border-dashed border-red-500 bg-[repeating-linear-gradient(135deg,#ef44441a_0_6px,transparent_6px_12px)] px-2 text-center text-[10px] font-semibold text-red-600"
           >
             {inrShort(unallocated)} unallocated
           </div>
         )}
       </div>
-      <div className="mono mt-3 flex justify-between text-[11px] text-muted">
+      <div className="tnum mt-3 flex justify-between text-xs text-muted">
         <span>₹0</span>
         <span>{inr(EVENT.prizePool)}</span>
       </div>
       {PREVIEW && unallocated > 0 && (
-        <p className="mono mt-2 text-[11px] text-signal">
+        <p className="mt-2 text-xs font-medium text-red-600">
           Preview only — published tables total {inr(EVENT.prizePool - unallocated)}. Boxing, weightlifting and marathon prize tables needed (B2).
         </p>
       )}
@@ -58,12 +58,12 @@ export function PrizeExplorer() {
           return (
             <li key={c.id} className="border-t border-line" onMouseEnter={() => setHover(c.id)} onMouseLeave={() => setHover(null)}>
               <button onClick={() => setOpen(isOpen ? null : c.id)} aria-expanded={isOpen} className="grid w-full grid-cols-[2rem_1fr_auto_1.5rem] items-center gap-3 py-5 text-left md:grid-cols-[3rem_1fr_16rem_9rem_2rem] md:py-6">
-                <span className="mono text-xs text-muted">0{i + 1}</span>
-                <span className="text-xl font-bold tracking-[-0.02em] md:text-3xl">{c.sport}</span>
+                <span className="text-sm font-semibold text-muted">0{i + 1}</span>
+                <span className="display text-2xl md:text-4xl">{c.sport}</span>
                 <span className="hidden h-[3px] bg-line md:block">
-                  <span className={`block h-full transition-colors ${hot === c.id ? "bg-signal" : "bg-fg"}`} style={{ width: `${Math.min(100, (total / 6000000) * 100)}%` }} />
+                  <span className={`block h-full transition-colors ${hot === c.id ? "bg-gold" : "bg-fg"}`} style={{ width: `${Math.min(100, (total / 6000000) * 100)}%` }} />
                 </span>
-                <span className="mono text-right text-base md:text-xl">{total ? inrShort(total) : "TBA"}</span>
+                <span className="display tnum text-right text-xl md:text-3xl">{total ? inrShort(total) : "Soon"}</span>
                 <Icon name="plus" className={`size-5 justify-self-end transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`} />
               </button>
 
@@ -83,21 +83,21 @@ export function PrizeExplorer() {
                               {d.name}
                               {d.tbc && <Tbc note={d.tbc} />}
                             </p>
-                            <p className="mono text-sm">{inr(divisionTotal(d))}</p>
+                            <p className="tnum text-sm font-semibold">{inr(divisionTotal(d))}</p>
                           </div>
                           <p className="mt-2 text-xs text-muted">{d.classes.length > 1 ? `${d.classes.length} classes · ${d.classes.join(" · ")}` : "Single open category"}</p>
-                          <table className="mono mt-3 w-full text-sm">
+                          <table className="tnum mt-3 w-full text-sm">
                             <tbody>
                               {d.prizes.map((p, j) => (
                                 <tr key={j} className="border-b border-line">
-                                  <td className="py-1.5 text-muted">{ordinal(j)}</td>
-                                  <td className="py-1.5 text-right">{prizeLabel(p)}</td>
+                                  <td className="py-1.5"><span className="flex items-center gap-2"><span className={`medal !size-6 !text-[10px] ${j < 3 ? `medal-${j + 1}` : ""}`}>{j + 1}</span>{ordinal(j)}</span></td>
+                                  <td className="py-1.5 text-right font-semibold">{prizeLabel(p)}</td>
                                 </tr>
                               ))}
                               {d.extras?.map((e) => (
                                 <tr key={e.label} className="border-b border-line">
-                                  <td className="py-1.5 font-sans font-semibold">{e.label}</td>
-                                  <td className="py-1.5 text-right">{prizeLabel(e.prize)}</td>
+                                  <td className="py-1.5 font-semibold">🏆 {e.label}</td>
+                                  <td className="py-1.5 text-right font-semibold">{prizeLabel(e.prize)}</td>
                                 </tr>
                               ))}
                             </tbody>
