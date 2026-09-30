@@ -98,18 +98,6 @@ body {
     letter-spacing: 0.16em;
     text-transform: uppercase;
   }
-  .hindi {
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--color-gold);
-  }
-  .t-paper .hindi,
-  .t-gold .hindi {
-    color: #b45309;
-  }
-  .t-gold .hindi {
-    color: #0a0a0a;
-  }
   .tnum {
     font-variant-numeric: tabular-nums;
   }

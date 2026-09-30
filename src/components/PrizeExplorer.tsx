@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { CHAMPIONSHIPS, EVENT, championshipTotal, divisionTotal, unallocated } from "@/data/festival";
+import { CHAMPIONSHIPS, championshipTotal, divisionTotal } from "@/data/festival";
 import { inr, inrShort, ordinal, prizeLabel } from "@/lib/format";
 import { Icon } from "./icons";
-import { PREVIEW, Tbc } from "./ui";
+import { Tbc } from "./ui";
 
 /** The prize sheet: ₹1.5 Cr as one bar split by championship, then every category on demand. */
 export function PrizeExplorer() {
   const ranked = [...CHAMPIONSHIPS].sort((a, b) => championshipTotal(b) - championshipTotal(a));
   const [open, setOpen] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
-  const pct = (n: number) => (n / EVENT.prizePool) * 100;
+  const shown = ranked.reduce((t, c) => t + championshipTotal(c), 0);
+  const pct = (n: number) => (n / shown) * 100;
   const hot = hover ?? open;
 
   return (
@@ -32,24 +33,7 @@ export function PrizeExplorer() {
             </button>
           ) : null,
         )}
-        {PREVIEW && unallocated > 0 && (
-          <div
-            style={{ width: `${pct(unallocated)}%` }}
-            className="grid h-full place-items-center rounded-sm border border-dashed border-red-500 bg-[repeating-linear-gradient(135deg,#ef44441a_0_6px,transparent_6px_12px)] px-2 text-center text-[10px] font-semibold text-red-600"
-          >
-            {inrShort(unallocated)} unallocated
-          </div>
-        )}
       </div>
-      <div className="tnum mt-3 flex justify-between text-xs text-muted">
-        <span>₹0</span>
-        <span>{inr(EVENT.prizePool)}</span>
-      </div>
-      {PREVIEW && unallocated > 0 && (
-        <p className="mt-2 text-xs font-medium text-red-600">
-          Preview only — published tables total {inr(EVENT.prizePool - unallocated)}. Boxing, weightlifting and marathon prize tables needed (B2).
-        </p>
-      )}
 
       <ul className="mt-12 border-b border-line">
         {ranked.map((c, i) => {

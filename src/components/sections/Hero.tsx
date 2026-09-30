@@ -11,29 +11,29 @@ export function Hero() {
   return (
     <section id="top" className="t-ink relative isolate overflow-hidden lg:flex lg:min-h-[100svh] lg:items-center">
       {/* athletes + bolt (client artwork). Mobile: square crop on top. Desktop: right side, fading into black. */}
-      <div aria-hidden className="strike relative mt-14 md:mt-0 -z-10 aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:w-[74%]">
+      <div aria-hidden className="strike relative mt-14 md:mt-0 -z-10 aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:w-[64%]">
         <Image src="/img/hero-athletes.webp" alt="" fill priority sizes="100vw" className="object-cover lg:hidden" />
-        <Image src="/img/hero-desktop.webp" alt="" fill priority sizes="74vw" className="hidden object-cover object-right [mask-image:linear-gradient(to_right,transparent,#000_28%)] lg:block" />
+        <Image src="/img/hero-desktop.webp" alt="" fill priority sizes="64vw" className="hidden object-cover object-[80%_center] [mask-image:linear-gradient(to_right,transparent,#000_30%)] lg:block" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink to-transparent lg:hidden" />
         <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-ink to-transparent lg:block" />
       </div>
       <span className="sr-only">Anil Gochhikar, Ranu Mohanty and Dutee Chand</span>
 
-      <div className="mx-auto -mt-10 w-full max-w-[1280px] px-5 pb-12 md:px-10 lg:mt-0 lg:pt-28 lg:pb-16">
-        <div className="max-w-[640px]">
+      <div className="mx-auto -mt-10 w-full max-w-[1680px] px-5 pb-12 md:px-10 lg:mt-0 lg:pt-24 lg:pb-10">
+        <div className="max-w-[640px] lg:max-w-[52%]">
           <h1 className="rise" style={d(0)}>
-            <span className="display block text-[clamp(2.2rem,9vw,3.6rem)] lg:text-[clamp(2.4rem,3.6vw,3.6rem)]">India’s Biggest</span>
-            <span className="display block text-[clamp(3.4rem,14.5vw,6rem)] lg:text-[clamp(3.6rem,5.8vw,6rem)]">
+            <span className="display block text-[clamp(2.2rem,9vw,3.6rem)] lg:text-[min(3.4vw,6.2vh)]">India’s Biggest</span>
+            <span className="display block text-[clamp(3.4rem,14.5vw,6rem)] lg:text-[min(5.6vw,10.5vh)]">
               <span className="text-gold">Sports</span> Festival
             </span>
           </h1>
           <span className="rise mt-5 block h-[3px] w-40 bg-gold md:w-56" style={d(1)} />
 
           <p className="rise mt-6 md:mt-8" style={d(2)}>
-            <span className="display block text-[clamp(5rem,24vw,10rem)] leading-[0.9] lg:text-[clamp(6rem,10.5vw,10rem)]">
+            <span className="display block text-[clamp(5rem,24vw,10rem)] leading-[0.9] lg:text-[min(8.6vw,17vh)]">
               <span className="text-gold">₹1.5</span> Crore
             </span>
-            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[clamp(1.5rem,2.4vw,2.4rem)]">Prizepool</span>
+            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[min(2.3vw,4.4vh)]">Prizepool</span>
           </p>
 
           <div className="rise mt-8 flex items-stretch gap-5 md:mt-10" style={d(3)}>
@@ -111,11 +111,11 @@ export function Glance() {
   ];
   return (
     <div className="t-ink border-b border-line px-5 py-12 md:px-10 md:py-16">
-      <ul className="mx-auto grid max-w-[1280px] grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
+      <ul className="mx-auto grid max-w-[1680px] grid-cols-2 gap-3 md:gap-4 lg:grid-cols-6">
         {stats.map((s, i) => (
-          <li key={s.l} className={`card p-5 md:p-6 ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`} data-reveal style={d(i)}>
+          <li key={s.l} className={`card p-5 md:p-6 ${i === 0 ? "col-span-2" : ""}`} data-reveal style={d(i)}>
             <Icon name={s.icon} className="size-7 text-gold" />
-            <p className="display mt-4 text-[clamp(2rem,5vw,2.8rem)] leading-none">{s.v}</p>
+            <p className="display mt-4 text-[clamp(2rem,4vw,3rem)] leading-none whitespace-nowrap">{s.v}</p>
             <p className="mt-2 text-sm text-muted">{s.l}</p>
           </li>
         ))}

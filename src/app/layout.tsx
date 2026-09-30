@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Poppins } from "next/font/google";
 import "./globals.css";
 
-// Anton: display (has ₹). Poppins: body + Hindi (has ₹ and Devanagari).
+// Anton: display, Poppins: body — both carry the ₹ glyph.
 const anton = Anton({ variable: "--font-anton", weight: "400", subsets: ["latin", "latin-ext"] });
-const poppins = Poppins({ variable: "--font-poppins", weight: ["400", "500", "600", "700"], subsets: ["latin", "latin-ext", "devanagari"] });
+const poppins = Poppins({ variable: "--font-poppins", weight: ["400", "500", "600", "700"], subsets: ["latin", "latin-ext"] });
 
 export const metadata: Metadata = {
   title: "Sports Festival 2026 · India’s Biggest Sports Festival · ₹1.5 Crore Prize Pool",

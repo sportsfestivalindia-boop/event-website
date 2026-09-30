@@ -16,7 +16,7 @@ const Mark = ({ children }: { children: React.ReactNode }) => <span className="b
 export function Arena() {
   return (
     <Section id="arena">
-      <SectionHead hi="अपना खेल चुनें" title={<>Choose your sport. <Gold>See your prize.</Gold></>} lead="Pick your sport and weight class — we’ll show you exactly how much you can win." />
+      <SectionHead title={<>Choose your sport. <Gold>See your prize.</Gold></>} lead="Pick your sport and weight class — we’ll show you exactly how much you can win." />
       <Finder />
     </Section>
   );
@@ -26,7 +26,7 @@ export function Arena() {
 export function Prizes() {
   return (
     <Section id="prizes" theme="paper">
-      <SectionHead hi="इनाम राशि" title={<><Mark>₹1,50,00,000</Mark> prize money</>} lead={<>{paidPlaces}+ athletes will take home cash. Up to 5 winners in every category.</>} />
+      <SectionHead title={<><Mark>₹1,50,00,000</Mark> prize money</>} lead={<>{paidPlaces}+ athletes will take home cash. Up to 5 winners in every category.</>} />
       <ul className="mb-14 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {HEADLINE_PRIZES.map((h, n) => (
           <li key={h.label + h.sub} className="card relative overflow-hidden p-5 md:p-6" data-reveal style={i(n)}>
@@ -56,7 +56,7 @@ export function Champions() {
   const legends = live(LEGENDS);
   return (
     <Section id="champions">
-      <SectionHead hi="देश के चैंपियन, हमारे साथ" title={<>India’s champions are <Gold>behind this festival.</Gold></>} />
+      <SectionHead title={<>India’s champions are <Gold>behind this festival.</Gold></>} />
       {legends.length > 0 && (
         <ul className="grid gap-4 md:grid-cols-3">
           {legends.map((l, n) => (
@@ -102,7 +102,7 @@ export function Champions() {
 export function Value() {
   return (
     <Section id="value" theme="paper">
-      <SectionHead hi="₹5,000 में आपको क्या मिलेगा" title={<>What you get for <Mark>{inr(EVENT.fee)}</Mark></>} />
+      <SectionHead title={<>What you get for <Mark>{inr(EVENT.fee)}</Mark></>} />
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {live(VALUE).map((v, n) => (
           <li key={v.title} className="card flex gap-4 p-5 md:p-6" data-reveal style={i(n % 3)}>
@@ -133,7 +133,7 @@ export function Value() {
 export function Days() {
   return (
     <Section id="schedule">
-      <SectionHead hi="कार्यक्रम" title={<>3 days of action. <Gold>You need just one.</Gold></>} lead={<>Each category competes on a fixed day, so you only travel for your day.<Tbc note="Session-level schedule per category" /></>} />
+      <SectionHead title={<>3 days of action. <Gold>You need just one.</Gold></>} lead={<>Each category competes on a fixed day, so you only travel for your day.<Tbc note="Session-level schedule per category" /></>} />
       <ol className="grid gap-3 md:grid-cols-3">
         {DAYS.map((d, n) => (
           <li key={d.day} className="card overflow-hidden" data-reveal style={i(n)}>
@@ -171,7 +171,7 @@ export function Trust() {
   ];
   return (
     <Section id="trust" theme="paper">
-      <SectionHead hi="विश्वसनीय आयोजन" title={<>Organised by <Mark>AOGA</Mark></>} lead="All Odisha Gym Association — the state body for gyms and fitness in Odisha." />
+      <SectionHead title={<>Organised by <Mark>AOGA</Mark></>} lead="All Odisha Gym Association — the state body for gyms and fitness in Odisha." />
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="card flex flex-col items-center gap-6 p-6 text-center md:p-8 lg:col-span-4" data-reveal>
           <Image src="/img/aoga.webp" alt="All Odisha Gym Association crest" width={320} height={331} className="w-40 md:w-48" />
@@ -226,7 +226,7 @@ export function Register() {
   ];
   return (
     <Section id="register" theme="gold">
-      <SectionHead hi="रजिस्ट्रेशन कैसे करें" title="Register in 3 easy steps — just 2 minutes" />
+      <SectionHead title="Register in 3 easy steps — just 2 minutes" />
       <ol className="grid gap-3 md:grid-cols-3">
         {steps.map((s, n) => (
           <li key={s.t} className="rounded-2xl bg-white/60 p-6" data-reveal style={i(n)}>
@@ -271,7 +271,7 @@ export function Venue() {
     <Section id="venue">
       <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
         <div>
-          <SectionHead hi="आयोजन स्थल" title={<>{EVENT.venue}<Tbc note={EVENT.tbc.venue} /></>} lead={EVENT.city} className="!mb-8" />
+          <SectionHead title={<>{EVENT.venue}<Tbc note={EVENT.tbc.venue} /></>} lead={EVENT.city} className="!mb-8" />
           <ul className="space-y-3">
             {rows.map(([ic, k, v]) => (
               <li key={k} className="card flex items-center gap-4 p-4">
@@ -309,7 +309,7 @@ export function Venue() {
 export function Faq() {
   return (
     <Section id="faq" theme="paper">
-      <SectionHead hi="अक्सर पूछे जाने वाले सवाल" title="Your questions, answered" />
+      <SectionHead title="Your questions, answered" />
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="space-y-3 lg:col-span-8">
           {live(FAQ).map((f) => (
@@ -350,10 +350,8 @@ export function FinalCall() {
   return (
     <section id="final" className="t-ink relative isolate overflow-hidden px-5 py-24 md:px-10 md:py-32">
       <div aria-hidden className="slash absolute inset-0 -z-10 opacity-35 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]" />
-      <div className="mx-auto max-w-[1280px] text-center">
-        <p className="hindi text-lg" lang="hi">
-          अभी नहीं तो कभी नहीं
-        </p>
+      <div className="mx-auto max-w-[1680px] text-center">
+        <p className="label text-gold">Last call · 4–6 December 2026</p>
         <h2 className="display mx-auto mt-4 max-w-[16ch] text-[clamp(3rem,9vw,7.5rem)]">
           <span className="text-gold">₹1.5 Crore.</span> One stage. Your name.
         </h2>
@@ -382,7 +380,7 @@ export function Footer() {
   ];
   return (
     <footer className="t-ink border-t border-line px-5 pt-14 pb-32 md:px-10 md:pb-14">
-      <div className="mx-auto grid max-w-[1280px] gap-10 md:grid-cols-12">
+      <div className="mx-auto grid max-w-[1680px] gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <Wordmark />
           <div className="mt-6 flex items-center gap-4">
@@ -413,10 +411,10 @@ export function Footer() {
           ))}
         </ul>
       </div>
-      <div className="mx-auto mt-12 flex max-w-[1280px] flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
+      <div className="mx-auto mt-12 flex max-w-[1680px] flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
         <span>© {EVENT.year} {EVENT.organiser} · sportsfestival</span>
         <span>
-          Jai Hind · <span lang="or">ଜୟ ଓଡ଼ିଶା</span>
+          Jai Hind · Jai Odisha
         </span>
       </div>
     </footer>

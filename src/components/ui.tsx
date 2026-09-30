@@ -53,13 +53,10 @@ export function WhatsAppLink({ label = "Questions? WhatsApp us", className = "" 
   );
 }
 
-/** Hindi line first (familiar), English headline second (clear), short gold rule (from the hero). */
-export function SectionHead({ hi, title, lead, className = "", center = false }: { hi: string; title: React.ReactNode; lead?: React.ReactNode; className?: string; center?: boolean }) {
+/** Headline + short gold rule (from the hero) + optional lead. */
+export function SectionHead({ title, lead, className = "", center = false }: { title: React.ReactNode; lead?: React.ReactNode; className?: string; center?: boolean }) {
   return (
     <header className={`mb-10 md:mb-14 ${center ? "mx-auto text-center" : ""} ${className}`}>
-      <p className="hindi mb-3 text-base md:text-lg" lang="hi" data-reveal>
-        {hi}
-      </p>
       <h2 className={`display text-[clamp(2.6rem,7vw,5.5rem)] ${center ? "mx-auto" : ""} max-w-[18ch]`} data-reveal style={{ "--i": 1 } as React.CSSProperties}>
         {title}
       </h2>
@@ -78,7 +75,7 @@ export const Gold = ({ children }: { children: React.ReactNode }) => <span class
 export function Section({ id, theme = "ink", children, className = "" }: { id?: string; theme?: "ink" | "paper" | "gold"; children: React.ReactNode; className?: string }) {
   return (
     <section id={id} className={`t-${theme} relative scroll-mt-16 px-5 py-20 md:px-10 md:py-28 ${className}`}>
-      <div className="mx-auto max-w-[1280px]">{children}</div>
+      <div className="mx-auto max-w-[1680px]">{children}</div>
     </section>
   );
 }
