@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description:
     "7 championships. ₹1,50,00,000 in prizes. 4–6 December 2026, Bhubaneswar, Odisha. Organised by the All Odisha Gym Association. Register for ₹5,000.",
   icons: { icon: "/img/icon-512.png", apple: "/img/icon-512.png" },
+  robots: { index: false, follow: false }, // draft for organiser review — remove at launch
 };
 
 export const viewport: Viewport = { themeColor: "#0a0a0a" };
