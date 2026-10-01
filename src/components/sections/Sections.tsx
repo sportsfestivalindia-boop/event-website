@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { DAYS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, VALUE, paidPlaces, registerHref } from "@/data/festival";
+import { COMMITTEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, VALUE, paidPlaces, registerHref } from "@/data/festival";
 import { inr, prizeLabel } from "@/lib/format";
 import { Finder } from "../Finder";
 import { Icon, WhatsAppGlyph, Wordmark } from "../icons";
@@ -136,7 +136,7 @@ export function Value() {
 export function Days() {
   return (
     <Section id="schedule">
-      <SectionHead title={<>3 days of action. <Gold>You need just one.</Gold></>} lead={<>Each category competes on a fixed day, so you only travel for your day.<Tbc note="Session-level schedule per category" /></>} />
+      <SectionHead title={<>3 days of action. <Gold>Find your day.</Gold></>} lead="Strength sports and the marathon on Day 1. Bodybuilding prelims on Day 2, finals on Day 3. Detailed timings are finalised by the Technical Committee." />
       <ol className="grid gap-3 md:grid-cols-3">
         {DAYS.map((d, n) => (
           <li key={d.day} className="card overflow-hidden" data-reveal style={i(n)}>
@@ -165,12 +165,12 @@ export function Days() {
 /* 06 ─ Trust */
 export function Trust() {
   const items = [
-    { icon: "users", t: "Independent judges", b: "Certified judges from different states. Results published openly.", tbc: "Judges list (N4)" },
-    { icon: "doc", t: "Clear rulebooks", b: "Rules, weigh-in and eligibility for every sport — download before you register.", tbc: "Rulebooks (B8)" },
-    { icon: "shield", t: "Doctors on site", b: "Medical team and ambulance ready all 3 days.", tbc: "Medical partner (N4)" },
-    { icon: "lock", t: "Safe payment", b: "Pay by UPI, card or netbanking through Razorpay. Instant receipt." },
+    { icon: "users", t: "Qualified judging panel", b: "Chief Judge, judges, jury and statisticians appointed by the Technical Committee. Judges must stay impartial." },
+    { icon: "doc", t: "Official rules", b: "Conducted under rules approved by the Organising and Technical Committees. Weigh-in is compulsory." },
+    { icon: "shield", t: "Medical support", b: "First aid, medical personnel and ambulance / emergency coordination at the venue." },
+    { icon: "lock", t: "Safe payment", b: "Pay AOGA’s official UPI by QR from GPay, PhonePe, Paytm or any UPI app. Confirmed on WhatsApp." },
     { icon: "badge", t: "Registered association", b: `All Odisha Gym Association · ${EVENT.regdNo}`, tbc: EVENT.tbc.identity },
-    { icon: "phone", t: "Real people, real help", b: `${EVENT.phone} · Call or WhatsApp, 9 am – 9 pm`, tbc: "Support hours" },
+    { icon: "phone", t: "Real people, real help", b: `${EVENT.phone} · ${EVENT.email}` },
   ];
   return (
     <Section id="trust" theme="paper">
@@ -216,6 +216,31 @@ export function Trust() {
           </ul>
         </div>
       </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-12">
+        <div className="card p-6 md:p-8 lg:col-span-8" data-reveal>
+          <p className="label text-amber-700">Organising committee</p>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {COMMITTEE.map((n) => (
+              <li key={n} className="rounded-full border border-line px-3 py-1.5 text-sm font-medium">
+                {n}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="card p-6 md:p-8 lg:col-span-4" data-reveal style={i(1)}>
+          <p className="label text-amber-700">Bring on event day</p>
+          <ul className="mt-4 space-y-2 text-sm">
+            {DOCUMENTS.map((d) => (
+              <li key={d} className="flex gap-2">
+                <Icon name="check" className="size-5 shrink-0 text-amber-600" />
+                {d}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <p className="mt-6 text-xs text-muted">Information as per the AOGA official circular, Ref. {EVENT.circularRef}.</p>
     </Section>
   );
 }
@@ -224,8 +249,8 @@ export function Trust() {
 export function Register() {
   const steps = [
     { icon: "trophy", t: "Choose your category", b: "Sport and weight class. Already chosen above? It’s filled in for you." },
-    { icon: "users", t: "Fill your details", b: "Name, mobile, email, city and gym. Only 7 fields." },
-    { icon: "rupee", t: `Pay ${inr(EVENT.fee)} by UPI`, b: "GPay, PhonePe, Paytm or any UPI app. Card and netbanking also work." },
+    { icon: "users", t: "Fill your details", b: "Name, date of birth, mobile, email, city and association. Takes a minute." },
+    { icon: "rupee", t: "Pay by UPI QR", b: "Scan the QR with GPay, PhonePe, Paytm or any UPI app, then enter your UTR number." },
   ];
   return (
     <Section id="register" theme="gold">
@@ -274,7 +299,7 @@ export function Venue() {
     <Section id="venue">
       <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
         <div>
-          <SectionHead title={<>{EVENT.venue}<Tbc note={EVENT.tbc.venue} /></>} lead={EVENT.city} className="!mb-8" />
+          <SectionHead title={EVENT.venue} lead={EVENT.city} className="!mb-8" />
           <ul className="space-y-3">
             {rows.map(([ic, k, v]) => (
               <li key={k} className="card flex items-center gap-4 p-4">

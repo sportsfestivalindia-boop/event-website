@@ -1,33 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import QRCode from "qrcode";
 import { useState } from "react";
-import { CHAMPIONSHIPS, EVENT } from "@/data/festival";
+import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
+import { Tbc } from "./ui";
 
-type Form = { sport: string; division: string; cls: string; name: string; phone: string; email: string; city: string; gym: string };
-type Done = { regId: string; label: string; paid: number; demo?: boolean };
-type RzpResponse = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
-declare global {
-  interface Window {
-    Razorpay?: new (opts: Record<string, unknown>) => { open: () => void };
-  }
-}
+type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
+type Pay = { regId: string; amount: number; label: string; upi: string; qr: string };
+type Done = { regId: string; label: string; paid: number; utr?: string };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
-
-function loadCheckout() {
-  return new Promise<void>((ok, fail) => {
-    if (window.Razorpay) return ok();
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => ok();
-    s.onerror = () => fail(new Error("Could not load payment window. Check your internet and try again."));
-    document.body.appendChild(s);
-  });
-}
+const upiReady = EVENT.upi.id.includes("@");
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -44,16 +31,18 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     division: div0.id,
     cls: div0.classes.includes(initial.cls ?? "") ? initial.cls! : div0.classes[0],
     name: "",
+    dob: "",
     phone: "",
     email: "",
     city: "",
-    gym: "",
+    association: "",
   });
   const [step, setStep] = useState(1);
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [demoPay, setDemoPay] = useState<{ amount: number; label: string } | null>(null);
+  const [pay, setPay] = useState<Pay | null>(null);
+  const [utr, setUtr] = useState("");
   const [done, setDone] = useState<Done | null>(null);
 
   const champ = open.find((c) => c.id === f.sport)!;
@@ -61,36 +50,18 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const fee = div.fee ?? EVENT.fee;
   const label = `${champ.sport} · ${div.name}${div.classes.length > 1 ? ` · ${f.cls}` : ""}`;
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const detailsOk = f.name.trim().length > 1 && !!f.dob && /^[6-9]\d{9}$/.test(f.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && f.city.trim().length > 1;
 
-  const detailsOk = f.name.trim().length > 1 && /^[6-9]\d{9}$/.test(f.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && f.city.trim().length > 1;
-
-  async function pay() {
+  async function submit() {
     setError("");
     setBusy(true);
     try {
-      const o = await post<{ free?: boolean; demo?: boolean; regId?: string; orderId?: string; amount: number; key?: string; label: string }>("/api/order", f);
-      if (o.free) return setDone({ regId: o.regId!, label: o.label, paid: 0 });
-      if (o.demo) return setDemoPay({ amount: o.amount, label: o.label });
-      await loadCheckout();
-      new window.Razorpay!({
-        key: o.key,
-        amount: o.amount,
-        currency: "INR",
-        order_id: o.orderId,
-        name: "Sports Festival 2026",
-        description: o.label,
-        prefill: { name: f.name, email: f.email, contact: "+91" + f.phone },
-        theme: { color: "#FFB81C" },
-        handler: async (r: RzpResponse) => {
-          try {
-            const v = await post<{ regId: string }>("/api/verify", { orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature });
-            setDone({ regId: v.regId, label: o.label, paid: o.amount / 100 });
-          } catch (e) {
-            setError((e as Error).message);
-          }
-        },
-        modal: { ondismiss: () => setBusy(false) },
-      }).open();
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi: string }>("/api/order", f);
+      if (o.free) return setDone({ regId: o.regId, label: o.label, paid: 0 });
+      const qr = await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" });
+      setPay({ ...o, qr });
+      setStep(4);
+      window.scrollTo({ top: 0 });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -98,13 +69,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     }
   }
 
-  async function confirmDemo() {
+  async function confirmUtr() {
+    setError("");
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 1400)); // feels like a real bank round-trip
     try {
-      const v = await post<{ regId: string }>("/api/verify", { demo: true });
-      setDone({ regId: v.regId, label: demoPay!.label, paid: demoPay!.amount, demo: true });
-      setDemoPay(null);
+      await post("/api/verify", { regId: pay!.regId, utr });
+      setDone({ regId: pay!.regId, label: pay!.label, paid: pay!.amount, utr });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -112,7 +82,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     }
   }
 
-  if (done) return <Pass done={done} name={f.name} city={f.city} />;
+  if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} />;
 
   const input = "h-13 w-full rounded-lg border border-line bg-raise px-4 text-base outline-none transition-colors focus:border-gold";
 
@@ -132,9 +102,8 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
       </h1>
       <p className="mt-2 text-muted">India’s Biggest Sports Festival · 4–6 Dec 2026 · Bhubaneswar</p>
 
-      {/* step bar */}
-      <ol className="mt-8 grid grid-cols-3 gap-2 text-xs font-semibold">
-        {["Category", "Your details", "Pay"].map((s, i) => (
+      <ol className="mt-8 grid grid-cols-4 gap-2 text-xs font-semibold">
+        {["Category", "Details", "Review", "Pay"].map((s, i) => (
           <li key={s}>
             <span className={`block h-1.5 rounded-full ${step > i ? "bg-gold" : "bg-line"}`} />
             <span className={`mt-2 block ${step === i + 1 ? "text-gold" : "text-muted"}`}>
@@ -183,9 +152,18 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               </select>
             </label>
           )}
-          <div className="flex items-center justify-between rounded-lg bg-raise p-4">
-            <span className="text-sm text-muted">Entry fee</span>
-            <span className="display text-3xl text-gold">{fee ? inr(fee) : "FREE"}</span>
+          {div.note && <p className="text-sm text-gold">{div.note}</p>}
+          <div className="rounded-lg bg-raise p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">Entry fee</span>
+              <span className="display text-3xl text-gold">
+                {fee ? inr(fee) : "FREE"}
+                {div.tbc && <Tbc note={div.tbc} />}
+              </span>
+            </div>
+            <p className="mt-2 flex items-center gap-2 text-xs text-muted">
+              <Icon name="calendar" className="size-4" /> Competes: {champ.when}
+            </p>
           </div>
         </section>
       )}
@@ -193,8 +171,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
       {step === 2 && (
         <section className="mt-8 space-y-4">
           <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Full name (as on ID)</span>
+            <span className="mb-2 block text-sm font-semibold">Full name (as on Government ID)</span>
             <input className={input} value={f.name} onChange={set("name")} autoComplete="name" placeholder="e.g. Rakesh Kumar Sahoo" />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">Date of birth</span>
+            <input className={input} value={f.dob} onChange={set("dob")} type="date" min="1930-01-01" max="2012-12-31" autoComplete="bday" />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold">Mobile number (WhatsApp)</span>
@@ -220,9 +202,9 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold">
-              Gym / club <span className="font-normal text-muted">(optional)</span>
+              Association / federation / gym <span className="font-normal text-muted">(optional)</span>
             </span>
-            <input className={input} value={f.gym} onChange={set("gym")} placeholder="Where do you train?" />
+            <input className={input} value={f.association} onChange={set("association")} placeholder="Who are you representing?" />
           </label>
         </section>
       )}
@@ -232,10 +214,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           <div className="card divide-y divide-line">
             {[
               ["Category", label],
+              ["Competes", champ.when],
               ["Name", f.name],
+              ["Date of birth", f.dob.split("-").reverse().join("/")],
               ["Mobile", "+91 " + f.phone],
               ["Email", f.email],
-              ["City", f.city + (f.gym ? ` · ${f.gym}` : "")],
+              ["City", f.city + (f.association ? ` · ${f.association}` : "")],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 p-4 text-sm">
                 <span className="text-muted">{k}</span>
@@ -247,96 +231,105 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               <span className="display text-3xl text-gold">{fee ? inr(fee) : "FREE"}</span>
             </div>
           </div>
-          <ul className="space-y-2 text-sm text-muted">
-            <li className="flex gap-2">
-              <Icon name="check" className="size-5 shrink-0 text-gold" /> Confirmation on WhatsApp + email instantly
-            </li>
-            <li className="flex gap-2">
-              <Icon name="check" className="size-5 shrink-0 text-gold" /> Full refund if the event is cancelled
-            </li>
-            <li className="flex gap-2">
-              <Icon name="lock" className="size-5 shrink-0 text-gold" /> Secure payment · UPI, cards, netbanking
-            </li>
-          </ul>
-          <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-[#ffb81c]" />
+          {fee > 0 && (
+            <p className="flex gap-2 text-sm text-muted">
+              <Icon name="rupee" className="size-5 shrink-0 text-gold" /> Next: pay by UPI QR with GPay, PhonePe, Paytm, BHIM or any UPI app.
+            </p>
+          )}
+          <label className="flex items-start gap-3 rounded-lg border border-line p-4 text-sm">
+            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#ffb81c]" />
             <span>
-              I agree to the{" "}
-              <Link href="/terms" className="underline">
-                terms
-              </Link>
-              ,{" "}
-              <Link href="/refund" className="underline">
-                refund policy
-              </Link>{" "}
-              and athlete waiver, and consent to AOGA using my details for this event.
+              <b className="block">Athlete declaration &amp; anti-doping consent</b>
+              <span className="mt-1 block text-muted">
+                I confirm my information is true and correct. I agree to follow the competition rules, the instructions of officials and the applicable anti-doping requirements, and to cooperate with any authorised testing. I understand that breaking the rules may lead to disqualification or withdrawal of awards.
+              </span>
             </span>
           </label>
         </section>
       )}
 
+      {step === 4 && pay && (
+        <section className="mt-8 space-y-5">
+          <div className="t-paper rounded-2xl p-6 text-center">
+            {!upiReady && (
+              <p className="mb-4 rounded-md bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-900">
+                DEMO QR · not payable yet
+                <Tbc note={EVENT.tbc.upi} />
+              </p>
+            )}
+            <p className="text-sm font-semibold">Scan &amp; pay with any UPI app</p>
+            <p className="display mt-1 text-5xl">{inr(pay.amount)}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
+            <img src={pay.qr} alt={`UPI QR code to pay ${inr(pay.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto mt-4 size-60 rounded-lg border border-line bg-white p-2" />
+            <p className="mt-3 text-xs text-muted">
+              Paying to <b className="text-ink">{EVENT.upi.payee}</b>
+              <br />
+              Reference {pay.regId}
+            </p>
+            <a href={pay.upi} className="btn btn-ink mt-5 w-full md:hidden">
+              Open GPay / PhonePe / Paytm
+            </a>
+            <p className="mt-3 text-xs text-muted">Google Pay · PhonePe · Paytm · BHIM · any UPI app</p>
+          </div>
+
+          <ol className="space-y-2 text-sm">
+            {["Scan the QR (or tap the button on your phone) and pay the exact amount.", "Copy the 12-digit UTR / UPI reference number shown after payment.", "Enter it below to get your athlete pass."].map((t, i) => (
+              <li key={t} className="flex gap-3">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
+                <span className="text-muted">{t}</span>
+              </li>
+            ))}
+          </ol>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">UTR / UPI reference number</span>
+            <input
+              className={`${input} tnum tracking-widest`}
+              value={utr}
+              onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))}
+              inputMode="numeric"
+              placeholder="12 digits"
+            />
+          </label>
+          <p className="text-xs text-muted">Can’t find the UTR? It’s in your UPI app’s payment history. Or WhatsApp us a screenshot of the payment.</p>
+        </section>
+      )}
+
       {error && <p className="mt-6 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
-      {/* sticky action bar */}
       <div className="t-ink fixed inset-x-0 bottom-0 z-40 border-t border-line px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-xl gap-3">
-          {step > 1 && (
+          {step > 1 && step < 4 && (
             <button onClick={() => setStep(step - 1)} className="btn btn-line !px-5">
               Back
             </button>
           )}
-          {step < 3 ? (
+          {step < 3 && (
             <button onClick={() => setStep(step + 1)} disabled={step === 2 && !detailsOk} className="btn btn-gold flex-1 disabled:opacity-40">
               Continue <Icon name="arrow" className="arr size-5" />
             </button>
-          ) : (
-            <button onClick={pay} disabled={!agree || busy} className="btn btn-gold flex-1 disabled:opacity-40">
-              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)}` : "Confirm free registration"}
+          )}
+          {step === 3 && (
+            <button onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 disabled:opacity-40">
+              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)} by UPI` : "Confirm free registration"}
+            </button>
+          )}
+          {step === 4 && (
+            <button onClick={confirmUtr} disabled={utr.length !== 12 || busy} className="btn btn-gold flex-1 disabled:opacity-40">
+              {busy ? "Please wait…" : "I’ve paid — get my pass"}
             </button>
           )}
         </div>
-        {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">Fill name, a 10-digit mobile, email and city to continue</p>}
-      </div>
-
-      {demoPay && <DemoPay amount={demoPay.amount} busy={busy} onPay={confirmDemo} onClose={() => setDemoPay(null)} />}
-    </div>
-  );
-}
-
-/** Demo payment sheet — shown only while no gateway keys are configured. Clearly labelled; no money moves. */
-function DemoPay({ amount, busy, onPay, onClose }: { amount: number; busy: boolean; onPay: () => void; onClose: () => void }) {
-  const [method, setMethod] = useState("UPI");
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm md:items-center" role="dialog" aria-modal>
-      <div className="t-paper w-full max-w-md rounded-t-2xl p-6 md:rounded-2xl">
-        <p className="rounded-md bg-amber-100 px-3 py-2 text-center text-xs font-semibold text-amber-900">DEMO PAYMENT · no money will be charged</p>
-        <div className="mt-5 flex items-baseline justify-between">
-          <p className="font-semibold">Sports Festival 2026</p>
-          <p className="display text-3xl">{inr(amount)}</p>
-        </div>
-        <p className="mt-5 mb-2 text-sm font-semibold">Pay using</p>
-        <div className="grid grid-cols-2 gap-2">
-          {["UPI", "Card", "Netbanking", "Wallet"].map((m) => (
-            <button key={m} onClick={() => setMethod(m)} className={`rounded-lg border p-3 text-sm font-semibold ${method === m ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>
-              {m}
-            </button>
-          ))}
-        </div>
-        {method === "UPI" && <p className="mt-3 text-xs text-muted">GPay · PhonePe · Paytm · BHIM · any UPI app</p>}
-        <button onClick={onPay} disabled={busy} className="btn btn-ink mt-6 w-full disabled:opacity-60">
-          {busy ? "Processing payment…" : `Pay ${inr(amount)}`}
-        </button>
-        <button onClick={onClose} disabled={busy} className="mt-3 w-full text-center text-sm text-muted">
-          Cancel
-        </button>
+        {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">Fill name, date of birth, a 10-digit mobile, email and city</p>}
       </div>
     </div>
   );
 }
 
 /** Success: the athlete pass. */
-function Pass({ done, name, city }: { done: Done; name: string; city: string }) {
+function Pass({ done, name, city, when }: { done: Done; name: string; city: string; when: string }) {
   const share = encodeURIComponent(`I just registered for India’s Biggest Sports Festival 2026 — ₹1.5 Crore prize pool! 4–6 Dec, Bhubaneswar. Register: ${typeof location !== "undefined" ? location.origin : ""}`);
+  const verifying = done.paid > 0;
   return (
     <div className="mx-auto w-full max-w-md px-5 py-10">
       <div className="text-center">
@@ -344,7 +337,9 @@ function Pass({ done, name, city }: { done: Done; name: string; city: string }) 
           <Icon name="check" className="size-9" />
         </span>
         <h1 className="display mt-5 text-5xl">You’re registered!</h1>
-        <p className="mt-2 text-muted">{done.paid ? `Payment of ${inr(done.paid)} received${done.demo ? " (demo)" : ""}.` : "Free registration confirmed."} Your pass is below.</p>
+        <p className="mt-2 text-muted">
+          {verifying ? `We’ve received your UTR for ${inr(done.paid)}. AOGA will verify it and confirm on WhatsApp within 24 hours.` : "Free registration confirmed."}
+        </p>
       </div>
 
       <div className="mt-8 overflow-hidden rounded-2xl bg-ink ring-1 ring-gold/60 shadow-[0_30px_80px_-30px_#ffb81c77]">
@@ -353,16 +348,23 @@ function Pass({ done, name, city }: { done: Done; name: string; city: string }) 
           <span className="text-xs font-bold">4–6 DEC 2026</span>
         </div>
         <div className="p-6">
-          <Wordmark />
+          <div className="flex items-start justify-between gap-3">
+            <Wordmark />
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${verifying ? "bg-amber-400/15 text-amber-300" : "bg-wa/15 text-wa"}`}>
+              {verifying ? "Payment verifying" : "Confirmed"}
+            </span>
+          </div>
           <p className="mt-6 text-xs text-muted uppercase">Athlete</p>
           <p className="display text-4xl leading-tight">{name}</p>
           <p className="text-sm text-muted">{city}</p>
           <p className="mt-4 text-xs text-muted uppercase">Category</p>
           <p className="font-semibold">{done.label}</p>
+          <p className="mt-1 text-sm text-gold">{when}</p>
           <div className="mt-6 flex items-end justify-between border-t border-dashed border-line pt-4">
             <div>
               <p className="text-xs text-muted uppercase">Registration ID</p>
               <p className="display text-3xl tracking-wider whitespace-nowrap text-gold">{done.regId}</p>
+              {done.utr && <p className="tnum mt-1 text-xs text-muted">UTR {done.utr}</p>}
             </div>
             <p className="text-right text-xs text-muted">
               {EVENT.venue}
@@ -373,6 +375,17 @@ function Pass({ done, name, city }: { done: Done; name: string; city: string }) 
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-muted">Screenshot this pass and show it at check-in.</p>
+
+      <div className="card mt-6 p-5">
+        <p className="text-sm font-semibold">Bring on event day</p>
+        <ul className="mt-3 space-y-1.5 text-sm text-muted">
+          {DOCUMENTS.map((d) => (
+            <li key={d} className="flex gap-2">
+              <Icon name="check" className="size-4 shrink-0 text-gold" /> {d}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="mt-8 flex flex-col gap-3">
         <a href={`https://wa.me/?text=${share}`} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">

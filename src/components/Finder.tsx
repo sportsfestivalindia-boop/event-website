@@ -106,7 +106,11 @@ export function Finder() {
                     {division.tbc && <Tbc note={division.tbc} />}
                   </p>
                   {division.note && <p className="text-sm font-medium text-amber-700">{division.note}</p>}
-                  <ol className="mt-5 divide-y divide-line border-y border-line">
+                  <p className="mt-2 flex items-center gap-2 text-sm text-muted">
+                    <Icon name="calendar" className="size-4 shrink-0" /> {champ.when}
+                  </p>
+                  {division.prizes.length === 0 && <p className="mt-5 border-y border-line py-4 text-muted">Prizes will be announced by AOGA.</p>}
+                  <ol className="mt-5 divide-y divide-line border-y border-line empty:hidden">
                     {division.prizes.map((p, i) => (
                       <li key={i} className="flex items-center justify-between py-2.5">
                         <span className="flex items-center gap-3 text-sm font-medium">

@@ -3,7 +3,7 @@ import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces } from "@/data/festival
 import { inr } from "@/lib/format";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
-import { Cta, Tbc } from "../ui";
+import { Cta } from "../ui";
 
 const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
@@ -62,7 +62,6 @@ export function Hero() {
             </li>
             <li className="flex items-center gap-2.5">
               <Icon name="pin" className="size-5 text-gold" /> {EVENT.venue}, Bhubaneswar
-              <Tbc note={EVENT.tbc.venue} />
             </li>
             <li className="flex items-center gap-2.5">
               <Icon name="users" className="size-5 text-gold" /> Registrations close in <Countdown className="font-semibold text-gold" />
