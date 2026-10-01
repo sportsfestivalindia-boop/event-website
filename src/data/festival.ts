@@ -265,8 +265,8 @@ export const DOCUMENTS = ["Government ID", "Age proof", "Recent photograph", "As
 
 export const LEGENDS = [
   { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/pfp-anil.webp", tbc: true },
-  { name: "Ranu Mohanty", title: "Powerlifting champion", line: "All India Open Powerlifting", face: "/img/pfp-ranu.webp", tbc: true },
-  { name: "Dutee Chand", title: "Asian Games silver medallist · Pride of India", line: "Dutee’s Marathon", face: "/img/pfp-dutee.webp", tbc: true },
+  { name: "Ranu Mohanty", title: "Asian Powerlifting Championship silver medallist · Senior National champion", line: "All India Open Powerlifting", face: "/img/pfp-ranu.webp", tbc: true },
+  { name: "Dutee Chand", title: "Olympian · 2× Asian Games silver medallist (2018) · National 100m record holder", line: "Dutee’s Marathon", face: "/img/pfp-dutee.webp", tbc: true },
 ];
 
 export const FAQ: { q: string; a: string; tbc?: boolean }[] = [

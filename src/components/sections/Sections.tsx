@@ -5,7 +5,6 @@ import { inr, prizeLabel } from "@/lib/format";
 import { Finder } from "../Finder";
 import { Icon, WhatsAppGlyph, Wordmark } from "../icons";
 import { CountdownBoxes } from "../live";
-import { PrizeExplorer } from "../PrizeExplorer";
 import { Cta, Gold, Section, SectionHead, Tbc, WhatsAppLink, live } from "../ui";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -38,15 +37,7 @@ export function Prizes() {
           </li>
         ))}
       </ul>
-      <PrizeExplorer />
-      <div className="mt-10 grid gap-4 text-sm md:grid-cols-3">
-        <p className="flex gap-3"><Icon name="shield" className="size-5 shrink-0 text-amber-600" />Paid by bank transfer after simple KYC (PAN + bank details).<Tbc /></p>
-        <p className="flex gap-3"><Icon name="doc" className="size-5 shrink-0 text-amber-600" />TDS deducted as per Indian tax rules.<Tbc /></p>
-        <Link href="/prizes" className="flex gap-3 font-semibold underline decoration-line underline-offset-4 hover:decoration-current">
-          <Icon name="arrow" className="size-5 shrink-0" />Read the full prize policy
-        </Link>
-      </div>
-      <Cta className="mt-10" label={`Register now — ${inr(EVENT.fee)}`} />
+      <Cta className="-mt-4" label={`Register now — ${inr(EVENT.fee)}`} />
     </Section>
   );
 }
