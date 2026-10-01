@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Poppins } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 // Anton: display, Poppins: body — both carry the ₹ glyph.
@@ -9,7 +10,7 @@ const poppins = Poppins({ variable: "--font-poppins", weight: ["400", "500", "60
 export const metadata: Metadata = {
   title: "Sports Festival 2026 · India’s Biggest Sports Festival · ₹1.5 Crore Prize Pool",
   description:
-    "7 championships. ₹1,50,00,000 in prizes. 4–6 December 2026, Bhubaneswar, Odisha. Organised by the All Odisha Gym Association. Register for ₹5,000.",
+    "6 championships. ₹1,50,00,000 in prizes. 4–6 December 2026, Bhubaneswar, Odisha. Organised by the All Odisha Gym Association. Register for ₹5,000.",
   icons: { icon: "/img/icon-512.png", apple: "/img/icon-512.png" },
   robots: { index: false, follow: false }, // draft for organiser review — remove at launch
 };
@@ -23,7 +24,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* reveal-on-scroll only when JS runs; ?shot disables it for QA screenshots */}
         <script dangerouslySetInnerHTML={{ __html: "if(!/[?&]shot/.test(location.search))document.documentElement.classList.add('js')" }} />
       </head>
-      <body className="t-ink">{children}</body>
+      <body className="t-ink">
+        {children}
+        {/* Meta Pixel + ad attribution, supplied by the ads team. Do not add a second pixel snippet. */}
+        <Script src="/aoga-tracking.js" strategy="afterInteractive" />
+      </body>
     </html>
   );
 }

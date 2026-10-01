@@ -7,6 +7,7 @@ import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { Tbc } from "./ui";
+import { track } from "@/lib/track";
 
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pay = { regId: string; amount: number; label: string; upi: string; qr: string };
@@ -56,8 +57,13 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setError("");
     setBusy(true);
     try {
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi: string }>("/api/order", f);
-      if (o.free) return setDone({ regId: o.regId, label: o.label, paid: 0 });
+      const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi: string }>("/api/order", { ...f, tracking });
+      if (o.free) {
+        track("freeRegistered", { label: o.label, regId: o.regId });
+        return setDone({ regId: o.regId, label: o.label, paid: 0 });
+      }
+      track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
       const qr = await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" });
       setPay({ ...o, qr });
       setStep(4);
@@ -74,6 +80,8 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setBusy(true);
     try {
       await post("/api/verify", { regId: pay!.regId, utr });
+      // ponytail: Purchase fires on UTR entry (not yet bank-verified). Move to a server-side event once AOGA verifies in a dashboard.
+      track("paid", { orderId: pay!.regId, value: pay!.amount, sport: champ.sport, label: pay!.label });
       setDone({ regId: pay!.regId, label: pay!.label, paid: pay!.amount, utr });
     } catch (e) {
       setError((e as Error).message);
@@ -122,7 +130,10 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
                 <button
                   key={c.id}
                   aria-pressed={c.id === f.sport}
-                  onClick={() => setF({ ...f, sport: c.id, division: c.divisions[0].id, cls: c.divisions[0].classes[0] })}
+                  onClick={() => {
+                    setF({ ...f, sport: c.id, division: c.divisions[0].id, cls: c.divisions[0].classes[0] });
+                    track("viewSport", c.sport);
+                  }}
                   className={`rounded-lg border p-3 text-left text-sm font-semibold transition-colors ${c.id === f.sport ? "border-gold bg-gold/10 text-gold" : "border-line bg-raise"}`}
                 >
                   {c.sport}

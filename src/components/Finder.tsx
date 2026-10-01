@@ -6,6 +6,7 @@ import { CHAMPIONSHIPS, EVENT, championshipTotal, registerHref, type Championshi
 import { inr, inrShort, ordinal, prizeLabel } from "@/lib/format";
 import { Icon } from "./icons";
 import { Tbc, WhatsAppLink } from "./ui";
+import { track } from "@/lib/track";
 
 const defaultClass = (classes: string[]) => classes[Math.min(4, classes.length - 1)] ?? "";
 type Sel = { sport: string; div: string; cls: string };
@@ -27,7 +28,10 @@ export function Finder() {
   const [picked, setPicked] = useState<Sel | null>(null);
   const sel = picked ?? selFor(CHAMPIONSHIPS.find((x) => x.id === urlSport) ?? CHAMPIONSHIPS[0]);
   const { sport, div, cls } = sel;
-  const choose = (c: Championship) => setPicked(selFor(c));
+  const choose = (c: Championship) => {
+    setPicked(selFor(c));
+    track("viewSport", c.sport);
+  };
 
   const champ = CHAMPIONSHIPS.find((c) => c.id === sport)!;
   const division = champ.divisions.find((d) => d.id === div);
