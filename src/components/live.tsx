@@ -153,6 +153,7 @@ export function Chrome() {
               ["Schedule", "#schedule"],
               ["Organisers", "#trust"],
               ["FAQ", "#faq"],
+              ["Partners", "/partner"],
             ].map(([l, h]) => (
               <a key={h} href={h} className="transition-colors hover:text-gold">
                 {l}

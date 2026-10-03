@@ -8,10 +8,11 @@ import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { Tbc } from "./ui";
 import { track } from "@/lib/track";
+import { razorpayPay, type RzpOrder } from "@/lib/checkout";
 
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pay = { regId: string; amount: number; label: string; upi: string; qr: string };
-type Done = { regId: string; label: string; paid: number; utr?: string };
+type Done = { regId: string; label: string; paid: number; utr?: string; confirmed?: boolean };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
@@ -58,14 +59,25 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setBusy(true);
     try {
       const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi: string }>("/api/order", { ...f, tracking });
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string; razorpay?: RzpOrder }>("/api/order", { ...f, tracking });
       if (o.free) {
         track("freeRegistered", { label: o.label, regId: o.regId });
         return setDone({ regId: o.regId, label: o.label, paid: 0 });
       }
       track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
-      const qr = await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" });
-      setPay({ ...o, qr });
+      if (o.razorpay) {
+        // Razorpay: UPI, cards, netbanking — confirmed instantly by signature check
+        const paid = await razorpayPay(o.razorpay, {
+          description: o.label,
+          prefill: { name: f.name, email: f.email, contact: "+91" + f.phone },
+          notes: { reg_id: o.regId },
+        });
+        await post("/api/verify", { ref: o.regId, ...paid });
+        track("paid", { orderId: paid.orderId, value: o.amount, sport: champ.sport, label: o.label });
+        return setDone({ regId: o.regId, label: o.label, paid: o.amount, confirmed: true });
+      }
+      const qr = await QRCode.toDataURL(o.upi!, { margin: 1, width: 520, errorCorrectionLevel: "M" });
+      setPay({ regId: o.regId, amount: o.amount, label: o.label, upi: o.upi!, qr });
       setStep(4);
       window.scrollTo({ top: 0 });
     } catch (e) {
@@ -79,7 +91,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setError("");
     setBusy(true);
     try {
-      await post("/api/verify", { regId: pay!.regId, utr });
+      await post("/api/verify", { ref: pay!.regId, utr });
       // ponytail: Purchase fires on UTR entry (not yet bank-verified). Move to a server-side event once AOGA verifies in a dashboard.
       track("paid", { orderId: pay!.regId, value: pay!.amount, sport: champ.sport, label: pay!.label });
       setDone({ regId: pay!.regId, label: pay!.label, paid: pay!.amount, utr });
@@ -244,7 +256,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           </div>
           {fee > 0 && (
             <p className="flex gap-2 text-sm text-muted">
-              <Icon name="rupee" className="size-5 shrink-0 text-gold" /> Next: pay by UPI QR with GPay, PhonePe, Paytm, BHIM or any UPI app.
+              <Icon name="lock" className="size-5 shrink-0 text-gold" /> Next: secure payment by UPI (GPay, PhonePe, Paytm, BHIM) and other methods.
             </p>
           )}
           <label className="flex items-start gap-3 rounded-lg border border-line p-4 text-sm">
@@ -322,7 +334,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           )}
           {step === 3 && (
             <button onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 disabled:opacity-40">
-              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)} by UPI` : "Confirm free registration"}
+              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)}` : "Confirm free registration"}
             </button>
           )}
           {step === 4 && (
@@ -340,7 +352,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
 /** Success: the athlete pass. */
 function Pass({ done, name, city, when }: { done: Done; name: string; city: string; when: string }) {
   const share = encodeURIComponent(`I just registered for India’s Biggest Sports Festival 2026 — ₹1.5 Crore prize pool! 4–6 Dec, Bhubaneswar. Register: ${typeof location !== "undefined" ? location.origin : ""}`);
-  const verifying = done.paid > 0;
+  const verifying = done.paid > 0 && !done.confirmed;
   return (
     <div className="mx-auto w-full max-w-md px-5 py-10">
       <div className="text-center">
@@ -349,7 +361,7 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
         </span>
         <h1 className="display mt-5 text-5xl">You’re registered!</h1>
         <p className="mt-2 text-muted">
-          {verifying ? `We’ve received your UTR for ${inr(done.paid)}. AOGA will verify it and confirm on WhatsApp within 24 hours.` : "Free registration confirmed."}
+          {verifying ? `We’ve received your UTR for ${inr(done.paid)}. AOGA will verify it and confirm on WhatsApp within 24 hours.` : done.paid ? `Payment of ${inr(done.paid)} received.` : "Free registration confirmed."}
         </p>
       </div>
 

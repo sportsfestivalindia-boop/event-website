@@ -1,6 +1,8 @@
 // Run: npx tsx src/lib/pay.check.ts — fails loudly if the money path breaks.
 import assert from "node:assert/strict";
-import { checkEntry, upiLink, validUtr } from "./pay";
+import { createHmac } from "node:crypto";
+import { checkEntry, checkStall, upiLink, validUtr } from "./pay";
+import { validSignature } from "./razorpay";
 
 const base = { sport: "bodybuilding", division: "mens-bb", cls: "75 kg", name: "Test Athlete", dob: "1998-05-10", phone: "9876543210", email: "a@b.in", city: "Bhubaneswar" };
 
@@ -23,5 +25,17 @@ assert.equal(validUtr("12345678901a"), false, "non-numeric UTR rejected");
 
 const link = upiLink(5000, "SF26-ABC123");
 assert.ok(link.startsWith("upi://pay?") && link.includes("am=5000.00") && link.includes("cu=INR"), "UPI link carries amount + currency");
+
+const firm = { stall: "s50x30", company: "Acme Nutrition", contact: "Test Person", phone: "9876543210", email: "a@b.in" };
+const big = checkStall(firm);
+assert.ok(big.ok && big.price === 10_00_000, "50x30 stall costs ₹10,00,000");
+assert.equal(checkStall({ ...firm, stall: "s1x1" }).ok, false, "unknown stall rejected");
+assert.equal(checkStall({ ...firm, gstin: "BADGST" }).ok, false, "bad GSTIN rejected");
+assert.ok(checkStall({ ...firm, gstin: "21AABCU9603R1ZM" }).ok, "valid GSTIN accepted");
+
+const sig = createHmac("sha256", "secret").update("order_1|pay_1").digest("hex");
+assert.ok(validSignature("order_1", "pay_1", sig, "secret"), "valid Razorpay signature accepted");
+assert.equal(validSignature("order_1", "pay_2", sig, "secret"), false, "tampered payment rejected");
+assert.equal(validSignature("order_1", "pay_1", "short", "secret"), false, "wrong-length signature rejected");
 
 console.log("pay.check: all passed");

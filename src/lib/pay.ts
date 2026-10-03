@@ -1,6 +1,7 @@
 // Server-side registration + UPI QR helpers. The fee is always computed here, never trusted from the client.
 import { randomBytes } from "node:crypto";
 import { CHAMPIONSHIPS, EVENT } from "../data/festival";
+import { STALLS } from "../data/partners";
 
 export type Entry = {
   sport: string;
@@ -41,3 +42,19 @@ export function upiLink(amount: number, ref: string) {
   const q = { pa: EVENT.upi.id, pn: EVENT.upi.payee, am: amount.toFixed(2), cu: "INR", tn: `${ref} Sports Festival 2026` };
   return "upi://pay?" + Object.entries(q).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
 }
+
+export type StallEntry = { stall: string; company: string; contact: string; phone: string; email: string; gstin?: string; sector?: string };
+
+/** Validates a stall booking against the price list; the price is ours, never the browser's. */
+export function checkStall(e: Partial<StallEntry>): { ok: true; price: number; label: string } | { ok: false; error: string } {
+  const st = STALLS.find((s) => s.id === e.stall);
+  if (!st) return { ok: false, error: "Please choose a stall size." };
+  if (!e.company || e.company.trim().length < 2 || e.company.length > 120) return { ok: false, error: "Please enter your company / brand name." };
+  if (!e.contact || e.contact.trim().length < 2) return { ok: false, error: "Please enter the contact person’s name." };
+  if (!/^[6-9]\d{9}$/.test(e.phone ?? "")) return { ok: false, error: "Please enter a valid 10-digit mobile number." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email ?? "")) return { ok: false, error: "Please enter a valid email address." };
+  if (e.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(e.gstin)) return { ok: false, error: "GSTIN looks wrong — check it or leave it blank." };
+  return { ok: true, price: st.price, label: `Stall ${st.size}` };
+}
+
+export const stallId = () => "SF26-ST-" + randomBytes(3).toString("hex").toUpperCase();

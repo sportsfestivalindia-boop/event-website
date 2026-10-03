@@ -9,7 +9,6 @@ const PAGES: Record<string, string> = {
   refund: "Refund policy",
   terms: "Terms & conditions",
   privacy: "Privacy policy",
-  partner: "Partner with us",
   international: "International athletes",
 };
 
