@@ -47,6 +47,10 @@ export const EVENT = {
   tagline: "Strength · Discipline · Tradition · Culture · Odisha",
 } as const;
 
+export const DANGAL_FEE = 1000;
+export const BOXING_FEE = 1000;
+export const MARATHON_FEE = 600;
+
 const BB_MEN: Prize[] = [50000, 30000, 20000, 10000, 5000];
 const OPEN_1L: Prize[] = [100000, 50000, 30000, 20000, 10000];
 
@@ -83,7 +87,7 @@ export const CHAMPIONSHIPS: Championship[] = [
       {
         id: "classic-physique",
         name: "Classic Physique",
-        classes: ["Category 1", "Category 2"],
+        classes: ["Up to 70 kg", "Above 70 kg"],
         prizes: BB_MEN,
         extras: [
           { label: "Champion of Champions", prize: 150000 },
@@ -149,9 +153,29 @@ export const CHAMPIONSHIPS: Championship[] = [
     sport: "Dangal (Matti Kusti)",
     name: "Utkal Kesari Dangal",
     level: "Heritage",
-    tagline: "After 25 years, the Dangal returns.",
+    tagline: "After 25 years, the Dangal returns — for men and women.",
     when: "Fri 4 Dec, from 11 AM",
-    divisions: [{ id: "kesari", name: "Utkal Kesari", classes: ["Open"], prizes: ["Royal Enfield Bullet", 100000] }],
+    // AOGA sheet "Competition Categories & Participation Quota" (Oct 2026)
+    divisions: [
+      {
+        id: "kesari",
+        name: "Utkal Kesari (Men)",
+        classes: ["80–120 kg"],
+        prizes: ["Royal Enfield Bullet + Gada", 100000, 50000],
+        fee: DANGAL_FEE,
+        note: "Winner takes home a Royal Enfield Bullet and the Gada (mace)",
+      },
+      {
+        id: "kesari-women",
+        name: "Utkal Kesari (Women)",
+        classes: ["70–90 kg"],
+        prizes: [100000, 50000, 30000],
+        fee: DANGAL_FEE,
+        note: "Winner also receives the Gada (mace)",
+      },
+      { id: "bouts-men", name: "Men’s Weight Bouts", classes: ["55–60 kg", "60–65 kg", "65–70 kg", "70–75 kg"], prizes: [30000, 20000, 10000], fee: DANGAL_FEE },
+      { id: "bouts-women", name: "Women’s Weight Bouts", classes: ["48–55 kg", "55–60 kg", "60–65 kg"], prizes: [30000, 20000, 10000], fee: DANGAL_FEE },
+    ],
   },
   {
     id: "boxing",
@@ -160,7 +184,10 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "National",
     tagline: "Gloves on in Bhubaneswar.",
     when: "Fri 4 Dec, from 11 AM",
-    divisions: [],
+    divisions: [
+      { id: "boxing-men", name: "Men", classes: ["Open"], prizes: [], fee: BOXING_FEE },
+      { id: "boxing-women", name: "Women", classes: ["Open"], prizes: [], fee: BOXING_FEE },
+    ],
   },
   {
     id: "marathon",
@@ -169,7 +196,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "National",
     tagline: "Run with the spirit of champions.",
     when: "Fri 4 Dec, 5:30 AM start",
-    divisions: [{ id: "run", name: "Open", classes: ["Open"], prizes: [], fee: 600 }],
+    divisions: [{ id: "run", name: "Open", classes: ["Open"], prizes: [], fee: MARATHON_FEE }],
   },
 ];
 
@@ -191,7 +218,7 @@ export const topPrize = Math.max(...CHAMPIONSHIPS.flatMap((c) => c.divisions.fla
 export const HEADLINE_PRIZES: { label: string; sub: string; prize: Prize }[] = [
   { label: "Champion of Champions", sub: "Men’s Bodybuilding", prize: 2000000 },
   { label: "Champion of Champions", sub: "Men’s Physique", prize: 500000 },
-  { label: "Utkal Kesari", sub: "Dangal winner", prize: "Royal Enfield Bullet" },
+  { label: "Utkal Kesari", sub: "Dangal · men’s winner", prize: "Royal Enfield Bullet" },
   { label: "Strong Man · Strong Woman", sub: "Powerlifting", prize: 100000 },
 ];
 
@@ -311,8 +338,8 @@ export const FAQ: { q: string; a: string }[] = [
   },
   { q: "Who is the Masters category for?", a: "Athletes aged 45 years and above." },
   {
-    q: "How much is the marathon entry?",
-    a: "Dutee’s Marathon entry is ₹600. All bodybuilding and physique categories are ₹5,000. The Star / Para category is free.",
+    q: "How much is the entry fee?",
+    a: "Dutee’s Marathon entry is ₹600. Boxing and Dangal are ₹1,000. Bodybuilding & physique, powerlifting and arm wrestling categories are ₹5,000. The Star / Para category is free.",
   },
   {
     q: "Can I enter more than one category?",

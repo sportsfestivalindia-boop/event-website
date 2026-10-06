@@ -55,7 +55,9 @@ export function Finder() {
                     className={`flex h-full w-full flex-col items-start gap-2 rounded-xl border p-4 text-left transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 ${on ? "border-gold bg-gold/10" : "border-line bg-raise hover:border-gold/60"}`}
                   >
                     <span className="display text-xl leading-tight md:text-2xl">{c.sport}</span>
-                    <span className={`mt-auto text-xs font-semibold ${total ? "text-gold" : "text-muted"}`}>{total ? `Prizes up to ${inrShort(total)}` : "Details coming soon"}</span>
+                    <span className={`mt-auto text-xs font-semibold ${total || c.divisions.length ? "text-gold" : "text-muted"}`}>
+                      {total ? `Prizes up to ${inrShort(total)}` : c.divisions.length ? `Registration open · ${inr(Math.min(...c.divisions.map((d) => d.fee ?? EVENT.fee)))}` : "Details coming soon"}
+                    </span>
                   </button>
                 </li>
               );

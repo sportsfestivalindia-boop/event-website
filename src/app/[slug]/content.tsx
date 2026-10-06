@@ -25,13 +25,19 @@ const A = ({ href, children }: { href: string; children: React.ReactNode }) => (
 );
 
 const org = `${EVENT.organiser} (“${EVENT.organiserShort}”, “we”, “us”)`;
+// one line per championship, straight from the facts file (Star Category listed on its own)
 const fees = (
   <L
     items={[
-      <>Bodybuilding &amp; physique categories: {inr(EVENT.fee)} per category</>,
-      <>Dutee’s Marathon: {inr(600)}</>,
+      ...CHAMPIONSHIPS.map((c) => {
+        const paid = [...new Set(c.divisions.map((d) => d.fee ?? EVENT.fee).filter((f) => f > 0))];
+        return (
+          <>
+            {c.sport}: {paid.map(inr).join(" / ")} per category
+          </>
+        );
+      }),
       <>Star Category (physically disabled / para athletes): free</>,
-      <>Powerlifting, arm wrestling and Dangal: {inr(EVENT.fee)} per category</>,
     ]}
   />
 );

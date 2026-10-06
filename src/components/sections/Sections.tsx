@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { COMMITTEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, REFUND, VALUE, paidPlaces, registerHref } from "@/data/festival";
+import { COMMITTEE, DANGAL_FEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, REFUND, VALUE, paidPlaces, registerHref } from "@/data/festival";
+import { STALLS } from "@/data/partners";
 import { inr, prizeLabel } from "@/lib/format";
 import { Finder } from "../Finder";
 import { Icon, WhatsAppGlyph, Wordmark } from "../icons";
@@ -75,7 +76,9 @@ export function Champions() {
           <p className="label text-gold">Utkal Kesari 2026 · Dangal</p>
           <p className="display mt-4 text-[clamp(4.5rem,11vw,7.5rem)] leading-none text-gold">25 years</p>
           <p className="display mt-1 text-3xl md:text-4xl">later, the Dangal returns</p>
-          <p className="mt-4 text-muted">Winner takes home a <b className="text-white">Royal Enfield Bullet</b>. Runner-up wins {inr(100000)}.</p>
+          <p className="mt-4 text-muted">
+            Utkal Kesari (men) winner takes home a <b className="text-white">Royal Enfield Bullet</b> and the Gada. Women’s Utkal Kesari winner wins {inr(100000)} and the Gada. Plus weight-category bouts for men and women — entry just {inr(DANGAL_FEE)}.
+          </p>
         </div>
         <div className="card relative overflow-hidden p-6 md:p-8" data-reveal style={i(1)}>
           <p className="label text-gold">Star Category · Para-athletes</p>
@@ -271,6 +274,13 @@ export function Register() {
             <WhatsAppGlyph className="size-6" /> Team registration on WhatsApp
           </a>
           <p className="text-center text-xs text-muted">Coaches: register your whole team in one message on WhatsApp.</p>
+          <Link href="/partner#stalls" className="flex items-center justify-between gap-4 rounded-xl bg-ink px-5 py-4 text-white" data-cta="stall">
+            <span>
+              <span className="block text-xs font-semibold tracking-[0.16em] text-gold uppercase">Exhibitors &amp; brands</span>
+              <span className="font-semibold">Book a stall at the venue — from {inr(STALLS[0].price)}</span>
+            </span>
+            <Icon name="arrow" className="size-5 shrink-0 text-gold" />
+          </Link>
         </div>
       </div>
     </Section>
