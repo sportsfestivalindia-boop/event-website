@@ -1,5 +1,6 @@
 "use client";
 // Opens Razorpay Standard Checkout and resolves with the signed payment, or rejects if the user closes it.
+import { EVENT } from "@/data/festival";
 
 export type RzpOrder = { orderId: string; amount: number; key: string };
 export type RzpPaid = { orderId: string; paymentId: string; signature: string };
@@ -29,8 +30,10 @@ export async function razorpayPay(
       amount: order.amount,
       currency: "INR",
       order_id: order.orderId,
-      name: "Sports Festival 2026",
+      // must match the business name on the Razorpay account
+      name: EVENT.organiser,
       description: o.description,
+      image: location.origin + "/img/icon-512.png",
       prefill: o.prefill,
       notes: o.notes,
       theme: { color: "#FFB81C" },

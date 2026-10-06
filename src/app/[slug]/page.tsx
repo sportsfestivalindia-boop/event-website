@@ -1,35 +1,47 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Wordmark } from "@/components/icons";
-import { WhatsAppLink } from "@/components/ui";
-
-const PAGES: Record<string, string> = {
-  prizes: "Prize & payout policy",
-  rules: "Rules & rulebooks",
-  refund: "Refund policy",
-  terms: "Terms & conditions",
-  privacy: "Privacy policy",
-  international: "International athletes",
-};
+import { Footer } from "@/components/sections/Sections";
+import { EVENT, registerHref } from "@/data/festival";
+import { PAGES, UPDATED } from "./content";
 
 export const dynamicParams = false;
 export const generateStaticParams = () => Object.keys(PAGES).map((slug) => ({ slug }));
 
-// Draft placeholder until the organiser-approved text is ready.
+export async function generateMetadata({ params }: PageProps<"/[slug]">): Promise<Metadata> {
+  const page = PAGES[(await params).slug];
+  return page ? { title: `${page.title} · ${EVENT.name} ${EVENT.year}`, description: page.lead } : {};
+}
+
 export default async function InfoPage({ params }: PageProps<"/[slug]">) {
-  const title = PAGES[(await params).slug];
-  if (!title) notFound();
+  const page = PAGES[(await params).slug];
+  if (!page) notFound();
   return (
-    <main className="t-ink grid min-h-[100svh] place-items-center px-5">
-      <div className="max-w-md">
-        <Wordmark />
-        <h1 className="display mt-14 text-5xl">{title}</h1>
-        <p className="mt-4 text-muted">This page is being finalised with the organisers and will be published soon.</p>
-        <WhatsAppLink className="mt-8" label="Questions? WhatsApp us" />
-        <p className="mt-14">
-          <Link href="/" className="text-sm text-muted hover:text-white">← Back to the festival</Link>
-        </p>
-      </div>
-    </main>
+    <>
+      <header className="t-ink sticky top-0 z-50 border-b border-line bg-ink/85 backdrop-blur-xl">
+        <div className="flex h-16 w-full items-center gap-6 px-5 md:h-20 md:px-10">
+          <Link href="/" aria-label="Sports Festival — home">
+            <Wordmark />
+          </Link>
+          <Link href={registerHref()} className="btn btn-gold ml-auto !min-h-10 shrink-0 !px-4 !text-xs md:!min-h-11 md:!px-5 md:!text-sm">
+            Register
+          </Link>
+        </div>
+      </header>
+      <main className="t-ink px-5 pt-14 pb-24 md:px-10 md:pt-20">
+        <article className="mx-auto max-w-3xl text-white/80">
+          <p className="label text-gold">
+            {EVENT.name} {EVENT.year}
+          </p>
+          <h1 className="display mt-4 text-[clamp(2.6rem,7vw,4.5rem)] text-white">{page.title}</h1>
+          <span className="mt-6 block h-[3px] w-24 bg-gold" />
+          <p className="mt-6 text-lg">{page.lead}</p>
+          <p className="mt-2 text-xs text-muted">Last updated {UPDATED}</p>
+          {page.body}
+        </article>
+      </main>
+      <Footer />
+    </>
   );
 }

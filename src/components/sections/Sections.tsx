@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { COMMITTEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, VALUE, paidPlaces, registerHref } from "@/data/festival";
+import { COMMITTEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, REFUND, VALUE, paidPlaces, registerHref } from "@/data/festival";
 import { inr, prizeLabel } from "@/lib/format";
 import { Finder } from "../Finder";
 import { Icon, WhatsAppGlyph, Wordmark } from "../icons";
 import { CountdownBoxes } from "../live";
-import { Cta, Gold, Section, SectionHead, Tbc, WhatsAppLink, live } from "../ui";
+import { Cta, Gold, POLICY_LINKS, Section, SectionHead, WhatsAppLink } from "../ui";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
 /** highlight on light backgrounds: gold block behind ink text */
@@ -15,7 +15,7 @@ const Mark = ({ children }: { children: React.ReactNode }) => <span className="b
 export function Arena() {
   return (
     <Section id="arena">
-      <SectionHead title={<>Choose your sport. <Gold>See your prize.</Gold></>} lead="Pick your sport and weight class — we’ll show you exactly how much you can win." />
+      <SectionHead title={<>Choose your sport. <Gold>Find your class.</Gold></>} lead="Pick your sport and weight class — see your competition day, entry fee and the prize money awarded to the winners." />
       <Finder />
     </Section>
   );
@@ -25,7 +25,7 @@ export function Arena() {
 export function Prizes() {
   return (
     <Section id="prizes" theme="paper">
-      <SectionHead title={<><Mark>₹1,50,00,000</Mark> prize money</>} lead={<>{paidPlaces}+ athletes will take home cash. Up to 5 winners in every category.</>} />
+      <SectionHead title={<><Mark>₹1,50,00,000</Mark> prize money</>} lead={<>{paidPlaces}+ podium places with cash awards — up to 5 per category, decided on merit by qualified judges and official results.</>} />
       <ul className="mb-14 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {HEADLINE_PRIZES.map((h, n) => (
           <li key={h.label + h.sub} className="card relative overflow-hidden p-5 md:p-6" data-reveal style={i(n)}>
@@ -44,7 +44,7 @@ export function Prizes() {
 
 /* 03 ─ Champions + special categories */
 export function Champions() {
-  const legends = live(LEGENDS);
+  const legends = LEGENDS;
   return (
     <Section id="champions">
       <SectionHead title={<>India’s champions are <Gold>behind this festival.</Gold></>} />
@@ -58,7 +58,6 @@ export function Champions() {
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
                   <p className="display text-3xl md:text-4xl">
                     {l.name}
-                    <Tbc note="Written consent needed (N3)" />
                   </p>
                   <p className="mt-1 text-sm text-white/80">{l.title}</p>
                 </div>
@@ -98,7 +97,7 @@ export function Value() {
     <Section id="value" theme="paper">
       <SectionHead title={<>What you get for <Mark>{inr(EVENT.fee)}</Mark></>} />
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {live(VALUE).map((v, n) => (
+        {VALUE.map((v, n) => (
           <li key={v.title} className="card flex gap-4 p-5 md:p-6" data-reveal style={i(n % 3)}>
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-gold text-ink">
               <Icon name={v.icon} className="size-6" />
@@ -106,7 +105,6 @@ export function Value() {
             <div>
               <p className="text-lg font-semibold">
                 {v.title}
-                {v.tbc && <Tbc note="Inclusion to confirm (N1)" />}
               </p>
               <p className="mt-1 text-sm text-muted">{v.body}</p>
             </div>
@@ -115,7 +113,7 @@ export function Value() {
       </ul>
       <div className="mt-8 flex flex-col gap-6 rounded-2xl bg-ink p-6 text-white md:flex-row md:items-center md:justify-between md:p-8">
         <p className="display text-3xl md:text-4xl">
-          All this + a chance to win <span className="text-gold">₹1.5 Crore</span>
+          All this — and your shot at the <span className="text-gold">podium</span>
         </p>
         <Cta micro={false} label="Book my spot" />
       </div>
@@ -159,8 +157,8 @@ export function Trust() {
     { icon: "users", t: "Qualified judging panel", b: "Chief Judge, judges, jury and statisticians appointed by the Technical Committee. Judges must stay impartial." },
     { icon: "doc", t: "Official rules", b: "Conducted under rules approved by the Organising and Technical Committees. Weigh-in is compulsory." },
     { icon: "shield", t: "Medical support", b: "First aid, medical personnel and ambulance / emergency coordination at the venue." },
-    { icon: "lock", t: "Safe payment", b: "Pay AOGA’s official UPI by QR from GPay, PhonePe, Paytm or any UPI app. Confirmed on WhatsApp." },
-    { icon: "badge", t: "Registered association", b: `All Odisha Gym Association · ${EVENT.regdNo}`, tbc: EVENT.tbc.identity },
+    { icon: "lock", t: "Secure payment", b: "Processed by Razorpay — UPI, cards or netbanking. Instant confirmation and an emailed receipt for every payment." },
+    { icon: "badge", t: "Official organiser", b: `${EVENT.organiser}${EVENT.regdNo ? ` · Regd. No. ${EVENT.regdNo}` : ""} · ${EVENT.address}` },
     { icon: "phone", t: "Real people, real help", b: `${EVENT.phone} · ${EVENT.email}` },
   ];
   return (
@@ -185,7 +183,6 @@ export function Trust() {
             </span>
             <p className="display mt-5 text-[clamp(1.8rem,4vw,3rem)]">
               The <span className="text-gold">₹1.5 Crore</span> prize money is committed. It does not depend on how many athletes register.
-              <Tbc note="Written commitment needed (B2)" />
             </p>
             <Link href="/prizes" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-gold hover:underline">
               Prize &amp; payout policy <Icon name="arrow" className="size-4" />
@@ -198,7 +195,6 @@ export function Trust() {
                 <div>
                   <p className="font-semibold">
                     {t.t}
-                    {t.tbc && <Tbc note={t.tbc} />}
                   </p>
                   <p className="mt-1 text-sm text-muted">{t.b}</p>
                 </div>
@@ -241,7 +237,7 @@ export function Register() {
   const steps = [
     { icon: "trophy", t: "Choose your category", b: "Sport and weight class. Already chosen above? It’s filled in for you." },
     { icon: "users", t: "Fill your details", b: "Name, date of birth, mobile, email, city and association. Takes a minute." },
-    { icon: "rupee", t: "Pay by UPI QR", b: "Scan the QR with GPay, PhonePe, Paytm or any UPI app, then enter your UTR number." },
+    { icon: "lock", t: "Pay securely online", b: "UPI, debit / credit card or netbanking through Razorpay. Your athlete pass is issued instantly." },
   ];
   return (
     <Section id="register" theme="gold">
@@ -263,14 +259,16 @@ export function Register() {
           <p className="label mb-3">Registrations close in</p>
           <CountdownBoxes />
           <p className="mt-4 text-sm">
-            Full refund if the event is cancelled. Free category change until registrations close.
-            <Tbc note="Refund policy (B6)" />
+            Full refund if the event is cancelled. {REFUND.partialPct}% refund until {REFUND.partialUntil}. Free category change until registrations close.{" "}
+            <Link href="/refund" className="font-semibold underline underline-offset-4">
+              Refund policy
+            </Link>
           </p>
         </div>
         <div className="flex flex-col gap-4">
           <Cta tone="ink" wide micro={false} label={`Register now — ${inr(EVENT.fee)}`} />
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">
-            <WhatsAppGlyph className="size-6" /> Register on WhatsApp
+            <WhatsAppGlyph className="size-6" /> Team registration on WhatsApp
           </a>
           <p className="text-center text-xs text-muted">Coaches: register your whole team in one message on WhatsApp.</p>
         </div>
@@ -298,7 +296,6 @@ export function Venue() {
                 <span>
                   <span className="block text-xs font-semibold text-muted uppercase">{k}</span>
                   {v}
-                  <Tbc note="Distances / partners" />
                 </span>
               </li>
             ))}
@@ -331,13 +328,10 @@ export function Faq() {
       <SectionHead title="Your questions, answered" />
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="space-y-3 lg:col-span-8">
-          {live(FAQ).map((f) => (
+          {FAQ.map((f) => (
             <details key={f.q} className="group card open:ring-2 open:ring-gold">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-5 text-base font-semibold md:text-lg [&::-webkit-details-marker]:hidden">
-                <span>
-                  {f.q}
-                  {f.tbc && <Tbc />}
-                </span>
+                <span>{f.q}</span>
                 <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gold text-ink transition-transform duration-300 group-open:rotate-45">
                   <Icon name="plus" className="size-4" />
                 </span>
@@ -372,7 +366,7 @@ export function FinalCall() {
       <div className="mx-auto w-full text-center">
         <p className="label text-gold">Last call · 4–6 December 2026</p>
         <h2 className="display mx-auto mt-4 max-w-[16ch] text-[clamp(3rem,9vw,7.5rem)]">
-          <span className="text-gold">₹1.5 Crore.</span> One stage. Your name.
+          <span className="text-gold">Six championships.</span> One stage. Your name.
         </h2>
         <div className="mx-auto mt-10 max-w-xl">
           <CountdownBoxes glass />
@@ -388,15 +382,7 @@ export function FinalCall() {
 
 /* Footer */
 export function Footer() {
-  const links = [
-    ["Prize policy", "/prizes"],
-    ["Rules", "/rules"],
-    ["Refunds", "/refund"],
-    ["Terms", "/terms"],
-    ["Privacy", "/privacy"],
-    ["Partner with us", "/partner"],
-    ["International athletes", "/international"],
-  ];
+  const links = [...POLICY_LINKS, ["Partner with us", "/partner"]];
   return (
     <footer className="t-ink border-t border-line px-5 pt-14 pb-32 md:px-10 md:pb-14">
       <div className="mx-auto grid w-full gap-10 md:grid-cols-12">
@@ -405,10 +391,15 @@ export function Footer() {
           <div className="mt-6 flex items-center gap-4">
             <Image src="/img/aoga.webp" alt="AOGA" width={320} height={331} className="size-14" />
             <p className="text-sm text-muted">
-              Organised by the {EVENT.organiser}
+              Organised by the {EVENT.organiser} ({EVENT.organiserShort})
               <br />
-              {EVENT.regdNo} · GSTIN {EVENT.gstin}
-              <Tbc note={EVENT.tbc.identity} />
+              {EVENT.address}
+              {(EVENT.regdNo || EVENT.gstin) && (
+                <>
+                  <br />
+                  {[EVENT.regdNo && `Regd. No. ${EVENT.regdNo}`, EVENT.gstin && `GSTIN ${EVENT.gstin}`].filter(Boolean).join(" · ")}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -416,13 +407,13 @@ export function Footer() {
           <p className="label mb-3 text-gold">Contact</p>
           <a href={EVENT.phoneHref} className="block hover:text-gold">{EVENT.phone}</a>
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="block hover:text-gold">WhatsApp</a>
-          <p className="text-muted">{EVENT.email}</p>
+          <a href={`mailto:${EVENT.email}`} className="block hover:text-gold">{EVENT.email}</a>
           {EVENT.socials.map((s) => (
             <a key={s.href} href={s.href} target="_blank" rel="noopener" className="block hover:text-gold">{s.label}</a>
           ))}
         </div>
-        <ul className="space-y-2 text-sm md:col-span-4">
-          <li className="label mb-3 text-gold">Information</li>
+        <ul className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:col-span-4">
+          <li className="label col-span-2 mb-1 text-gold">Information</li>
           {links.map(([l, h]) => (
             <li key={h}>
               <Link href={h} className="hover:text-gold">{l}</Link>
@@ -430,8 +421,13 @@ export function Footer() {
           ))}
         </ul>
       </div>
-      <div className="mx-auto mt-12 flex w-full flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
-        <span>© {EVENT.year} {EVENT.organiser} · sportsfestival</span>
+      <p className="mx-auto mt-12 w-full max-w-4xl text-xs leading-relaxed text-muted">
+        {EVENT.name} is a physical sports competition. Results and prizes are decided solely by athletic performance — judges’ scores, weigh-ins, lifts,
+        bouts and finish times — under published rules. There is no lottery, draw, betting or game of chance. The registration fee is a participation fee
+        for competition entry and athlete services. Payments are processed securely by Razorpay.
+      </p>
+      <div className="mx-auto mt-6 flex w-full flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
+        <span>© {EVENT.year} {EVENT.organiser}</span>
         <span>
           Jai Hind · Jai Odisha
         </span>

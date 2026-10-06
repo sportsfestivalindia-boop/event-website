@@ -3,7 +3,7 @@ import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces } from "@/data/festival
 import { inr } from "@/lib/format";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
-import { Cta } from "../ui";
+import { Cta, PAY_LINE } from "../ui";
 
 const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
@@ -33,7 +33,7 @@ export function Hero() {
             <span className="display block text-[clamp(5rem,24vw,10rem)] leading-[0.9] lg:text-[min(8.6vw,17vh)]">
               <span className="text-gold">₹1.5</span> Crore
             </span>
-            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[min(2.3vw,4.4vh)]">Prizepool</span>
+            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[min(2.3vw,4.4vh)]">Prize money</span>
           </p>
 
           <div className="rise mt-8 flex items-stretch gap-4 whitespace-nowrap sm:gap-5 md:mt-10" style={d(3)}>
@@ -53,7 +53,7 @@ export function Hero() {
             </a>
           </div>
           <p className="rise mt-3 text-xs text-muted" style={d(4)}>
-            2-min signup · UPI enabled · Instant WhatsApp confirmation
+            {PAY_LINE}
           </p>
 
           <ul className="rise mt-8 flex flex-col gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6" style={d(5)}>
@@ -94,9 +94,9 @@ export function Ticker() {
 /** Festival at a glance — four big numbers anyone can read in one second. */
 export function Glance() {
   const stats = [
-    { icon: "rupee", v: <Odometer value={inr(EVENT.prizePool)} />, l: "Total prize pool" },
+    { icon: "rupee", v: <Odometer value={inr(EVENT.prizePool)} />, l: "Total prize money" },
     { icon: "trophy", v: String(CHAMPIONSHIPS.length), l: "Championships" },
-    { icon: "medal", v: `${paidPlaces}+`, l: "Cash prizes to be won" },
+    { icon: "medal", v: `${paidPlaces}+`, l: "Podium places with cash awards" },
     { icon: "users", v: `${categoryCount}+`, l: "Categories" },
     { icon: "calendar", v: "3 Days", l: "4–6 December 2026" },
   ];

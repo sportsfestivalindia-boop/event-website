@@ -1,4 +1,4 @@
-// Razorpay (server only). Live when both env vars are set in Vercel; otherwise the site falls back to UPI QR / enquiry.
+// Razorpay (server only). Live when both env vars are set in Vercel; until then registrations and stall bookings hand off to AOGA on WhatsApp.
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const razorpayKeys = () => {

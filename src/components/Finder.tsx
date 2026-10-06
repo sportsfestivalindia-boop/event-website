@@ -5,7 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 import { CHAMPIONSHIPS, EVENT, championshipTotal, registerHref, type Championship } from "@/data/festival";
 import { inr, inrShort, ordinal, prizeLabel } from "@/lib/format";
 import { Icon } from "./icons";
-import { Tbc, WhatsAppLink } from "./ui";
+import { WhatsAppLink } from "./ui";
 import { track } from "@/lib/track";
 
 const defaultClass = (classes: string[]) => classes[Math.min(4, classes.length - 1)] ?? "";
@@ -36,7 +36,6 @@ export function Finder() {
   const champ = CHAMPIONSHIPS.find((c) => c.id === sport)!;
   const division = champ.divisions.find((d) => d.id === div);
   const fee = division?.fee ?? EVENT.fee;
-  const cash = division?.prizes.filter((p): p is number => typeof p === "number") ?? [];
   const hasClasses = (division?.classes.length ?? 0) > 1;
 
   return (
@@ -96,7 +95,7 @@ export function Finder() {
           <div className="t-paper relative overflow-hidden rounded-2xl shadow-[0_30px_80px_-30px_#ffb81c55]" aria-live="polite">
             <div className="flex items-center justify-between bg-ink px-6 py-3 text-white">
               <span className="text-xs font-semibold tracking-[0.18em] uppercase">Your category</span>
-              <span className="text-xs text-gold">{champ.name}{champ.tbc && <Tbc note={champ.tbc} />}</span>
+              <span className="text-xs text-gold">{champ.name}</span>
             </div>
             <div className="relative px-6 pt-6 pb-2 md:px-8">
               {["top-3 left-3", "top-3 right-3"].map((p) => (
@@ -107,7 +106,6 @@ export function Finder() {
                   <p className="display text-[clamp(3.6rem,13vw,5.5rem)] leading-none">{hasClasses ? cls : division.name}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {hasClasses ? division.name : champ.sport}
-                    {division.tbc && <Tbc note={division.tbc} />}
                   </p>
                   {division.note && <p className="text-sm font-medium text-amber-700">{division.note}</p>}
                   <p className="mt-2 flex items-center gap-2 text-sm text-muted">
@@ -146,7 +144,7 @@ export function Finder() {
             </div>
             <div className="t-gold mt-4 flex items-center gap-2 px-6 py-3 text-sm font-semibold md:px-8">
               <Icon name="check" className="size-5 shrink-0" />
-              {fee === 0 ? "Free registration for this category" : cash.length && Math.min(...cash) >= fee ? `Every prize place pays at least your ${inr(fee)} entry back` : "India’s Biggest Sports Festival · 4–6 Dec 2026"}
+              {fee === 0 ? "Free registration for this category" : "Winners decided by qualified judges under official rules"}
             </div>
           </div>
 

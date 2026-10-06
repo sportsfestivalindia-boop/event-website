@@ -1,4 +1,4 @@
-// Server-side registration + UPI QR helpers. The fee is always computed here, never trusted from the client.
+// Server-side registration + stall validation. The fee is always computed here, never trusted from the client.
 import { randomBytes } from "node:crypto";
 import { CHAMPIONSHIPS, EVENT } from "../data/festival";
 import { STALLS } from "../data/partners";
@@ -32,16 +32,6 @@ export function checkEntry(e: Partial<Entry>): { ok: true; fee: number; label: s
 }
 
 export const regId = () => "SF26-" + randomBytes(4).toString("hex").toUpperCase().slice(0, 6);
-
-/** UTR / UPI reference number: 12 digits. */
-export const validUtr = (utr: unknown) => typeof utr === "string" && /^\d{12}$/.test(utr);
-
-/** Standard UPI deep link — every Indian UPI app (GPay, PhonePe, Paytm, BHIM) understands it, as a link or as a QR. */
-export function upiLink(amount: number, ref: string) {
-  // %20 not "+": some UPI apps show "+" literally in the payee name
-  const q = { pa: EVENT.upi.id, pn: EVENT.upi.payee, am: amount.toFixed(2), cu: "INR", tn: `${ref} Sports Festival 2026` };
-  return "upi://pay?" + Object.entries(q).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
-}
 
 export type StallEntry = { stall: string; company: string; contact: string; phone: string; email: string; gstin?: string; sector?: string };
 

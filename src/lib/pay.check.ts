@@ -1,7 +1,7 @@
 // Run: npx tsx src/lib/pay.check.ts — fails loudly if the money path breaks.
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { checkEntry, checkStall, upiLink, validUtr } from "./pay";
+import { checkEntry, checkStall } from "./pay";
 import { validSignature } from "./razorpay";
 
 const base = { sport: "bodybuilding", division: "mens-bb", cls: "75 kg", name: "Test Athlete", dob: "1998-05-10", phone: "9876543210", email: "a@b.in", city: "Bhubaneswar" };
@@ -18,13 +18,6 @@ assert.equal(checkEntry({ ...base, email: "nope" }).ok, false, "bad email reject
 assert.equal(checkEntry({ ...base, dob: "" }).ok, false, "missing DOB rejected");
 assert.equal(checkEntry({ ...base, division: "masters", cls: "Open" }).ok, false, "under-45 rejected from Masters");
 assert.ok(checkEntry({ ...base, division: "masters", cls: "Open", dob: "1975-01-01" }).ok, "45+ accepted in Masters");
-
-assert.ok(validUtr("123456789012"), "12-digit UTR accepted");
-assert.equal(validUtr("12345"), false, "short UTR rejected");
-assert.equal(validUtr("12345678901a"), false, "non-numeric UTR rejected");
-
-const link = upiLink(5000, "SF26-ABC123");
-assert.ok(link.startsWith("upi://pay?") && link.includes("am=5000.00") && link.includes("cu=INR"), "UPI link carries amount + currency");
 
 const firm = { stall: "s50x30", company: "Acme Nutrition", contact: "Test Person", phone: "9876543210", email: "a@b.in" };
 const big = checkStall(firm);

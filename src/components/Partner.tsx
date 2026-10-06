@@ -1,12 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { EVENT } from "@/data/festival";
-import { SECTORS, STALLS, STALL_TBC, TIERS } from "@/data/partners";
+import { SECTORS, STALLS, TIERS } from "@/data/partners";
 import { razorpayPay, type RzpOrder } from "@/lib/checkout";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph } from "./icons";
-import { Tbc } from "./ui";
 
 const input = "h-12 w-full rounded-lg border border-line bg-raise px-4 text-base outline-none transition-colors focus:border-gold";
 const waTo = (text: string) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
@@ -118,7 +118,6 @@ export function StallBooking() {
           <p className="display text-3xl">{st.size}</p>
           <p className="display text-3xl text-gold">
             {inr(st.price)}
-            <Tbc note={STALL_TBC} />
           </p>
         </div>
         <p className="mt-1 text-xs text-muted">Baramunda Ground Field, Bhubaneswar · 4–6 Dec 2026</p>
@@ -150,7 +149,11 @@ export function StallBooking() {
           </div>
           <label className="flex items-start gap-3 text-sm">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#ffb81c]" />
-            <span className="text-muted">I agree that stall location is allotted by AOGA, and to the exhibitor rules shared with the booking.</span>
+            <span className="text-muted">
+              I agree that stall location is allotted by AOGA, to the exhibitor rules shared with the booking, and to the{" "}
+              <Link href="/terms" target="_blank" className="underline underline-offset-2">Terms</Link> and{" "}
+              <Link href="/refund" target="_blank" className="underline underline-offset-2">Refund policy</Link>.
+            </span>
           </label>
         </div>
 

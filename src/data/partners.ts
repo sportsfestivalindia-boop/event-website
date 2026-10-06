@@ -22,8 +22,6 @@ export const STALLS = [
   { id: "s50x30", size: "50 ft × 30 ft", sqft: 1500, price: 10_00_000 },
 ];
 
-export const STALL_TBC = "GST, what's included (power, furniture, branding) and stall allotment rules not yet confirmed by AOGA";
-
 export const PARTNER_WHY = [
   { icon: "users", t: "Thousands of visitors", b: "Athletes, coaches, gym owners and families across 3 days at Baramunda Ground." },
   { icon: "trophy", t: "6 championships", b: "Bodybuilding to Dangal — one stage for India’s strength and fitness community." },

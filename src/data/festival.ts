@@ -1,5 +1,4 @@
 // THE facts file. Every number, date and name on the site comes from here.
-// `tbc` = not yet confirmed by AOGA. Preview builds show a TBC badge; production hides tbc items.
 
 export type Prize = number | string; // string = non-cash prize (e.g. a motorcycle)
 export type Extra = { label: string; prize: Prize };
@@ -11,7 +10,6 @@ export type Division = {
   extras?: Extra[]; // overall titles contested across the division
   fee?: number; // overrides EVENT.fee
   note?: string;
-  tbc?: string;
 };
 export type Championship = {
   id: string;
@@ -21,7 +19,6 @@ export type Championship = {
   tagline: string;
   when: string; // competition day(s), from the circular schedule
   divisions: Division[];
-  tbc?: string;
 };
 // Source of truth since 1 Oct 2026: AOGA official circular "Circular Design v3" (Ref. AOGA/AGC/2026/001).
 export const EVENT = {
@@ -42,24 +39,16 @@ export const EVENT = {
   whatsappHref: "https://wa.me/919938818919?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
   email: "aogaofficial@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
-  // ponytail: placeholder is deliberately NOT a valid UPI ID (no "@"), so nobody can pay a stranger by accident.
-  upi: { id: "AOGA-UPI-ID-PENDING", payee: "All Odisha Gym Association" },
-  regdNo: "[Regd. No. TBC]",
-  gstin: "[GSTIN TBC]",
+  // Shown in the footer, Contact and Terms only when filled in. Must match the Razorpay KYC exactly.
+  regdNo: "" as string,
+  gstin: "" as string,
   address: "Baramunda Ground, Bhubaneswar, Odisha, India",
   socials: [{ label: "Instagram · @aoga_official", href: "https://instagram.com/aoga_official" }],
   tagline: "Strength · Discipline · Tradition · Culture · Odisha",
-  tbc: {
-    close: "Circular leaves registration opening/closing dates blank — 20 Nov assumed",
-    identity: "Regd. No. and GSTIN not in the circular",
-    upi: "AOGA's UPI ID needed — this QR is not payable until then",
-  },
 } as const;
 
 const BB_MEN: Prize[] = [50000, 30000, 20000, 10000, 5000];
 const OPEN_1L: Prize[] = [100000, 50000, 30000, 20000, 10000];
-
-const FEE_TBC = "Circular lists fees for physique categories and the marathon only — fee to be announced";
 
 // Six championships per circular §2.4; categories §4; prizes §9; fees §7; days §5.
 export const CHAMPIONSHIPS: Championship[] = [
@@ -100,7 +89,6 @@ export const CHAMPIONSHIPS: Championship[] = [
           { label: "Champion of Champions", prize: 150000 },
           { label: "Runner-up", prize: 70000 },
         ],
-        tbc: "Circular leaves the two Classic Physique category limits blank",
       },
       { id: "womens-bb", name: "Women’s Bodybuilding", classes: ["Open"], prizes: OPEN_1L },
       { id: "bikini", name: "Bikini Model", classes: ["Open"], prizes: OPEN_1L },
@@ -129,7 +117,6 @@ export const CHAMPIONSHIPS: Championship[] = [
         classes: ["53 kg", "59 kg", "66 kg", "74 kg", "83 kg", "93 kg", "105 kg", "105 kg+"],
         prizes: [25000, 20000, 15000, 10000, 5000],
         extras: [{ label: "Strong Man", prize: 100000 }],
-        tbc: `Weight classes from the earlier poster (not in circular). ${FEE_TBC}`,
       },
       {
         id: "pl-women",
@@ -137,7 +124,6 @@ export const CHAMPIONSHIPS: Championship[] = [
         classes: ["47 kg", "52 kg", "57 kg", "63 kg", "69 kg", "76 kg", "84 kg", "84 kg+"],
         prizes: [25000, 20000, 15000, 10000, 5000],
         extras: [{ label: "Strong Woman", prize: 100000 }],
-        tbc: `Weight classes from the earlier poster (not in circular). ${FEE_TBC}`,
       },
     ],
   },
@@ -155,7 +141,6 @@ export const CHAMPIONSHIPS: Championship[] = [
         classes: ["55 kg", "60 kg", "65 kg", "70 kg", "75 kg", "80 kg", "85 kg", "90 kg", "90 kg+"],
         prizes: [30000, 20000, 10000],
         extras: [{ label: "Champion of Champions", prize: 100000 }],
-        tbc: `Weight classes from the earlier poster (not in circular). ${FEE_TBC}`,
       },
     ],
   },
@@ -166,7 +151,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "Heritage",
     tagline: "After 25 years, the Dangal returns.",
     when: "Fri 4 Dec, from 11 AM",
-    divisions: [{ id: "kesari", name: "Utkal Kesari", classes: ["Open"], prizes: ["Royal Enfield Bullet", 100000], tbc: FEE_TBC }],
+    divisions: [{ id: "kesari", name: "Utkal Kesari", classes: ["Open"], prizes: ["Royal Enfield Bullet", 100000] }],
   },
   {
     id: "boxing",
@@ -176,7 +161,6 @@ export const CHAMPIONSHIPS: Championship[] = [
     tagline: "Gloves on in Bhubaneswar.",
     when: "Fri 4 Dec, from 11 AM",
     divisions: [],
-    tbc: "Circular lists Boxing but leaves categories and prizes blank",
   },
   {
     id: "marathon",
@@ -185,7 +169,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "National",
     tagline: "Run with the spirit of champions.",
     when: "Fri 4 Dec, 5:30 AM start",
-    divisions: [{ id: "run", name: "Open", classes: ["Open"], prizes: [], fee: 600, tbc: "Distances and prizes not in the circular" }],
+    divisions: [{ id: "run", name: "Open", classes: ["Open"], prizes: [], fee: 600 }],
   },
 ];
 
@@ -211,13 +195,13 @@ export const HEADLINE_PRIZES: { label: string; sub: string; prize: Prize }[] = [
   { label: "Strong Man · Strong Woman", sub: "Powerlifting", prize: 100000 },
 ];
 
-export const VALUE: { title: string; body: string; icon: string; tbc?: boolean }[] = [
+export const VALUE: { title: string; body: string; icon: string }[] = [
   { title: "Official athlete ID", body: "Your entry pass and access to the athlete zone on your competition day.", icon: "badge" },
-  { title: "Medal, certificate & T-shirt", body: "Festival medal, participation certificate and official athlete T-shirt.", icon: "medal", tbc: true },
-  { title: "Your photos & reel", body: "10 professional stage photos + a 15-second Instagram reel of you, within 72 hours.", icon: "camera", tbc: true },
-  { title: "Live on stream", body: "Your category is broadcast live — family and friends can watch from home.", icon: "broadcast", tbc: true },
-  { title: "Warm-up zone & medical", body: "Pump-up area, drinking water, and doctors on site all 3 days.", icon: "shield", tbc: true },
-  { title: "Hotel & travel help", body: "Special athlete rates at partner hotels in Bhubaneswar.", icon: "hotel", tbc: true },
+  { title: "Medal, certificate & T-shirt", body: "Festival medal, participation certificate and official athlete T-shirt.", icon: "medal" },
+  { title: "Your photos & reel", body: "10 professional stage photos + a 15-second Instagram reel of you, within 72 hours.", icon: "camera" },
+  { title: "Live on stream", body: "Your category is broadcast live — family and friends can watch from home.", icon: "broadcast" },
+  { title: "Warm-up zone & medical", body: "Pump-up area, drinking water, and doctors on site all 3 days.", icon: "shield" },
+  { title: "Hotel & travel help", body: "Special athlete rates at partner hotels in Bhubaneswar.", icon: "hotel" },
 ];
 
 export const DAYS = [
@@ -264,36 +248,46 @@ export const COMMITTEE = [
 export const DOCUMENTS = ["Government ID", "Age proof", "Recent photograph", "Association / federation details", "Athlete self-declaration", "Medical declaration, if applicable"];
 
 export const LEGENDS = [
-  { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/pfp-anil.webp", tbc: true },
-  { name: "Ranu Mohanty", title: "Asian Powerlifting Championship silver medallist · Senior National champion", line: "All India Open Powerlifting", face: "/img/pfp-ranu.webp", tbc: true },
-  { name: "Dutee Chand", title: "Olympian · 2× Asian Games silver medallist (2018) · National 100m record holder", line: "Dutee’s Marathon", face: "/img/pfp-dutee.webp", tbc: true },
+  { name: "Anil Gochhikar", title: "Bodybuilder · The Classic is named after him", line: "Anil Gochhikar Classic", face: "/img/pfp-anil.webp" },
+  { name: "Ranu Mohanty", title: "Asian Powerlifting Championship silver medallist · Senior National champion", line: "All India Open Powerlifting", face: "/img/pfp-ranu.webp" },
+  { name: "Dutee Chand", title: "Olympian · 2× Asian Games silver medallist (2018) · National 100m record holder", line: "Dutee’s Marathon", face: "/img/pfp-dutee.webp" },
 ];
 
-export const FAQ: { q: string; a: string; tbc?: boolean }[] = [
+// Refund rules — one source for the FAQ, the Register section and the /refund policy page.
+export const REFUND = {
+  partialUntil: "31 October 2026",
+  partialPct: 50,
+  creditDays: "5–7 working days",
+};
+
+export const FAQ: { q: string; a: string }[] = [
+  {
+    q: "Is this a lottery, betting or game of chance?",
+    a: "No. India’s Biggest Sports Festival is a physical sports competition. Results are decided only by athletic performance — judges’ scores, weigh-ins, lifts, bouts and finish times — under published rules. There is no draw, no betting and no element of chance. The registration fee pays for competition entry and athlete services; it is not a stake.",
+  },
   {
     q: "Is the prize money guaranteed?",
-    a: "Yes. The ₹1.5 Crore prize pool is committed by the organisers and does not depend on how many athletes register. The full payout policy — timelines, KYC and tax — is published on the prize page.",
-    tbc: true,
+    a: "Yes. The ₹1.5 Crore prize money is committed by the organisers and does not depend on how many athletes register. The payout process — KYC and tax — is set out in the Prize & payout policy.",
   },
   {
     q: "What does the ₹5,000 registration include?",
     a: "Competition entry, official accreditation, medal and certificate, athlete kit, professional stage photos and a short reel of your moment, live-stream presence and athlete-lounge access.",
-    tbc: true,
+  },
+  {
+    q: "How do I pay?",
+    a: "Online, through Razorpay’s secure checkout — UPI (GPay, PhonePe, Paytm, BHIM), debit / credit card or netbanking. Your registration is confirmed on screen the moment payment succeeds, and Razorpay emails you a receipt.",
   },
   {
     q: "Can I get a refund?",
-    a: "Full refund if the organiser cancels or postpones. 50% refund until 31 October. You can transfer your entry to another athlete or change category free of charge until registrations close.",
-    tbc: true,
+    a: `Full refund if the organiser cancels or postpones. ${REFUND.partialPct}% refund if you cancel on or before ${REFUND.partialUntil}. You can transfer your entry to another athlete or change category free of charge until registrations close. Approved refunds go back to your original payment method within ${REFUND.creditDays}.`,
   },
   {
     q: "When and how are prizes paid?",
-    a: "Winners are announced on stage and paid by bank transfer after KYC (PAN + bank details). Tax (TDS) is deducted as required by Indian law.",
-    tbc: true,
+    a: "Winners are announced on stage and paid by bank transfer to the winner’s own account after KYC (PAN + bank details). Tax (TDS) is deducted as required by Indian law.",
   },
   {
     q: "Which federation rules apply? Will competing affect my federation status?",
-    a: "Athletes from all federations are welcome. Sport-specific rules, judging criteria and weigh-in procedures are published in each rulebook.",
-    tbc: true,
+    a: "Athletes from all federations are welcome. Sport-specific rules, judging criteria and weigh-in procedures are published on the Rules page.",
   },
   {
     q: "Is the competition drug-tested?",
@@ -323,16 +317,15 @@ export const FAQ: { q: string; a: string; tbc?: boolean }[] = [
   {
     q: "Can I enter more than one category?",
     a: "Yes — each category is a separate entry. Register once per category.",
-    tbc: true,
   },
-  { q: "I’m a coach. Can I register my whole team?", a: "Yes. Message us on WhatsApp with your athletes’ details and our team will send one UPI QR for the total." },
+  { q: "I’m a coach. Can I register my whole team?", a: "Yes. Message us on WhatsApp with your athletes’ details and our team will send one secure Razorpay payment link for the total." },
   {
     q: "Is the Star Category really free?",
     a: "Yes. Registration for physically disabled athletes is free, with a ₹2,10,000 prize table.",
   },
   {
     q: "I paid but didn’t get a confirmation.",
-    a: "Do not pay again. After paying by UPI QR, enter your 12-digit UTR number — AOGA checks it against the bank statement and confirms on WhatsApp within 24 hours. If you closed the page, WhatsApp us your payment screenshot.",
+    a: `Do not pay again. A successful payment shows your registration ID on screen and Razorpay emails a receipt. If money was deducted but you saw no confirmation, WhatsApp us your Razorpay payment ID (it starts with “pay_”) and we will confirm within 24 hours. A payment that failed midway is reversed to your account automatically, usually within ${REFUND.creditDays}.`,
   },
 ];
 

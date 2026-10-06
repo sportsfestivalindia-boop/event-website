@@ -3,19 +3,6 @@ import { EVENT, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph } from "./icons";
 
-/** Preview builds show unconfirmed facts with a TBC badge; production (NEXT_PUBLIC_SHOW_TBC=0) hides them. */
-export const PREVIEW = process.env.NEXT_PUBLIC_SHOW_TBC !== "0";
-export const live = <T extends { tbc?: unknown }>(items: T[]) => (PREVIEW ? items : items.filter((i) => !i.tbc));
-
-export function Tbc({ note }: { note?: string }) {
-  if (!PREVIEW) return null;
-  return (
-    <span title={note} className="ml-2 inline-block shrink-0 self-start rounded-sm border border-red-500 px-1 align-middle font-sans text-[9px] leading-[14px] font-semibold tracking-normal text-red-500 normal-case">
-      TBC{note ? <span className="sr-only">: {note}</span> : null}
-    </span>
-  );
-}
-
 export function Cta({
   label = "Register now",
   href = registerHref(),
@@ -39,7 +26,7 @@ export function Cta({
         {label}
         <Icon name="arrow" className="arr size-5" />
       </Link>
-      {micro && <p className="text-xs text-muted">2-min signup · UPI enabled · Instant WhatsApp confirmation</p>}
+      {micro && <p className="text-xs text-muted">{PAY_LINE}</p>}
     </div>
   );
 }
@@ -80,12 +67,30 @@ export function Section({ id, theme = "ink", children, className = "" }: { id?: 
   );
 }
 
-/** Art-directed slot for original photography — swapped file-for-file later. */
-export function MediaSlot({ label, ratio, className = "" }: { label: string; ratio: string; className?: string }) {
+/** One line under every CTA: how payment works. */
+export const PAY_LINE = "2-min signup · Secure payment by Razorpay · Instant confirmation";
+
+/** Policy links Razorpay (and athletes) expect on every page, checkout included. */
+export const POLICY_LINKS = [
+  ["About us", "/about"],
+  ["Contact us", "/contact"],
+  ["Terms & conditions", "/terms"],
+  ["Privacy policy", "/privacy"],
+  ["Refund & cancellation", "/refund"],
+  ["Shipping & delivery", "/shipping"],
+  ["Prize & payout policy", "/prizes"],
+  ["Rules", "/rules"],
+] as const;
+
+export function PolicyLinks({ className = "" }: { className?: string }) {
   return (
-    <div className={`finder-frame relative overflow-hidden rounded-xl ${className}`}>
-      {PREVIEW && <span className="absolute top-4 left-6 text-[10px] tracking-wide text-muted uppercase">Photo · {label} · {ratio}</span>}
-    </div>
+    <nav aria-label="Policies" className={`flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-muted ${className}`}>
+      {POLICY_LINKS.map(([l, h]) => (
+        <Link key={h} href={h} className="underline-offset-4 hover:text-white hover:underline">
+          {l}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

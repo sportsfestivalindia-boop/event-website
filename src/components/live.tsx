@@ -176,7 +176,7 @@ export function Chrome() {
       >
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="display text-xl leading-none text-gold">₹1.5 Crore</p>
+            <p className="display text-xl leading-none text-gold">4–6 Dec · Bhubaneswar</p>
             <p className="mt-1 text-[11px] whitespace-nowrap text-muted">
               Closes in <Countdown className="font-semibold text-white" />
             </p>

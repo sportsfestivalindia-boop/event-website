@@ -8,11 +8,10 @@ const anton = Anton({ variable: "--font-anton", weight: "400", subsets: ["latin"
 const poppins = Poppins({ variable: "--font-poppins", weight: ["400", "500", "600", "700"], subsets: ["latin", "latin-ext"] });
 
 export const metadata: Metadata = {
-  title: "Sports Festival 2026 · India’s Biggest Sports Festival · ₹1.5 Crore Prize Pool",
+  title: "India’s Biggest Sports Festival 2026 · Bodybuilding, Powerlifting, Dangal & more · Bhubaneswar",
   description:
-    "6 championships. ₹1,50,00,000 in prizes. 4–6 December 2026, Bhubaneswar, Odisha. Organised by the All Odisha Gym Association. Register for ₹5,000.",
+    "Six championships — bodybuilding & physique, powerlifting, arm wrestling, Dangal, boxing and a marathon. 4–6 December 2026, Baramunda Ground, Bhubaneswar. Organised by the All Odisha Gym Association. ₹1.5 Crore in prize money for the winners.",
   icons: { icon: "/img/icon-512.png", apple: "/img/icon-512.png" },
-  robots: { index: false, follow: false }, // draft for organiser review — remove at launch
 };
 
 export const viewport: Viewport = { themeColor: "#0a0a0a" };
