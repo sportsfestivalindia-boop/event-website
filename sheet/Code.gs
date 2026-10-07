@@ -6,9 +6,9 @@
  *   2. Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone → copy the /exec URL.
  *   3. Put that URL in Vercel as SHEET_WEBHOOK_URL (Production) — the website then writes here.
  *
- * Daily use: open the Yes Bank merchant app, find each UTR in the Registrations tab, check the amount,
- * set Status = Verified. The athlete's confirmation email goes out automatically; tap "Send" in the
- * WhatsApp column to send the WhatsApp confirmation.
+ * Daily use: check each WhatsApp payment screenshot against the Yes Bank merchant app, then issue the ticket at
+ * sportsfestivalindia.com/admin/tickets. That marks the row Verified here and emails the athlete automatically.
+ * (Setting Status = Verified by hand also sends the email.)
  */
 
 const EVENT = {
@@ -93,6 +93,16 @@ function doPost(e) {
         sh.getRange(r, R["UTR"]).setValue(d.utr);
         sh.getRange(r, R["UTR at"]).setValue(d.utrAt);
         if (sh.getRange(r, R["Status"]).getValue() !== "Verified") sh.getRange(r, R["Status"]).setValue("Pending");
+      }
+    } else if (d.action === "ticket") {
+      // staff issued a ticket on the website → mark the athlete Verified and email them (if a row exists for this Reg ID)
+      const sh = ss.getSheetByName("Registrations");
+      const r = findRow(sh, R["Reg ID"], d.regId);
+      if (r) {
+        sh.getRange(r, R["UTR"]).setValue(d.utr);
+        sh.getRange(r, R["Notes"]).setValue(`Ticket ${d.ticketNo}: ${d.ticketUrl}`);
+        sh.getRange(r, R["Status"]).setValue("Verified");
+        confirm(sh, r);
       }
     } else if (d.action === "stall") {
       ss.getSheetByName("Stalls").appendRow([d.bookingId, d.created, d.stall, d.price, d.company, d.contact, d.phone, d.email, d.gstin, d.sector, d.status, ""]);

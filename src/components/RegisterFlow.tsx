@@ -11,7 +11,7 @@ import { track } from "@/lib/track";
 
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
-type Done = { regId: string; label: string; paid: number; utr?: string };
+type Done = { regId: string; label: string; paid: number };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
@@ -42,7 +42,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
-  const [utr, setUtr] = useState("");
+  const [copied, setCopied] = useState(false);
   const [done, setDone] = useState<Done | null>(null);
 
   const champ = open.find((c) => c.id === f.sport)!;
@@ -74,19 +74,19 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     }
   }
 
-  const waText = (p: Pending, u?: string) =>
-    `Registration ${p.regId}\n${p.label} · ${inr(p.amount)}${u ? `\nPaid by UPI · UTR ${u}` : ""}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`;
-  const waHref = (p: Pending, u?: string) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(waText(p, u))}`;
+  const waText = (p: Pending, paid?: boolean) =>
+    `${paid ? "PAYMENT SCREENSHOT ATTACHED 👇\n\n" : ""}Registration ${p.regId}\n${p.label} · ${inr(p.amount)}${paid ? " · paid by UPI" : ""}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`;
+  const waHref = (p: Pending, paid?: boolean) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(waText(p, paid))}`;
 
-  function sendUtr() {
-    // Purchase fires on UTR entry (not yet bank-verified). WhatsApp opens first (popup blockers need it inside the click);
-    // the sheet write follows with keepalive so it survives the tab switch. WhatsApp to AOGA is the backup record.
-    window.open(waHref(pending!, utr), "_blank", "noopener");
-    fetch("/api/utr", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ regId: pending!.regId, utr }), keepalive: true }).catch(() => {});
+  function sendScreenshot() {
+    // Athlete attaches the payment screenshot in WhatsApp; AOGA verifies it against the Yes Bank statement and sends the ticket.
+    // Purchase fires here (not yet bank-verified).
+    window.open(waHref(pending!, true), "_blank", "noopener");
     track("paid", { orderId: pending!.regId, value: pending!.amount, sport: champ.sport, label: pending!.label });
-    setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount, utr });
+    setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount });
   }
 
+  if (done && done.paid) return <Submitted done={done} resend={() => window.open(waHref(pending!, true), "_blank", "noopener")} />;
   if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} />;
 
   const input = "h-13 w-full rounded-lg border border-line bg-raise px-4 text-base outline-none transition-colors focus:border-gold";
@@ -261,33 +261,48 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
       {step === 4 && pending && pending.qr && (
         <section className="mt-8 space-y-5">
           <div className="t-paper rounded-2xl p-6 text-center">
-            <p className="text-sm font-semibold">Scan &amp; pay with any UPI app</p>
-            <p className="display mt-1 text-5xl">{inr(pending.amount)}</p>
+            <p className="text-xs font-semibold text-muted uppercase">Registration {pending.regId}</p>
+            <p className="mt-2 text-sm font-semibold">Pay exactly</p>
+            <p className="display text-6xl">{inr(pending.amount)}</p>
             {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
             <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto mt-4 size-60 rounded-lg border border-line bg-white p-2" />
             <p className="mt-3 text-xs text-muted">
               Your UPI app will show <b className="text-ink">{EVENT.upi.payee}</b> ({EVENT.upi.bank}) — the festival’s collection account
-              <br />
-              Reference {pending.regId}
             </p>
             <a href={pending.upi!} className="btn btn-ink mt-5 w-full md:hidden">
               Open GPay / PhonePe / Paytm
             </a>
-            <p className="mt-3 text-xs text-muted">Google Pay · PhonePe · Paytm · BHIM · any UPI app</p>
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs">
+              <span className="text-muted">UPI ID</span>
+              <code className="rounded bg-ink/5 px-2 py-1 font-semibold">{EVENT.upi.id}</code>
+              <button
+                onClick={() => navigator.clipboard?.writeText(EVENT.upi.id).then(() => setCopied(true))}
+                className="rounded border border-line px-2 py-1 font-semibold hover:border-ink"
+              >
+                {copied ? "Copied ✓" : "Copy"}
+              </button>
+            </div>
           </div>
-          <ol className="space-y-2 text-sm">
-            {["Scan the QR (or tap the button on your phone) and pay the exact amount.", "Copy the 12-digit UTR / UPI reference number shown after payment.", "Enter it below and send it to AOGA on WhatsApp to get your pass."].map((t, i) => (
-              <li key={t} className="flex gap-3">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
-                <span className="text-muted">{t}</span>
-              </li>
-            ))}
-          </ol>
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">UTR / UPI reference number</span>
-            <input className={`${input} tnum tracking-widest`} value={utr} onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))} inputMode="numeric" placeholder="12 digits" />
-          </label>
-          <p className="text-xs text-muted">Can’t find the UTR? It’s in your UPI app’s payment history. Or send AOGA a screenshot of the payment on WhatsApp.</p>
+
+          <div className="card p-5">
+            <p className="text-sm font-semibold">How to pay — 4 easy steps</p>
+            <ol className="mt-3 space-y-3 text-sm">
+              {[
+                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Open GPay / PhonePe / Paytm”, or take a screenshot of the QR and scan it from your gallery inside the app.</>],
+                ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
+                ["Screenshot", <>After paying, take a <b className="text-white">screenshot of the “Payment successful” screen</b> — it must show the UTR / transaction number.</>],
+                ["Send", <>Tap <b className="text-white">“Send payment screenshot on WhatsApp”</b> below, attach the screenshot and send. We verify it and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.</>],
+              ].map(([t, b], i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
+                  <span className="text-muted">
+                    <b className="text-white">{t}.</b> {b}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <p className="text-center text-xs text-muted">Don’t pay twice. If the payment failed or money was deducted without success, WhatsApp us — we’ll sort it out.</p>
         </section>
       )}
 
@@ -328,8 +343,8 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             </button>
           )}
           {step === 4 && pending?.qr && (
-            <button onClick={sendUtr} disabled={utr.length !== 12} className="btn btn-gold flex-1 disabled:opacity-40">
-              I’ve paid — send UTR &amp; get pass
+            <button onClick={sendScreenshot} className="btn flex-1 bg-wa text-white">
+              <WhatsAppGlyph className="size-6" /> Send payment screenshot on WhatsApp
             </button>
           )}
         </div>
@@ -339,7 +354,37 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   );
 }
 
-/** Success: the athlete pass. */
+/** Paid by QR: screenshot sent to AOGA, ticket follows after verification. */
+function Submitted({ done, resend }: { done: Done; resend: () => void }) {
+  return (
+    <div className="mx-auto w-full max-w-md px-5 py-10 text-center">
+      <span className="mx-auto grid size-16 place-items-center rounded-full bg-gold text-ink">
+        <Icon name="check" className="size-9" />
+      </span>
+      <h1 className="display mt-5 text-5xl">Payment submitted</h1>
+      <p className="mt-3 text-muted">
+        Thank you! Our team will check your {inr(done.paid)} payment and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.
+      </p>
+      <div className="card mt-8 p-6">
+        <p className="text-xs text-muted uppercase">Your registration ID</p>
+        <p className="display mt-1 text-4xl tracking-wider text-gold">{done.regId}</p>
+        <p className="mt-2 text-sm font-semibold">{done.label}</p>
+      </div>
+      <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-left text-sm">
+        <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and press send. Didn’t open?
+        <button onClick={resend} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-wa py-3 font-semibold text-white">
+          <WhatsAppGlyph className="size-5" /> Open WhatsApp again
+        </button>
+      </div>
+      <p className="mt-6 text-xs text-muted">Keep your registration ID and payment screenshot until you receive your ticket.</p>
+      <Link href="/" className="btn btn-line mt-8 w-full">
+        Back to home
+      </Link>
+    </div>
+  );
+}
+
+/** Success: the athlete pass (free registrations). */
 function Pass({ done, name, city, when }: { done: Done; name: string; city: string; when: string }) {
   const share = encodeURIComponent(`I just registered for India’s Biggest Sports Festival 2026 — 6 championships, 4–6 Dec, Bhubaneswar. Register: ${typeof location !== "undefined" ? location.origin : ""}`);
   return (
@@ -350,7 +395,7 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
         </span>
         <h1 className="display mt-5 text-5xl">You’re registered!</h1>
         <p className="mt-2 text-muted">
-          {done.paid ? `UTR sent for ${inr(done.paid)}. AOGA will match it with the bank and confirm on WhatsApp within 24 hours.` : "Free registration confirmed."}
+          Free registration confirmed.
         </p>
       </div>
 
@@ -362,9 +407,7 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
         <div className="p-6">
           <div className="flex items-start justify-between gap-3">
             <Wordmark />
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${done.paid ? "bg-amber-400/15 text-amber-300" : "bg-wa/15 text-wa"}`}>
-              {done.paid ? "Payment verifying" : "Confirmed"}
-            </span>
+            <span className="shrink-0 rounded-full bg-wa/15 px-2.5 py-1 text-[10px] font-bold text-wa uppercase">Confirmed</span>
           </div>
           <p className="mt-6 text-xs text-muted uppercase">Athlete</p>
           <p className="display text-4xl leading-tight">{name}</p>
@@ -376,7 +419,6 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
             <div>
               <p className="text-xs text-muted uppercase">Registration ID</p>
               <p className="display text-3xl tracking-wider whitespace-nowrap text-gold">{done.regId}</p>
-              {done.utr && <p className="tnum mt-1 text-xs text-muted">UTR {done.utr}</p>}
             </div>
             <p className="text-right text-xs text-muted">
               {EVENT.venue}

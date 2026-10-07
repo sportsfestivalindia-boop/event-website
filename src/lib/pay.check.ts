@@ -35,4 +35,16 @@ assert.equal(validUtr("12345"), false, "short UTR rejected");
 assert.equal(validUtr("12345678901a"), false, "non-numeric UTR rejected");
 assert.equal(upiLink(5000, "SF26-ABC123") === null || upiLink(5000, "SF26-ABC123")!.includes("am=5000.00"), true, "UPI link carries the amount (or is off until the UPI ID is set)");
 
-console.log("pay.check: all passed");
+// tickets: sealed with ADMIN_KEY — tamper-proof, one UTR = one ticket number
+process.env.ADMIN_KEY = "test-key-for-checks-only";
+import("./ticket").then(({ seal, unseal, ticketNo, isAdmin }) => {
+  const tk = { t: ticketNo("428109567123"), n: "Test Athlete", c: "Marathon · Open", w: "Fri 4 Dec", a: 600, u: "428109567123", i: new Date().toISOString() };
+  assert.equal(ticketNo("428109567123"), tk.t, "same UTR → same ticket number");
+  assert.notEqual(ticketNo("428109567124"), tk.t, "different UTR → different ticket number");
+  const token = seal(tk);
+  assert.deepEqual(unseal(token), tk, "ticket round-trips");
+  const bad = token.slice(0, 20) + (token[20] === "A" ? "B" : "A") + token.slice(21);
+  assert.equal(unseal(bad), null, "edited ticket link rejected");
+  assert.ok(isAdmin("test-key-for-checks-only") && !isAdmin("wrong"), "staff password checked");
+  console.log("pay.check: all passed");
+});
