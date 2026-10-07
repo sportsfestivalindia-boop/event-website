@@ -1,6 +1,8 @@
 // Server only. Tickets are sealed (AES-256-GCM) with ADMIN_KEY, so a ticket link can't be faked or edited, and
 // personal details never sit readable in the URL. The ticket number is derived from the UTR, so one payment = one ticket.
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { CHAMPIONSHIPS } from "@/data/festival";
+import { istNow, toSheet } from "@/lib/sheet";
 
 export type Ticket = {
   t: string; // ticket number
@@ -52,4 +54,23 @@ export function unseal(token: string): Ticket | null {
   } catch {
     return null;
   }
+}
+
+/** Competition day(s) for a category label like "Marathon · Open". */
+export const whenFor = (category: string) => CHAMPIONSHIPS.find((c) => category.startsWith(c.sport))?.when ?? "";
+
+/**
+ * Seals the ticket and records it in the sheet, which marks the athlete Verified and emails them.
+ * Refused when the sheet says this UTR already has a ticket for someone else (reused screenshot / UTR).
+ */
+export async function issueTicket(
+  p: { name: string; phone: string; category: string; amount: number; utr: string; regId?: string; when?: string },
+  origin: string,
+): Promise<{ ticketNo: string; url: string } | { duplicate: string }> {
+  const t = ticketNo(p.utr);
+  const token = seal({ t, n: p.name, c: p.category, w: p.when || whenFor(p.category), a: p.amount, u: p.utr, r: p.regId || undefined, i: new Date().toISOString() });
+  const url = new URL(`/ticket/${token}`, origin).toString();
+  const sheet = await toSheet("ticket", { regId: p.regId ?? "", utr: p.utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow(), name: p.name, phone: p.phone, category: p.category, fee: p.amount });
+  if (sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
+  return { ticketNo: t, url };
 }

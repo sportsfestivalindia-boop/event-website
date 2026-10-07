@@ -11,7 +11,8 @@ import { track } from "@/lib/track";
 
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
-type Done = { regId: string; label: string; paid: number };
+type Done = { regId: string; label: string; paid: number; utr?: string };
+type Claim = { verified?: boolean; pending?: boolean; ticketUrl?: string | null; ticketNo?: string };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
@@ -44,6 +45,9 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const [pending, setPending] = useState<Pending | null>(null);
   const [copied, setCopied] = useState(false);
   const [done, setDone] = useState<Done | null>(null);
+  const [utr, setUtr] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [verified, setVerified] = useState<Claim | null>(null);
 
   const champ = open.find((c) => c.id === f.sport)!;
   const div = champ.divisions.find((d) => d.id === f.division)!;
@@ -79,13 +83,35 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const waHref = (p: Pending, paid?: boolean) => `https://wa.me/${EVENT.paymentsWhatsApp.wa}?text=${encodeURIComponent(waText(p, paid))}`;
 
   function sendScreenshot() {
-    // Athlete attaches the payment screenshot in WhatsApp; AOGA verifies it against the Yes Bank statement and sends the ticket.
-    // Purchase fires here (not yet bank-verified).
+    // Fallback: athlete attaches the payment screenshot in WhatsApp; AOGA checks it against Yes Bank and sends the ticket.
     window.open(waHref(pending!, true), "_blank", "noopener");
-    track("paid", { orderId: pending!.regId, value: pending!.amount, sport: champ.sport, label: pending!.label });
     setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount });
   }
 
+  /** Matches the typed UTR with Yes Bank's own credit alert (logged by Make). Most payments confirm within a minute. */
+  async function verify() {
+    const p = pending!;
+    setError("");
+    setChecking(true);
+    try {
+      for (let i = 0; i < 20; i++) {
+        const c = await post<Claim>("/api/claim", { regId: p.regId, utr });
+        if (c.verified) {
+          // Purchase fires only once the bank has confirmed the money (not on a click)
+          track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
+          return setVerified(c);
+        }
+        await new Promise((r) => setTimeout(r, 9000));
+      }
+      setDone({ regId: p.regId, label: p.label, paid: p.amount, utr }); // bank alert still not in: Make finishes it, ticket comes by email
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  if (verified) return <Verified claim={verified} regId={pending!.regId} label={pending!.label} email={f.email} />;
   if (done && done.paid) return <Submitted done={done} resend={() => window.open(waHref(pending!, true), "_blank", "noopener")} />;
   if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} />;
 
@@ -285,13 +311,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           </div>
 
           <div className="card p-5">
-            <p className="text-sm font-semibold">How to pay — 4 easy steps</p>
+            <p className="text-sm font-semibold">How to pay — 3 easy steps</p>
             <ol className="mt-3 space-y-3 text-sm">
               {[
                 ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Open GPay / PhonePe / Paytm”, or take a screenshot of the QR and scan it from your gallery inside the app.</>],
                 ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
-                ["Screenshot", <>After paying, take a <b className="text-white">screenshot of the “Payment successful” screen</b> — it must show the UTR / transaction number.</>],
-                ["Send", <>Tap <b className="text-white">“Send payment screenshot on WhatsApp”</b> below (or WhatsApp it to <b className="text-white">{EVENT.paymentsWhatsApp.display}</b>), attach the screenshot and send. We verify it and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.</>],
+                ["Confirm", <>On the “Payment successful” screen, find the <b className="text-white">12-digit UTR / UPI Ref. No. / UPI transaction ID</b>, type it below and tap <b className="text-white">Verify my payment</b>. We match it with the bank and your <b className="text-white">ticket appears here</b> — usually within a minute.</>],
               ].map(([t, b], i) => (
                 <li key={i} className="flex gap-3">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
@@ -302,7 +327,24 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               ))}
             </ol>
           </div>
-          <p className="text-center text-xs text-muted">Don’t pay twice. If the payment failed or money was deducted without success, WhatsApp us — we’ll sort it out.</p>
+          <label className="card block p-5">
+            <span className="text-sm font-semibold">UTR / UPI reference number</span>
+            <input
+              className={`${input} tnum mt-3 text-center text-xl tracking-[0.25em]`}
+              value={utr}
+              onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="12 digits"
+              disabled={checking}
+            />
+            <span className="mt-2 block text-xs text-muted">GPay: “UPI transaction ID” · PhonePe: “UTR” · Paytm: “UPI Ref. No.”</span>
+          </label>
+          {checking && <p className="text-center text-sm text-gold">Checking with the bank… keep this page open (up to 3 minutes).</p>}
+          <button onClick={sendScreenshot} className="flex w-full items-center justify-center gap-2 text-sm text-muted underline underline-offset-2 hover:text-white">
+            <WhatsAppGlyph className="size-4" /> Can’t find the UTR? Send your payment screenshot on WhatsApp instead
+          </button>
+          <p className="text-center text-xs text-muted">Don’t pay twice. If the payment failed or money was deducted without success, WhatsApp {EVENT.paymentsWhatsApp.display} — we’ll sort it out.</p>
         </section>
       )}
 
@@ -343,12 +385,13 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             </button>
           )}
           {step === 4 && pending?.qr && (
-            <button onClick={sendScreenshot} className="btn flex-1 bg-wa text-white">
-              <WhatsAppGlyph className="size-6" /> Send payment screenshot on WhatsApp
+            <button onClick={verify} disabled={utr.length !== 12 || checking} className="btn btn-gold flex-1 disabled:opacity-40">
+              {checking ? "Checking with the bank…" : "Verify my payment"}
             </button>
           )}
         </div>
         {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">Fill name, date of birth, a 10-digit mobile, email and city</p>}
+        {step === 4 && pending?.qr && utr.length !== 12 && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">After paying, type the 12-digit UTR from your payment screen</p>}
       </div>
     </div>
   );
@@ -362,21 +405,61 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
         <Icon name="check" className="size-9" />
       </span>
       <h1 className="display mt-5 text-5xl">Payment submitted</h1>
-      <p className="mt-3 text-muted">
-        Thank you! Our team will check your {inr(done.paid)} payment and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.
-      </p>
+      {done.utr ? (
+        <p className="mt-3 text-muted">
+          Thank you! The bank hasn’t confirmed your {inr(done.paid)} payment (UTR {done.utr}) yet — this sometimes takes a little longer. Your <b className="text-white">ticket will be emailed</b> to you automatically as soon as it does.
+        </p>
+      ) : (
+        <p className="mt-3 text-muted">
+          Thank you! Our team will check your {inr(done.paid)} payment and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.
+        </p>
+      )}
       <div className="card mt-8 p-6">
         <p className="text-xs text-muted uppercase">Your registration ID</p>
         <p className="display mt-1 text-4xl tracking-wider text-gold">{done.regId}</p>
         <p className="mt-2 text-sm font-semibold">{done.label}</p>
       </div>
       <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-left text-sm">
-        <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and send it to <b>{EVENT.paymentsWhatsApp.display}</b>. Didn’t open?
+        {done.utr ? (
+          <>
+            <b>No ticket within 2 hours?</b> Send your “Payment successful” screenshot on WhatsApp to <b>{EVENT.paymentsWhatsApp.display}</b>.
+          </>
+        ) : (
+          <>
+            <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and send it to <b>{EVENT.paymentsWhatsApp.display}</b>. Didn’t open?
+          </>
+        )}
         <button onClick={resend} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-wa py-3 font-semibold text-white">
-          <WhatsAppGlyph className="size-5" /> Open WhatsApp again
+          <WhatsAppGlyph className="size-5" /> {done.utr ? "Send screenshot on WhatsApp" : "Open WhatsApp again"}
         </button>
       </div>
       <p className="mt-6 text-xs text-muted">Keep your registration ID and payment screenshot until you receive your ticket.</p>
+      <Link href="/" className="btn btn-line mt-8 w-full">
+        Back to home
+      </Link>
+    </div>
+  );
+}
+
+/** Bank confirmed the payment: ticket right here (also emailed by the sheet). */
+function Verified({ claim, regId, label, email }: { claim: Claim; regId: string; label: string; email: string }) {
+  return (
+    <div className="mx-auto w-full max-w-md px-5 py-10 text-center">
+      <span className="mx-auto grid size-16 place-items-center rounded-full bg-wa text-white">
+        <Icon name="check" className="size-9" />
+      </span>
+      <h1 className="display mt-5 text-5xl">Payment verified</h1>
+      <p className="mt-3 text-muted">You’re registered for {label}. We’ve also emailed your ticket to {email}.</p>
+      <div className="card mt-8 p-6">
+        <p className="text-xs text-muted uppercase">{claim.ticketNo ? "Ticket no." : "Registration ID"}</p>
+        <p className="display mt-1 text-4xl tracking-wider text-gold">{claim.ticketNo ?? regId}</p>
+      </div>
+      {claim.ticketUrl && (
+        <a href={claim.ticketUrl} className="btn btn-gold mt-6 w-full">
+          Open my ticket <Icon name="arrow" className="arr size-5" />
+        </a>
+      )}
+      <p className="mt-4 text-xs text-muted">Screenshot your ticket and bring it with your Government ID to check-in.</p>
       <Link href="/" className="btn btn-line mt-8 w-full">
         Back to home
       </Link>

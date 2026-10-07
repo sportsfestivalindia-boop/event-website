@@ -28,11 +28,14 @@ const EVENT = {
 const STATUSES = ["Awaiting payment", "Pending", "Verified", "Rejected"];
 
 const TABS = {
-  Registrations: ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes"],
+  Registrations: ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes", "Ticket"],
+  // Yes Bank credit alerts (SMS / email), parsed by the Make scenario — the proof a UTR was really paid
+  Bank: ["Received", "Amount (₹)", "UTR", "Payer", "Source", "Raw", "Matched Reg ID"],
   Stalls: ["Booking ID", "Created", "Stall", "Price (₹)", "Company", "Contact", "Mobile", "Email", "GSTIN", "Sector", "Status", "Notes"],
   Sponsors: ["Created", "Company", "Contact", "Mobile", "Email", "Interested in", "Budget", "Note", "Status", "Notes"],
 };
 const R = Object.fromEntries(TABS.Registrations.map((h, i) => [h, i + 1])); // header → column number
+const B = Object.fromEntries(TABS.Bank.map((h, i) => [h, i + 1]));
 
 /* ───────────────────────── setup ───────────────────────── */
 
@@ -46,6 +49,8 @@ function setup() {
   const reg = ss.getSheetByName("Registrations");
   // text formats so mobiles / UTRs keep their leading digits
   ["Mobile", "UTR", "DOB"].forEach((h) => reg.getRange(2, R[h], reg.getMaxRows() - 1).setNumberFormat("@"));
+  const bank = ss.getSheetByName("Bank");
+  bank.getRange(2, B["UTR"], bank.getMaxRows() - 1).setNumberFormat("@");
   reg.getRange(2, R["Status"], reg.getMaxRows() - 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).build());
 
   const col = (h) => String.fromCharCode(64 + R[h]);
@@ -91,14 +96,54 @@ function doPost(e) {
       const r = sh.getLastRow();
       sh.getRange(r, R["WhatsApp"]).setFormula(waFormula(sh, r));
       if (d.status === "Verified") confirm(sh, r); // free Star category: confirmed straight away
-    } else if (d.action === "utr") {
+    } else if (d.action === "claim") {
+      // athlete (or Make) says "registration X was paid with UTR Y": record it, and tell the website whether
+      // Yes Bank's own alert for that UTR is already here — the website issues the ticket only if it is
       const sh = ss.getSheetByName("Registrations");
+      const v = (r, h) => sh.getRange(r, R[h]).getValue();
       const r = findRow(sh, R["Reg ID"], d.regId);
-      if (r) {
-        sh.getRange(r, R["UTR"]).setValue(d.utr);
-        sh.getRange(r, R["UTR at"]).setValue(d.utrAt);
-        if (sh.getRange(r, R["Status"]).getValue() !== "Verified") sh.getRange(r, R["Status"]).setValue("Pending");
-      }
+      if (!r) return json({ ok: false, error: "not-found" });
+      if (v(r, "Status") === "Verified") return json({ ok: true, verified: true, ticketUrl: v(r, "Ticket") });
+      const u = findRow(sh, R["UTR"], d.utr);
+      if (u && u !== r && v(u, "Status") === "Verified") return json({ ok: false, duplicate: true });
+      sh.getRange(r, R["UTR"]).setValue(d.utr);
+      sh.getRange(r, R["UTR at"]).setValue(d.at);
+      sh.getRange(r, R["Status"]).setValue("Pending");
+      const bank = ss.getSheetByName("Bank");
+      const b = findRow(bank, B["UTR"], d.utr);
+      return json({
+        ok: true,
+        row: { name: v(r, "Name"), phone: String(v(r, "Mobile")), category: v(r, "Category"), fee: Number(v(r, "Fee (₹)")) },
+        bank: b ? { amount: Number(bank.getRange(b, B["Amount (₹)"]).getValue()) } : null,
+      });
+    } else if (d.action === "bank") {
+      // Make parsed a Yes Bank credit alert → log it once, and return the registration waiting on that UTR (if any);
+      // Make then calls the website's /api/claim, which issues the ticket
+      const bank = ss.getSheetByName("Bank");
+      const utr = String(d.utr || "").replace(/\D/g, "");
+      const amount = Number(d.amount);
+      if (!/^\d{12}$/.test(utr) || !(amount > 0)) return json({ ok: false, error: "bad-credit" });
+      if (!findRow(bank, B["UTR"], utr)) bank.appendRow([d.received || new Date(), amount, utr, d.payer || "", d.source || "", String(d.raw || "").slice(0, 500), ""]);
+      const reg = ss.getSheetByName("Registrations");
+      const r = findRow(reg, R["UTR"], utr);
+      const waiting = r && reg.getRange(r, R["Status"]).getValue() !== "Verified";
+      return json({ ok: true, utr, match: waiting ? reg.getRange(r, R["Reg ID"]).getValue() : "" });
+    } else if (d.action === "summary") {
+      // daily report for the organisers (Make → email / WhatsApp)
+      const reg = ss.getSheetByName("Registrations");
+      const n = reg.getLastRow() - 1;
+      const rows = n > 0 ? reg.getRange(2, 1, n, TABS.Registrations.length).getValues() : [];
+      const byStatus = {};
+      let collected = 0;
+      rows.forEach((x) => {
+        const s = x[R["Status"] - 1] || "Blank";
+        byStatus[s] = (byStatus[s] || 0) + 1;
+        if (s === "Verified") collected += Number(x[R["Fee (₹)"] - 1]) || 0;
+      });
+      const bank = ss.getSheetByName("Bank");
+      const bn = bank.getLastRow() - 1;
+      const unmatched = bn > 0 ? bank.getRange(2, B["Matched Reg ID"], bn, 1).getValues().filter((x) => !x[0]).length : 0;
+      return json({ ok: true, total: rows.length, byStatus, collected, unmatchedBankCredits: unmatched });
     } else if (d.action === "ticket") {
       // staff issued a ticket on the website → refuse a UTR already ticketed for someone else (reused screenshot),
       // else mark the athlete's row Verified and email them; no matching row (no Reg ID) → log the ticket as a new row
@@ -118,8 +163,11 @@ function doPost(e) {
         sh.getRange(r, R["WhatsApp"]).setFormula(waFormula(sh, r));
       }
       sh.getRange(r, R["UTR"]).setValue(d.utr);
-      sh.getRange(r, R["Notes"]).setValue(`Ticket ${d.ticketNo}: ${d.ticketUrl}`);
+      sh.getRange(r, R["Ticket"]).setValue(d.ticketUrl);
       sh.getRange(r, R["Status"]).setValue("Verified");
+      const bank = ss.getSheetByName("Bank");
+      const b = findRow(bank, B["UTR"], d.utr);
+      if (b) bank.getRange(b, B["Matched Reg ID"]).setValue(d.regId || d.name);
       confirm(sh, r);
     } else if (d.action === "stall") {
       ss.getSheetByName("Stalls").appendRow([d.bookingId, d.created, d.stall, d.price, d.company, d.contact, d.phone, d.email, d.gstin, d.sector, d.status, ""]);
@@ -153,6 +201,7 @@ function confirm(sh, r) {
     `Your registration for ${EVENT.name} is CONFIRMED.`,
     "",
     `Registration ID: ${v("Reg ID")}`,
+    ...(v("Ticket") ? [`Your ticket: ${v("Ticket")}`] : []),
     `Category: ${v("Category")}`,
     fee ? `Amount received: ₹${fee.toLocaleString("en-IN")} (UPI, UTR ${v("UTR")})` : "Entry: Free (Star / Para category)",
     `Dates: ${EVENT.dates}`,
