@@ -87,6 +87,29 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount });
   }
 
+  /** Same-phone payers: hand the QR image to the share menu — GPay/PhonePe read it as a scan (a link-opened payment is capped). */
+  async function shareQr() {
+    const p = pending!;
+    const file = new File([await (await fetch(p.qr!)).blob()], `sports-festival-${p.regId}-qr.png`, { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+      } catch {} // closed the menu
+      return;
+    }
+    Object.assign(document.createElement("a"), { href: p.qr!, download: file.name }).click(); // no share menu: save it instead
+  }
+
+  /** The UTR copied in the UPI app (often inside a longer text) → the 12-digit number. */
+  async function pasteUtr() {
+    try {
+      const text = await navigator.clipboard.readText();
+      setUtr(text.match(/\d{12}/)?.[0] ?? text.replace(/\D/g, "").slice(0, 12));
+    } catch {
+      setError("Couldn’t read the copied text — please type the 12 digits.");
+    }
+  }
+
   /** Matches the typed UTR with Yes Bank's own credit alert (logged by Make). Most payments confirm within a minute. */
   async function verify() {
     const p = pending!;
@@ -313,11 +336,15 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
                 from a link ("merchant received maximum amount"). A scan — even of a saved image — always works. */}
             <div className="mt-5 md:hidden">
               <p className="text-sm font-semibold">Paying on this phone?</p>
-              <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="btn btn-ink mt-3 w-full">
-                Save QR to gallery
-              </a>
-              <p className="mt-2 text-xs text-muted">
-                Then open GPay / PhonePe / Paytm → <b className="text-ink">Scan</b> → tap the <b className="text-ink">gallery</b> icon → choose this QR. iPhone: press and hold the QR → Save to Photos.
+              <button onClick={shareQr} className="btn btn-ink mt-3 w-full">
+                Pay with UPI app
+              </button>
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                Pick GPay / PhonePe / Paytm in the menu — it reads the QR. App not listed?{" "}
+                <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="font-semibold text-ink underline underline-offset-2">
+                  Save QR to gallery
+                </a>
+                , then in your UPI app tap Scan → gallery. iPhone: press and hold the QR → Save to Photos.
               </p>
             </div>
             <div className="mt-4 flex items-center justify-center gap-2 text-xs">
@@ -336,7 +363,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             <p className="text-sm font-semibold">How to pay — 3 easy steps</p>
             <ol className="mt-3 space-y-3 text-sm">
               {[
-                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Save QR to gallery” (or take a screenshot), then in your UPI app tap Scan → gallery and choose the QR.</>],
+                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Pay with UPI app” and pick your app — or save the QR and scan it from your gallery inside the app.</>],
                 ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
                 ["Confirm", <>On the “Payment successful” screen, find the <b className="text-white">12-digit UTR / UPI Ref. No. / UPI transaction ID</b>, type it below and tap <b className="text-white">Verify my payment</b>. We match it with the bank and your <b className="text-white">ticket appears here</b> — usually within a minute.</>],
               ].map(([t, b], i) => (
@@ -349,19 +376,27 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               ))}
             </ol>
           </div>
-          <label className="card block p-5">
-            <span className="text-sm font-semibold">UTR / UPI reference number</span>
-            <input
-              className={`${input} tnum mt-3 text-center text-xl tracking-[0.25em]`}
-              value={utr}
-              onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))}
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="12 digits"
-              disabled={checking}
-            />
-            <span className="mt-2 block text-xs text-muted">GPay: “UPI transaction ID” · PhonePe: “UTR” · Paytm: “UPI Ref. No.”</span>
-          </label>
+          <div className="card p-5">
+            <label htmlFor="utr" className="text-sm font-semibold">
+              UTR / UPI reference number
+            </label>
+            <div className="mt-3 flex gap-2">
+              <input
+                id="utr"
+                className={`${input} tnum min-w-0 text-center text-xl tracking-[0.2em]`}
+                value={utr}
+                onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="12 digits"
+                disabled={checking}
+              />
+              <button onClick={pasteUtr} disabled={checking} className="btn btn-line shrink-0 !px-4 text-sm">
+                Paste
+              </button>
+            </div>
+            <span className="mt-2 block text-xs text-muted">Copy it in your UPI app, then tap Paste. GPay: “UPI transaction ID” · PhonePe: “UTR” · Paytm: “UPI Ref. No.”</span>
+          </div>
           {checking && <p className="text-center text-sm text-gold">Checking with the bank… keep this page open (up to 3 minutes).</p>}
           <button onClick={sendScreenshot} className="flex w-full items-center justify-center gap-2 text-sm text-muted underline underline-offset-2 hover:text-white">
             <WhatsAppGlyph className="size-4" /> Can’t find the UTR? Send your payment screenshot on WhatsApp instead
