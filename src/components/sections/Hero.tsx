@@ -14,39 +14,43 @@ export function Hero() {
       <div aria-hidden className="strike relative mt-14 md:mt-0 -z-10 aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:w-[64%]">
         <Image src="/img/hero-athletes.webp" alt="" fill priority sizes="100vw" className="object-cover lg:hidden" />
         <Image src="/img/hero-desktop.webp" alt="" fill priority sizes="64vw" className="hidden object-cover object-[80%_center] [mask-image:linear-gradient(to_right,transparent,#000_30%)] lg:block" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink to-transparent lg:hidden" />
+        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ink via-ink/70 to-transparent lg:hidden" />
         <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-ink to-transparent lg:block" />
       </div>
       <span className="sr-only">Anil Gochhikar, Ranu Mohanty and Dutee Chand</span>
 
-      <div className="mx-auto -mt-10 w-full px-5 pb-12 md:px-10 lg:mt-0 lg:pt-24 lg:pb-10">
-        <div className="max-w-[640px] lg:max-w-[52%]">
+      {/* Mobile reads like a poster: centred title on the photo's faded edge, when & where, one prize card, CTA — all in the first screen. Desktop: left column. */}
+      <div className="relative mx-auto -mt-24 w-full px-5 pb-10 text-center md:px-10 lg:mt-0 lg:pt-24 lg:pb-10 lg:text-left">
+        <div className="mx-auto max-w-[640px] lg:mx-0 lg:max-w-[52%]">
           <h1 className="rise" style={d(0)}>
-            <span className="display block text-[clamp(2.2rem,9vw,3.6rem)] lg:text-[min(3.4vw,6.2vh)]">India’s Biggest</span>
-            <span className="display block text-[clamp(3.4rem,14.5vw,6rem)] lg:text-[min(5.6vw,10.5vh)]">
+            <span className="display block text-[clamp(1.6rem,7.4vw,3.6rem)] lg:text-[min(3.4vw,6.2vh)]">India’s Biggest</span>
+            <span className="display block text-[clamp(2.6rem,12.6vw,6rem)] leading-[0.95] lg:text-[min(5.6vw,10.5vh)]">
               <span className="text-gold">Sports</span> Festival
             </span>
           </h1>
-          <span className="rise mt-5 block h-[3px] w-40 bg-gold md:w-56" style={d(1)} />
-
-          <p className="rise mt-6 md:mt-8" style={d(2)}>
-            <span className="display block text-[clamp(5rem,24vw,10rem)] leading-[0.9] lg:text-[min(8.6vw,17vh)]">
-              <span className="text-gold">₹1.5</span> Crore
-            </span>
-            <span className="tracked mt-3 block pl-[0.3em] text-[clamp(1.35rem,6.4vw,2.4rem)] lg:text-[min(2.3vw,4.4vh)]">Prize money</span>
+          <p className="rise mt-3 lg:hidden" style={d(1)}>
+            <span className="block text-base font-bold tracking-[0.12em] text-gold uppercase">4–6 December 2026</span>
+            <span className="block text-sm text-muted">{EVENT.venue}, Bhubaneswar</span>
           </p>
+          <span className="rise mx-auto mt-5 block h-[3px] w-24 bg-gold md:w-56 lg:mx-0" style={d(1)} />
 
-          <div className="rise mt-8 flex items-stretch gap-4 whitespace-nowrap sm:gap-5 md:mt-10" style={d(3)}>
-            <div className="flex items-center gap-3">
+          <div className="rise mt-6 rounded-2xl border border-gold/40 bg-gold/[0.06] px-4 py-5 md:mt-8 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0" style={d(2)}>
+            <p>
+              <span className="display block text-[clamp(3.2rem,15.5vw,10rem)] leading-[0.9] lg:text-[min(8.6vw,17vh)]">
+                <span className="text-gold">₹1.5</span> Crore
+              </span>
+              <span className="tracked mt-2 block pl-[0.3em] text-[clamp(1rem,4.6vw,2.4rem)] lg:mt-3 lg:text-[min(2.3vw,4.4vh)]">Prize money</span>
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-3 border-t border-line pt-4 whitespace-nowrap lg:mt-10 lg:justify-start lg:border-0 lg:pt-0">
               <Icon name="ticket" className="size-7 shrink-0 text-gold sm:size-9" />
-              <div>
+              <div className="text-left">
                 <p className="label !text-[11px] text-muted">Your entry</p>
-                <p className="display text-[clamp(1.5rem,7.5vw,2.25rem)]">{inr(EVENT.fee)}</p>
+                <p className="display text-[clamp(1.5rem,7vw,2.25rem)]">{inr(EVENT.fee)}</p>
               </div>
             </div>
           </div>
 
-          <div className="rise mt-8 flex flex-col gap-3 sm:flex-row" style={d(4)}>
+          <div className="rise mt-6 flex flex-col gap-3 sm:flex-row md:mt-8" style={d(4)}>
             <Cta id="hero-cta" micro={false} />
             <a href="#arena" className="btn btn-line w-full sm:w-auto">
               Find my category <Icon name="down" className="size-5" />
@@ -56,11 +60,11 @@ export function Hero() {
             {PAY_LINE}
           </p>
 
-          <ul className="rise mt-8 flex flex-col gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6" style={d(5)}>
-            <li className="flex items-center gap-2.5">
+          <ul className="rise mt-8 flex flex-col items-center gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:gap-x-6 lg:items-start" style={d(5)}>
+            <li className="hidden items-center gap-2.5 lg:flex">
               <Icon name="calendar" className="size-5 text-gold" /> <b className="font-semibold">4–6 DEC 2026</b>
             </li>
-            <li className="flex items-center gap-2.5">
+            <li className="hidden items-center gap-2.5 lg:flex">
               <Icon name="pin" className="size-5 text-gold" /> {EVENT.venue}, Bhubaneswar
             </li>
             <li className="flex items-center gap-2.5">
