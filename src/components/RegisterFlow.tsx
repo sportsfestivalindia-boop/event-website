@@ -79,8 +79,10 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const waHref = (p: Pending, u?: string) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(waText(p, u))}`;
 
   function sendUtr() {
-    // ponytail: no database — the WhatsApp message to AOGA is the record. Purchase fires on UTR entry (not yet bank-verified).
+    // Purchase fires on UTR entry (not yet bank-verified). WhatsApp opens first (popup blockers need it inside the click);
+    // the sheet write follows with keepalive so it survives the tab switch. WhatsApp to AOGA is the backup record.
     window.open(waHref(pending!, utr), "_blank", "noopener");
+    fetch("/api/utr", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ regId: pending!.regId, utr }), keepalive: true }).catch(() => {});
     track("paid", { orderId: pending!.regId, value: pending!.amount, sport: champ.sport, label: pending!.label });
     setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount, utr });
   }

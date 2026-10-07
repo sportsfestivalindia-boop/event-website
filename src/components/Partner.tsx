@@ -203,7 +203,14 @@ export function SponsorForm() {
           <textarea className={`${input} h-24 py-3`} value={f.note} onChange={set("note")} placeholder="Products, activation ideas, sampling…" />
         </Field>
       </div>
-      <a href={ok ? waTo(text) : undefined} target="_blank" rel="noopener" aria-disabled={!ok} className={`btn mt-5 w-full bg-wa text-white ${ok ? "" : "pointer-events-none opacity-40"}`}>
+      <a
+        href={ok ? waTo(text) : undefined}
+        onClick={() => ok && fetch("/api/enquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f), keepalive: true }).catch(() => {})}
+        target="_blank"
+        rel="noopener"
+        aria-disabled={!ok}
+        className={`btn mt-5 w-full bg-wa text-white ${ok ? "" : "pointer-events-none opacity-40"}`}
+      >
         <WhatsAppGlyph className="size-6" /> Send enquiry on WhatsApp
       </a>
       <a
