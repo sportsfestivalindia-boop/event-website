@@ -20,6 +20,8 @@ export async function POST(req: Request) {
   const t = ticketNo(utr);
   const token = seal({ t, n: s("name", 80), c: s("category"), w: s("when"), a: amount, u: utr, r: regId || undefined, i: new Date().toISOString() });
   const url = new URL(`/ticket/${token}`, req.url).toString();
-  if (regId) await toSheet("ticket", { regId, utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow() });
+  // Logs every ticket in the sheet; the sheet refuses a UTR that already has a ticket for another athlete (reused screenshot).
+  const sheet = await toSheet("ticket", { regId, utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow(), name: s("name", 80), phone: s("phone", 10), category: s("category"), fee: amount });
+  if (sheet?.duplicate) return Response.json({ error: `This UTR already has a ticket (${sheet.duplicate}). Do not issue another — ask the athlete for their own payment screenshot.` }, { status: 409 });
   return Response.json({ ticketNo: t, url });
 }

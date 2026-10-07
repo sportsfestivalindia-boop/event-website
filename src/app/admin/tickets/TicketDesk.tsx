@@ -41,7 +41,7 @@ export function TicketDesk() {
       const res = await fetch("/api/ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, name: f.name, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
+        body: JSON.stringify({ key, name: f.name, phone: f.phone, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Could not issue the ticket.");

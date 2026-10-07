@@ -1,7 +1,8 @@
 /**
- * Sports Festival 2026 — registrations sheet (Google Apps Script, bound to AOGA's Google Sheet).
+ * Sports Festival 2026 — registrations sheet (standalone Google Apps Script on sportsfestivalindia@gmail.com,
+ * writing to the sheet SHEET_ID below; standalone because "Extensions → Apps Script" breaks with several Google logins).
  *
- * One-time setup (Extensions → Apps Script, paste this file, then):
+ * One-time setup (script.google.com → New project, paste this file, then):
  *   1. Run `setup` once and allow the permissions (edit this sheet, send email as you).
  *   2. Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone → copy the /exec URL.
  *   3. Put that URL in Vercel as SHEET_WEBHOOK_URL (Production) — the website then writes here.
@@ -10,6 +11,10 @@
  * sportsfestivalindia.com/admin/tickets. That marks the row Verified here and emails the athlete automatically.
  * (Setting Status = Verified by hand also sends the email.)
  */
+
+// "Sports Festival 2026 — Registrations" in sportsfestivalindia@gmail.com's Drive
+const SHEET_ID = "1FQIaO79jL9hIiJt-dqY8GwSFX8JnG24IarrUEhB2eO8";
+const book = () => SpreadsheetApp.openById(SHEET_ID);
 
 const EVENT = {
   name: "India’s Biggest Sports Festival 2026",
@@ -32,7 +37,7 @@ const R = Object.fromEntries(TABS.Registrations.map((h, i) => [h, i + 1])); // h
 /* ───────────────────────── setup ───────────────────────── */
 
 function setup() {
-  const ss = SpreadsheetApp.getActive();
+  const ss = book();
   for (const [name, headers] of Object.entries(TABS)) {
     const sh = ss.getSheetByName(name) || ss.insertSheet(name);
     sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight("bold").setBackground("#0a0a0a").setFontColor("#ffb81c");
@@ -74,7 +79,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActive();
+    const ss = book();
     if (d.action === "registration") {
       const sh = ss.getSheetByName("Registrations");
       const row = new Array(TABS.Registrations.length).fill("");
@@ -95,21 +100,33 @@ function doPost(e) {
         if (sh.getRange(r, R["Status"]).getValue() !== "Verified") sh.getRange(r, R["Status"]).setValue("Pending");
       }
     } else if (d.action === "ticket") {
-      // staff issued a ticket on the website → mark the athlete Verified and email them (if a row exists for this Reg ID)
+      // staff issued a ticket on the website → refuse a UTR already ticketed for someone else (reused screenshot),
+      // else mark the athlete's row Verified and email them; no matching row (no Reg ID) → log the ticket as a new row
       const sh = ss.getSheetByName("Registrations");
-      const r = findRow(sh, R["Reg ID"], d.regId);
-      if (r) {
-        sh.getRange(r, R["UTR"]).setValue(d.utr);
-        sh.getRange(r, R["Notes"]).setValue(`Ticket ${d.ticketNo}: ${d.ticketUrl}`);
-        sh.getRange(r, R["Status"]).setValue("Verified");
-        confirm(sh, r);
+      const v = (r, h) => sh.getRange(r, R[h]).getValue();
+      const u = findRow(sh, R["UTR"], d.utr);
+      if (u && v(u, "Status") === "Verified" && (d.regId ? v(u, "Reg ID") !== d.regId : v(u, "Name") !== d.name))
+        return json({ ok: false, duplicate: `${v(u, "Reg ID") || "no Reg ID"} · ${v(u, "Name")}` });
+      let r = d.regId ? findRow(sh, R["Reg ID"], d.regId) : u;
+      if (!r) {
+        const row = new Array(TABS.Registrations.length).fill("");
+        const set = (h, val) => (row[R[h] - 1] = val);
+        set("Reg ID", d.regId); set("Created", d.verifiedAt); set("Name", d.name); set("Mobile", d.phone);
+        set("Category", d.category); set("Fee (₹)", d.fee); set("Source", "Ticket desk");
+        sh.appendRow(row);
+        r = sh.getLastRow();
+        sh.getRange(r, R["WhatsApp"]).setFormula(waFormula(sh, r));
       }
+      sh.getRange(r, R["UTR"]).setValue(d.utr);
+      sh.getRange(r, R["Notes"]).setValue(`Ticket ${d.ticketNo}: ${d.ticketUrl}`);
+      sh.getRange(r, R["Status"]).setValue("Verified");
+      confirm(sh, r);
     } else if (d.action === "stall") {
       ss.getSheetByName("Stalls").appendRow([d.bookingId, d.created, d.stall, d.price, d.company, d.contact, d.phone, d.email, d.gstin, d.sector, d.status, ""]);
     } else if (d.action === "enquiry") {
       ss.getSheetByName("Sponsors").appendRow([d.created, d.company, d.contact, d.phone, d.email, d.tier, d.budget, d.note, d.status, ""]);
     }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    return json({ ok: true });
   } finally {
     lock.releaseLock();
   }
@@ -126,6 +143,7 @@ function onStatusEdit(e) {
 function confirm(sh, r) {
   const v = (h) => sh.getRange(r, R[h]).getValue();
   if (!v("Verified at")) sh.getRange(r, R["Verified at"]).setValue(new Date());
+  if (!v("Email")) return; // ticket-desk row without an email: the WhatsApp ticket is their confirmation
   if (v("Email sent") && String(v("Email sent")).indexOf("Quota") !== 0) return; // never email twice
   if (MailApp.getRemainingDailyQuota() < 1) return sh.getRange(r, R["Email sent"]).setValue("Quota — retries hourly");
   const fee = Number(v("Fee (₹)"));
@@ -152,7 +170,7 @@ function confirm(sh, r) {
 }
 
 function retryEmails() {
-  const sh = SpreadsheetApp.getActive().getSheetByName("Registrations");
+  const sh = book().getSheetByName("Registrations");
   const last = sh.getLastRow();
   if (last < 2) return;
   const vals = sh.getRange(2, 1, last - 1, TABS.Registrations.length).getValues();
@@ -163,11 +181,15 @@ function retryEmails() {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
+function json(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
 function findRow(sh, col, value) {
   const last = sh.getLastRow();
   if (last < 2) return 0;
   const vals = sh.getRange(2, col, last - 1, 1).getValues();
-  for (let i = vals.length - 1; i >= 0; i--) if (vals[i][0] === value) return i + 2;
+  for (let i = vals.length - 1; i >= 0; i--) if (String(vals[i][0]) === String(value)) return i + 2;
   return 0;
 }
 

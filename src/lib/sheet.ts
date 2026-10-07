@@ -3,9 +3,10 @@
 // the WhatsApp message to AOGA is the backup record.
 export type SheetAction = "registration" | "ticket" | "stall" | "enquiry";
 
-export async function toSheet(action: SheetAction, data: Record<string, string | number>) {
+/** Returns the script's JSON reply, or null if the sheet is off, slow or down. */
+export async function toSheet(action: SheetAction, data: Record<string, string | number>): Promise<Record<string, unknown> | null> {
   const url = process.env.SHEET_WEBHOOK_URL;
-  if (!url) return false;
+  if (!url) return null;
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -15,9 +16,9 @@ export async function toSheet(action: SheetAction, data: Record<string, string |
       redirect: "follow",
       signal: AbortSignal.timeout(8000),
     });
-    return res.ok;
+    return res.ok ? await res.json() : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
