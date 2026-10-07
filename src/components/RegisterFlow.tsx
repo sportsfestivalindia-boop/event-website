@@ -76,7 +76,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
 
   const waText = (p: Pending, paid?: boolean) =>
     `${paid ? "PAYMENT SCREENSHOT ATTACHED 👇\n\n" : ""}Registration ${p.regId}\n${p.label} · ${inr(p.amount)}${paid ? " · paid by UPI" : ""}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`;
-  const waHref = (p: Pending, paid?: boolean) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(waText(p, paid))}`;
+  const waHref = (p: Pending, paid?: boolean) => `https://wa.me/${EVENT.paymentsWhatsApp.wa}?text=${encodeURIComponent(waText(p, paid))}`;
 
   function sendScreenshot() {
     // Athlete attaches the payment screenshot in WhatsApp; AOGA verifies it against the Yes Bank statement and sends the ticket.
@@ -291,7 +291,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
                 ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Open GPay / PhonePe / Paytm”, or take a screenshot of the QR and scan it from your gallery inside the app.</>],
                 ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
                 ["Screenshot", <>After paying, take a <b className="text-white">screenshot of the “Payment successful” screen</b> — it must show the UTR / transaction number.</>],
-                ["Send", <>Tap <b className="text-white">“Send payment screenshot on WhatsApp”</b> below, attach the screenshot and send. We verify it and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.</>],
+                ["Send", <>Tap <b className="text-white">“Send payment screenshot on WhatsApp”</b> below (or WhatsApp it to <b className="text-white">{EVENT.paymentsWhatsApp.display}</b>), attach the screenshot and send. We verify it and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.</>],
               ].map(([t, b], i) => (
                 <li key={i} className="flex gap-3">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
@@ -371,7 +371,7 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
         <p className="mt-2 text-sm font-semibold">{done.label}</p>
       </div>
       <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-left text-sm">
-        <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and press send. Didn’t open?
+        <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and send it to <b>{EVENT.paymentsWhatsApp.display}</b>. Didn’t open?
         <button onClick={resend} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-wa py-3 font-semibold text-white">
           <WhatsAppGlyph className="size-5" /> Open WhatsApp again
         </button>

@@ -36,6 +36,8 @@ export const EVENT = {
   prizePool: 1_50_00_000,
   phone: "+91 99388 18919",
   phoneHref: "tel:+919938818919",
+  // registrations + payment screenshots go here (client, 2026-10-07); general questions stay on `phone`
+  paymentsWhatsApp: { display: "+91 80189 58655", wa: "918018958655" },
   whatsappHref: "https://wa.me/919938818919?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
   email: "aogaofficial@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
