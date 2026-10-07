@@ -106,7 +106,7 @@ function doPost(e) {
       if (v(r, "Status") === "Verified") return json({ ok: true, verified: true, ticketUrl: v(r, "Ticket") });
       const u = findRow(sh, R["UTR"], d.utr);
       if (u && u !== r && v(u, "Status") === "Verified") return json({ ok: false, duplicate: true });
-      sh.getRange(r, R["UTR"]).setValue(d.utr);
+      asText(sh.getRange(r, R["UTR"]), d.utr);
       sh.getRange(r, R["UTR at"]).setValue(d.at);
       sh.getRange(r, R["Status"]).setValue("Pending");
       const bank = ss.getSheetByName("Bank");
@@ -123,7 +123,10 @@ function doPost(e) {
       const utr = String(d.utr || "").replace(/\D/g, "");
       const amount = Number(d.amount);
       if (!/^\d{12}$/.test(utr) || !(amount > 0)) return json({ ok: false, error: "bad-credit" });
-      if (!findRow(bank, B["UTR"], utr)) bank.appendRow([d.received || new Date(), amount, utr, d.payer || "", d.source || "", String(d.raw || "").slice(0, 500), ""]);
+      if (!findRow(bank, B["UTR"], utr)) {
+        bank.appendRow([d.received || new Date(), amount, "", d.payer || "", d.source || "", String(d.raw || "").slice(0, 500), ""]);
+        asText(bank.getRange(bank.getLastRow(), B["UTR"]), utr);
+      }
       const reg = ss.getSheetByName("Registrations");
       const r = findRow(reg, R["UTR"], utr);
       const waiting = r && reg.getRange(r, R["Status"]).getValue() !== "Verified";
@@ -162,7 +165,7 @@ function doPost(e) {
         r = sh.getLastRow();
         sh.getRange(r, R["WhatsApp"]).setFormula(waFormula(sh, r));
       }
-      sh.getRange(r, R["UTR"]).setValue(d.utr);
+      asText(sh.getRange(r, R["UTR"]), d.utr);
       sh.getRange(r, R["Ticket"]).setValue(d.ticketUrl);
       sh.getRange(r, R["Status"]).setValue("Verified");
       const bank = ss.getSheetByName("Bank");
@@ -243,9 +246,17 @@ function json(o) {
 function findRow(sh, col, value) {
   const last = sh.getLastRow();
   if (last < 2) return 0;
+  // a UTR like 025759167451 that Sheets once stored as the number 25759167451 still matches
+  const norm = (x) => (/^\d{9,12}$/.test(String(x)) ? String(x).padStart(12, "0") : String(x));
+  const want = norm(value);
   const vals = sh.getRange(2, col, last - 1, 1).getValues();
-  for (let i = vals.length - 1; i >= 0; i--) if (String(vals[i][0]) === String(value)) return i + 2;
+  for (let i = vals.length - 1; i >= 0; i--) if (norm(vals[i][0]) === want) return i + 2;
   return 0;
+}
+
+// Sheets turns "025759167451" into the number 25759167451 unless the cell is plain text — UTRs can start with 0
+function asText(range, value) {
+  range.setNumberFormat("@").setValue(String(value));
 }
 
 function waFormula(sh, r) {
