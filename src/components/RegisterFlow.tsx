@@ -8,8 +8,6 @@ import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
 import { track } from "@/lib/track";
-import { UPI_APPS, upiAppLink } from "@/lib/upi";
-
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
 type Done = { regId: string; label: string; paid: number; utr?: string };
@@ -50,8 +48,6 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const [checking, setChecking] = useState(false);
   const [verified, setVerified] = useState<Claim | null>(null);
 
-  // iPhones have no "any UPI app" chooser, so each app button uses that app's own link scheme there
-  const ios = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
   const champ = open.find((c) => c.id === f.sport)!;
   const div = champ.divisions.find((d) => d.id === f.division)!;
   const fee = div.fee ?? EVENT.fee;
@@ -313,18 +309,16 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             <p className="mt-3 text-xs text-muted">
               Your UPI app will show <b className="text-ink">{EVENT.upi.payee}</b> ({EVENT.upi.bank}) — the festival’s collection account
             </p>
+            {/* No "open GPay/PhonePe" buttons: this is an in-shop merchant QR, and UPI apps cap or block payments opened
+                from a link ("merchant received maximum amount"). A scan — even of a saved image — always works. */}
             <div className="mt-5 md:hidden">
-              <p className="text-sm font-semibold">Paying on this phone? Tap your app:</p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {UPI_APPS.map((a) => (
-                  <a key={a.name} href={upiAppLink(pending.upi!, a, ios)} className="btn btn-ink !px-3 text-sm">
-                    {a.name}
-                  </a>
-                ))}
-                <a href={pending.upi!} className="btn btn-line !px-3 text-sm !text-ink">
-                  Other UPI app
-                </a>
-              </div>
+              <p className="text-sm font-semibold">Paying on this phone?</p>
+              <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="btn btn-ink mt-3 w-full">
+                Save QR to gallery
+              </a>
+              <p className="mt-2 text-xs text-muted">
+                Then open GPay / PhonePe / Paytm → <b className="text-ink">Scan</b> → tap the <b className="text-ink">gallery</b> icon → choose this QR. iPhone: press and hold the QR → Save to Photos.
+              </p>
             </div>
             <div className="mt-4 flex items-center justify-center gap-2 text-xs">
               <span className="text-muted">UPI ID</span>
@@ -342,7 +336,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             <p className="text-sm font-semibold">How to pay — 3 easy steps</p>
             <ol className="mt-3 space-y-3 text-sm">
               {[
-                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap your app’s button above — or take a screenshot of the QR and scan it from your gallery inside the app.</>],
+                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Save QR to gallery” (or take a screenshot), then in your UPI app tap Scan → gallery and choose the QR.</>],
                 ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
                 ["Confirm", <>On the “Payment successful” screen, find the <b className="text-white">12-digit UTR / UPI Ref. No. / UPI transaction ID</b>, type it below and tap <b className="text-white">Verify my payment</b>. We match it with the bank and your <b className="text-white">ticket appears here</b> — usually within a minute.</>],
               ].map(([t, b], i) => (
