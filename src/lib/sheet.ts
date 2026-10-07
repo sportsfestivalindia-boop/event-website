@@ -3,10 +3,22 @@
 // the WhatsApp message to AOGA is the backup record.
 export type SheetAction = "registration" | "claim" | "ticket" | "stall" | "enquiry";
 
+// About 1 in 6 times Google's reply link fails ("unable to open the file") and stays broken, so a lost reply means
+// asking again. Only for actions that are safe to repeat; appends (registration, stall, enquiry) are sent once.
+const SAFE_TO_REPEAT: SheetAction[] = ["claim", "ticket"];
+
 /** Returns the script's JSON reply, or null if the sheet is off, slow or down. */
 export async function toSheet(action: SheetAction, data: Record<string, string | number>): Promise<Record<string, unknown> | null> {
   const url = process.env.SHEET_WEBHOOK_URL?.trim(); // trim() also drops a stray BOM from a pasted value
   if (!url) return null;
+  for (let tries = SAFE_TO_REPEAT.includes(action) ? 3 : 1; tries > 0; tries--) {
+    const reply = await once(url, action, data);
+    if (reply) return reply;
+  }
+  return null;
+}
+
+async function once(url: string, action: SheetAction, data: Record<string, string | number>): Promise<Record<string, unknown> | null> {
   try {
     const signal = AbortSignal.timeout(20_000); // Apps Script replies in 0.5–10 s
     let res = await fetch(url, {

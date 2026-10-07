@@ -52,5 +52,21 @@ import("./ticket").then(({ seal, unseal, ticketNo, isAdmin }) => {
   const bad = token.slice(0, 20) + (token[20] === "A" ? "B" : "A") + token.slice(21);
   assert.equal(unseal(bad), null, "edited ticket link rejected");
   assert.ok(isAdmin("test-key-for-checks-only") && !isAdmin("wrong"), "staff password checked");
-  console.log("pay.check: all passed");
-});
+})
+  // sheet: Google's reply link sometimes breaks → ask again, but only for actions that are safe to repeat
+  .then(async () => {
+    process.env.SHEET_WEBHOOK_URL = "https://sheet.test/exec";
+    let posts = 0;
+    globalThis.fetch = (async (_u: unknown, init?: RequestInit) =>
+      init?.method === "POST"
+        ? (posts++, new Response(null, { status: 302, headers: { location: "https://sheet.test/reply" } }))
+        : new Response(posts < 3 ? "<html>Sorry, unable to open the file</html>" : '{"ok":true}')) as typeof fetch;
+    console.error = () => {}; // the two failed replies log on purpose
+    const { toSheet } = await import("./sheet");
+    assert.deepEqual(await toSheet("claim", {}), { ok: true }, "claim: lost replies are asked again");
+    assert.equal(posts, 3, "claim: third try gets the reply");
+    posts = 0;
+    assert.equal(await toSheet("registration", {}), null, "registration: lost reply stays lost");
+    assert.equal(posts, 1, "registration sent once (an append, never repeated)");
+    console.log("pay.check: all passed");
+  });
