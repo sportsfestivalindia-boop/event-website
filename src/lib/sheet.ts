@@ -16,8 +16,10 @@ export async function toSheet(action: SheetAction, data: Record<string, string |
       redirect: "follow",
       signal: AbortSignal.timeout(8000),
     });
+    if (!res.ok) console.error(`toSheet ${action}: HTTP ${res.status}`);
     return res.ok ? await res.json() : null;
-  } catch {
+  } catch (e) {
+    console.error(`toSheet ${action}:`, e);
     return null;
   }
 }
