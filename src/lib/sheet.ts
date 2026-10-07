@@ -8,14 +8,19 @@ export async function toSheet(action: SheetAction, data: Record<string, string |
   const url = process.env.SHEET_WEBHOOK_URL?.trim(); // trim() also drops a stray BOM from a pasted value
   if (!url) return null;
   try {
-    const res = await fetch(url, {
+    const signal = AbortSignal.timeout(20_000); // Apps Script replies in 0.5–10 s
+    let res = await fetch(url, {
       method: "POST",
       // text/plain avoids an extra preflight hop on Apps Script; the body is still JSON
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action, ...data }),
-      redirect: "follow",
-      signal: AbortSignal.timeout(8000),
+      redirect: "manual",
+      signal,
     });
+    // Apps Script runs doPost, then 302s to its reply. Follow that as a plain GET ourselves: fetch's automatic
+    // follow lands back on /exec ("doGet not found") and the reply is lost.
+    const reply = res.headers.get("location");
+    if (reply) res = await fetch(reply, { signal });
     if (!res.ok) console.error(`toSheet ${action}: HTTP ${res.status}`);
     return res.ok ? await res.json() : null;
   } catch (e) {
