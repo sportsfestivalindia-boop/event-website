@@ -68,9 +68,9 @@ export function Section({ id, theme = "ink", children, className = "" }: { id?: 
 }
 
 /** One line under every CTA: how payment works. */
-export const PAY_LINE = "2-min signup · Secure payment by Razorpay · Instant confirmation";
+export const PAY_LINE = "2-min signup · Pay by UPI QR · Confirmation on WhatsApp";
 
-/** Policy links Razorpay (and athletes) expect on every page, checkout included. */
+/** Policy links athletes expect on every page, checkout included. */
 export const POLICY_LINKS = [
   ["About us", "/about"],
   ["Contact us", "/contact"],

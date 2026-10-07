@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import QRCode from "qrcode";
 import { useState } from "react";
 import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
 import { track } from "@/lib/track";
-import { razorpayPay, type RzpOrder } from "@/lib/checkout";
 
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
-type Offline = { regId: string; amount: number; label: string };
-type Done = { regId: string; label: string; paid: number };
+type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
+type Done = { regId: string; label: string; paid: number; utr?: string };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
@@ -41,7 +41,8 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [offline, setOffline] = useState<Offline | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [utr, setUtr] = useState("");
   const [done, setDone] = useState<Done | null>(null);
 
   const champ = open.find((c) => c.id === f.sport)!;
@@ -56,25 +57,14 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setBusy(true);
     try {
       const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; razorpay?: RzpOrder | null }>("/api/order", { ...f, tracking });
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null }>("/api/order", { ...f, tracking });
       if (o.free) {
         track("freeRegistered", { label: o.label, regId: o.regId });
         return setDone({ regId: o.regId, label: o.label, paid: 0 });
       }
       track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
-      if (o.razorpay) {
-        // Razorpay: UPI, cards, netbanking — confirmed instantly by signature check
-        const paid = await razorpayPay(o.razorpay, {
-          description: o.label,
-          prefill: { name: f.name, email: f.email, contact: "+91" + f.phone },
-          notes: { reg_id: o.regId },
-        });
-        await post("/api/verify", { ref: o.regId, ...paid });
-        track("paid", { orderId: paid.orderId, value: o.amount, sport: champ.sport, label: o.label });
-        return setDone({ regId: o.regId, label: o.label, paid: o.amount });
-      }
-      // online payment not switched on yet — AOGA completes the registration on WhatsApp
-      setOffline({ regId: o.regId, amount: o.amount, label: o.label });
+      const qr = o.upi ? await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" }) : null;
+      setPending({ regId: o.regId, amount: o.amount, label: o.label, upi: o.upi ?? null, qr });
       setStep(4);
       window.scrollTo({ top: 0 });
     } catch (e) {
@@ -82,6 +72,17 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     } finally {
       setBusy(false);
     }
+  }
+
+  const waText = (p: Pending, u?: string) =>
+    `Registration ${p.regId}\n${p.label} · ${inr(p.amount)}${u ? `\nPaid by UPI · UTR ${u}` : ""}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`;
+  const waHref = (p: Pending, u?: string) => `https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(waText(p, u))}`;
+
+  function sendUtr() {
+    // ponytail: no database — the WhatsApp message to AOGA is the record. Purchase fires on UTR entry (not yet bank-verified).
+    window.open(waHref(pending!, utr), "_blank", "noopener");
+    track("paid", { orderId: pending!.regId, value: pending!.amount, sport: champ.sport, label: pending!.label });
+    setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount, utr });
   }
 
   if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} />;
@@ -237,7 +238,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           </div>
           {fee > 0 && (
             <p className="flex gap-2 text-sm text-muted">
-              <Icon name="lock" className="size-5 shrink-0 text-gold" /> Next: secure payment by Razorpay — UPI (GPay, PhonePe, Paytm, BHIM), debit / credit card or netbanking.
+              <Icon name="rupee" className="size-5 shrink-0 text-gold" /> Next: pay by UPI QR with GPay, PhonePe, Paytm, BHIM or any UPI app.
             </p>
           )}
           <label className="flex items-start gap-3 rounded-lg border border-line p-4 text-sm">
@@ -255,25 +256,49 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
         </section>
       )}
 
-      {step === 4 && offline && (
+      {step === 4 && pending && pending.qr && (
+        <section className="mt-8 space-y-5">
+          <div className="t-paper rounded-2xl p-6 text-center">
+            <p className="text-sm font-semibold">Scan &amp; pay with any UPI app</p>
+            <p className="display mt-1 text-5xl">{inr(pending.amount)}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
+            <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto mt-4 size-60 rounded-lg border border-line bg-white p-2" />
+            <p className="mt-3 text-xs text-muted">
+              Paying to <b className="text-ink">{EVENT.upi.payee}</b>
+              <br />
+              Reference {pending.regId}
+            </p>
+            <a href={pending.upi!} className="btn btn-ink mt-5 w-full md:hidden">
+              Open GPay / PhonePe / Paytm
+            </a>
+            <p className="mt-3 text-xs text-muted">Google Pay · PhonePe · Paytm · BHIM · any UPI app</p>
+          </div>
+          <ol className="space-y-2 text-sm">
+            {["Scan the QR (or tap the button on your phone) and pay the exact amount.", "Copy the 12-digit UTR / UPI reference number shown after payment.", "Enter it below and send it to AOGA on WhatsApp to get your pass."].map((t, i) => (
+              <li key={t} className="flex gap-3">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
+                <span className="text-muted">{t}</span>
+              </li>
+            ))}
+          </ol>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">UTR / UPI reference number</span>
+            <input className={`${input} tnum tracking-widest`} value={utr} onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))} inputMode="numeric" placeholder="12 digits" />
+          </label>
+          <p className="text-xs text-muted">Can’t find the UTR? It’s in your UPI app’s payment history. Or send AOGA a screenshot of the payment on WhatsApp.</p>
+        </section>
+      )}
+
+      {step === 4 && pending && !pending.qr && (
         <section className="mt-8 space-y-5">
           <div className="card p-6 text-center">
             <p className="text-xs text-muted uppercase">Registration ID</p>
-            <p className="display mt-1 text-4xl tracking-wider text-gold">{offline.regId}</p>
-            <p className="mt-3 font-semibold">{offline.label}</p>
-            <p className="display mt-1 text-3xl">{inr(offline.amount)}</p>
+            <p className="display mt-1 text-4xl tracking-wider text-gold">{pending.regId}</p>
+            <p className="mt-3 font-semibold">{pending.label}</p>
+            <p className="display mt-1 text-3xl">{inr(pending.amount)}</p>
           </div>
-          <p className="text-sm text-muted">
-            Your place is reserved. Send these details to the AOGA team on WhatsApp — they’ll share a secure Razorpay payment link and confirm your athlete pass once it’s paid.
-          </p>
-          <a
-            href={`https://wa.me/${EVENT.phoneHref.replace(/\D/g, "")}?text=${encodeURIComponent(
-              `Registration ${offline.regId}\n${offline.label} · ${inr(offline.amount)}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`,
-            )}`}
-            target="_blank"
-            rel="noopener"
-            className="btn w-full bg-wa text-white"
-          >
+          <p className="text-sm text-muted">Your place is reserved. Send these details to the AOGA team on WhatsApp — they’ll share the UPI QR for {inr(pending.amount)} and confirm your athlete pass once it’s paid.</p>
+          <a href={waHref(pending)} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">
             <WhatsAppGlyph className="size-6" /> Send registration on WhatsApp
           </a>
         </section>
@@ -297,7 +322,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           )}
           {step === 3 && (
             <button onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 disabled:opacity-40">
-              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)}` : "Confirm free registration"}
+              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)} by UPI` : "Confirm free registration"}
+            </button>
+          )}
+          {step === 4 && pending?.qr && (
+            <button onClick={sendUtr} disabled={utr.length !== 12} className="btn btn-gold flex-1 disabled:opacity-40">
+              I’ve paid — send UTR &amp; get pass
             </button>
           )}
         </div>
@@ -318,7 +348,7 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
         </span>
         <h1 className="display mt-5 text-5xl">You’re registered!</h1>
         <p className="mt-2 text-muted">
-          {done.paid ? `Payment of ${inr(done.paid)} received. Razorpay has emailed your receipt.` : "Free registration confirmed."}
+          {done.paid ? `UTR sent for ${inr(done.paid)}. AOGA will match it with the bank and confirm on WhatsApp within 24 hours.` : "Free registration confirmed."}
         </p>
       </div>
 
@@ -330,7 +360,9 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
         <div className="p-6">
           <div className="flex items-start justify-between gap-3">
             <Wordmark />
-            <span className="shrink-0 rounded-full bg-wa/15 px-2.5 py-1 text-[10px] font-bold text-wa uppercase">Confirmed</span>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${done.paid ? "bg-amber-400/15 text-amber-300" : "bg-wa/15 text-wa"}`}>
+              {done.paid ? "Payment verifying" : "Confirmed"}
+            </span>
           </div>
           <p className="mt-6 text-xs text-muted uppercase">Athlete</p>
           <p className="display text-4xl leading-tight">{name}</p>
@@ -342,6 +374,7 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
             <div>
               <p className="text-xs text-muted uppercase">Registration ID</p>
               <p className="display text-3xl tracking-wider whitespace-nowrap text-gold">{done.regId}</p>
+              {done.utr && <p className="tnum mt-1 text-xs text-muted">UTR {done.utr}</p>}
             </div>
             <p className="text-right text-xs text-muted">
               {EVENT.venue}

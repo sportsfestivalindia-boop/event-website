@@ -39,7 +39,9 @@ export const EVENT = {
   whatsappHref: "https://wa.me/919938818919?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
   email: "aogaofficial@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
-  // Shown in the footer, Contact and Terms only when filled in. Must match the Razorpay KYC exactly.
+  // AOGA's UPI ID (e.g. "aoga@sbi"). Empty = payment QR switched off; athletes send their entry to AOGA on WhatsApp instead.
+  upi: { id: "" as string, payee: "All Odisha Gym Association" },
+  // Shown in the footer, Contact and Terms only when filled in.
   regdNo: "" as string,
   gstin: "" as string,
   address: "Baramunda Ground, Bhubaneswar, Odisha, India",
@@ -302,7 +304,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "How do I pay?",
-    a: "Online, through Razorpay’s secure checkout — UPI (GPay, PhonePe, Paytm, BHIM), debit / credit card or netbanking. Your registration is confirmed on screen the moment payment succeeds, and Razorpay emails you a receipt.",
+    a: "By UPI. After you fill your details, scan the QR (or tap the button on your phone) and pay with GPay, PhonePe, Paytm, BHIM or any UPI app. Enter the 12-digit UTR number from your payment and send it to AOGA on WhatsApp — your pass is confirmed once AOGA matches the payment, usually within 24 hours.",
   },
   {
     q: "Can I get a refund?",
@@ -345,14 +347,14 @@ export const FAQ: { q: string; a: string }[] = [
     q: "Can I enter more than one category?",
     a: "Yes — each category is a separate entry. Register once per category.",
   },
-  { q: "I’m a coach. Can I register my whole team?", a: "Yes. Message us on WhatsApp with your athletes’ details and our team will send one secure Razorpay payment link for the total." },
+  { q: "I’m a coach. Can I register my whole team?", a: "Yes. Message us on WhatsApp with your athletes’ details and our team will send one UPI QR for the total." },
   {
     q: "Is the Star Category really free?",
     a: "Yes. Registration for physically disabled athletes is free, with a ₹2,10,000 prize table.",
   },
   {
     q: "I paid but didn’t get a confirmation.",
-    a: `Do not pay again. A successful payment shows your registration ID on screen and Razorpay emails a receipt. If money was deducted but you saw no confirmation, WhatsApp us your Razorpay payment ID (it starts with “pay_”) and we will confirm within 24 hours. A payment that failed midway is reversed to your account automatically, usually within ${REFUND.creditDays}.`,
+    a: `Do not pay again. WhatsApp us your registration ID (it starts with “SF26-”) and the 12-digit UTR number from your UPI app, or a screenshot of the payment — we confirm within 24 hours. A UPI payment that failed midway is reversed to your account automatically by your bank, usually within ${REFUND.creditDays}.`,
   },
 ];
 

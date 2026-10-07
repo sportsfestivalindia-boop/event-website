@@ -123,7 +123,7 @@ export default function PartnerPage() {
         <Section id="stalls">
           <SectionHead
             title={<>Book a stall at <Gold>Baramunda Ground</Gold></>}
-            lead="Choose your size, fill your details and pay online. Stall location is allotted by AOGA — book early for the best spots."
+            lead="Choose your size, fill your details and send the booking to AOGA on WhatsApp. Stall location is allotted by AOGA — book early for the best spots."
           />
           <StallBooking />
         </Section>

@@ -1,8 +1,6 @@
 // Run: npx tsx src/lib/pay.check.ts — fails loudly if the money path breaks.
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
-import { checkEntry, checkStall } from "./pay";
-import { validSignature } from "./razorpay";
+import { checkEntry, checkStall, upiLink, validUtr } from "./pay";
 
 const base = { sport: "bodybuilding", division: "mens-bb", cls: "75 kg", name: "Test Athlete", dob: "1998-05-10", phone: "9876543210", email: "a@b.in", city: "Bhubaneswar" };
 
@@ -32,9 +30,9 @@ assert.equal(checkStall({ ...firm, stall: "s1x1" }).ok, false, "unknown stall re
 assert.equal(checkStall({ ...firm, gstin: "BADGST" }).ok, false, "bad GSTIN rejected");
 assert.ok(checkStall({ ...firm, gstin: "21AABCU9603R1ZM" }).ok, "valid GSTIN accepted");
 
-const sig = createHmac("sha256", "secret").update("order_1|pay_1").digest("hex");
-assert.ok(validSignature("order_1", "pay_1", sig, "secret"), "valid Razorpay signature accepted");
-assert.equal(validSignature("order_1", "pay_2", sig, "secret"), false, "tampered payment rejected");
-assert.equal(validSignature("order_1", "pay_1", "short", "secret"), false, "wrong-length signature rejected");
+assert.ok(validUtr("123456789012"), "12-digit UTR accepted");
+assert.equal(validUtr("12345"), false, "short UTR rejected");
+assert.equal(validUtr("12345678901a"), false, "non-numeric UTR rejected");
+assert.equal(upiLink(5000, "SF26-ABC123") === null || upiLink(5000, "SF26-ABC123")!.includes("am=5000.00"), true, "UPI link carries the amount (or is off until the UPI ID is set)");
 
 console.log("pay.check: all passed");

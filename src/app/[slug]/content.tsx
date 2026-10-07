@@ -1,4 +1,4 @@
-// Policy & information pages. Razorpay reviews these before activating payments — keep them complete, specific and
+// Policy & information pages — keep them complete, specific and
 // consistent with the facts file (fees, dates, refund rules all come from @/data/festival).
 import Link from "next/link";
 import { CHAMPIONSHIPS, DOCUMENTS, EVENT, ORGANISERS, REFUND } from "@/data/festival";
@@ -144,7 +144,7 @@ export const PAGES: Record<string, Page> = {
         />
         <H>Payment or refund issue?</H>
         <P>
-          Send your registration ID (starts with “SF26-”) and, if you paid, your Razorpay payment ID (starts with “pay_”). We reply within 24 hours.
+          Send your registration ID (starts with “SF26-”) and, if you paid, the 12-digit UTR number of your UPI payment. We reply within 24 hours.
         </P>
         <H>Venue</H>
         <P>
@@ -188,8 +188,8 @@ export const PAGES: Record<string, Page> = {
         </P>
         <H>5. Payments</H>
         <P>
-          Online payments are processed by Razorpay (UPI, debit / credit cards, netbanking). We never see or store your card, UPI PIN or banking
-          credentials. Razorpay emails you a receipt for every successful payment.
+          Payments are made by UPI (GPay, PhonePe, Paytm, BHIM or any UPI app) directly to the All Odisha Gym Association, using the QR shown at
+          registration. We never see your UPI PIN or banking credentials. Your registration is confirmed on WhatsApp once AOGA matches your UTR number.
         </P>
         <H>6. Cancellations, refunds and transfers</H>
         <P>
@@ -246,7 +246,7 @@ export const PAGES: Record<string, Page> = {
           items={[
             "Athletes: name, date of birth, mobile number, email, city, association / federation, chosen category.",
             "Exhibitors and sponsors: company name, contact person, mobile, email, GSTIN (optional), business sector.",
-            "Payments: order and payment IDs and status from Razorpay. Card, UPI and bank credentials go directly to Razorpay and are never seen or stored by us.",
+            "Payments: the UTR / UPI reference number you send us, to match your payment. Your UPI PIN and bank credentials stay with your UPI app and bank.",
             "Website usage: pages visited and ad-campaign source, through cookies and the Meta Pixel, to measure our advertising.",
           ]}
         />
@@ -263,8 +263,7 @@ export const PAGES: Record<string, Page> = {
         <H>Who we share it with</H>
         <L
           items={[
-            "Razorpay — to process payments.",
-            "Our technical officials and judges — only what is needed to run your category.",
+                        "Our technical officials and judges — only what is needed to run your category.",
             "Our website host and Meta (advertising measurement).",
             "Government authorities, when required by law.",
           ]}
@@ -329,7 +328,7 @@ export const PAGES: Record<string, Page> = {
         <H>How to request a refund</H>
         <P>
           WhatsApp <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="text-gold">{EVENT.phone}</a> or email{" "}
-          <a href={`mailto:${EVENT.email}`} className="text-gold">{EVENT.email}</a> with your registration / booking ID and Razorpay payment ID.
+          <a href={`mailto:${EVENT.email}`} className="text-gold">{EVENT.email}</a> with your registration / booking ID and the UTR number of your payment.
         </P>
         <H>When you get your money</H>
         <P>
@@ -348,7 +347,7 @@ export const PAGES: Record<string, Page> = {
         <H>Athlete registration</H>
         <L
           items={[
-            "Instantly on successful payment: your registration ID and digital athlete pass on screen, and a payment receipt from Razorpay by email.",
+            "Right after you send your UTR: your registration ID and digital athlete pass on screen, marked “payment verifying”.",
             "Within 24 hours: confirmation from the AOGA team on WhatsApp.",
             <>
               On your competition day at {EVENT.venue}, {EVENT.city}: check-in, athlete ID, athlete kit and T-shirt, handed over in person.
@@ -358,8 +357,8 @@ export const PAGES: Record<string, Page> = {
         />
         <H>Exhibition stalls</H>
         <P>
-          On successful payment you receive a booking ID on screen and a Razorpay receipt by email. Stall allotment and the invoice follow by email /
-          WhatsApp. The stall is available at the venue for the event days, {EVENT.dateLabel}.
+          You receive a booking ID on screen and send the booking to AOGA on WhatsApp. The team confirms availability and shares payment details
+          (bank transfer for larger stalls). Stall allotment and the invoice follow by email / WhatsApp. The stall is available at the venue for the event days, {EVENT.dateLabel}.
         </P>
         <H>Where the service is delivered</H>
         <P>

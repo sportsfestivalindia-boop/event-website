@@ -48,3 +48,15 @@ export function checkStall(e: Partial<StallEntry>): { ok: true; price: number; l
 }
 
 export const stallId = () => "SF26-ST-" + randomBytes(3).toString("hex").toUpperCase();
+
+/** UTR / UPI reference number: 12 digits. */
+export const validUtr = (utr: unknown) => typeof utr === "string" && /^\d{12}$/.test(utr);
+
+/** Standard UPI deep link — every Indian UPI app (GPay, PhonePe, Paytm, BHIM) reads it as a link or a QR. Null until AOGA's UPI ID is set. */
+export function upiLink(amount: number, ref: string) {
+  if (!EVENT.upi.id) return null;
+  // %20 not "+": some UPI apps show "+" literally in the payee name
+  const q = { pa: EVENT.upi.id, pn: EVENT.upi.payee, am: amount.toFixed(2), cu: "INR", tn: `${ref} Sports Festival 2026` };
+  // keep "@" literal in the UPI ID — some UPI apps fail to read "%40"
+  return "upi://pay?" + Object.entries(q).map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%40/g, "@")}`).join("&");
+}

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { EVENT } from "@/data/festival";
 import { SECTORS, STALLS, TIERS } from "@/data/partners";
-import { razorpayPay, type RzpOrder } from "@/lib/checkout";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph } from "./icons";
 
@@ -29,14 +28,14 @@ function Field({ label, children, optional }: { label: string; children: React.R
   );
 }
 
-/* ───────── Stall booking: pick a size → details → pay (Razorpay) → booking confirmed ───────── */
+/* ───────── Stall booking: pick a size → details → booking ID → sent to AOGA on WhatsApp ───────── */
 export function StallBooking() {
   const [stall, setStall] = useState(STALLS[0].id);
   const [f, setF] = useState({ company: "", contact: "", phone: "", email: "", gstin: "", sector: SECTORS[0] });
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState<{ id: string; label: string; amount: number; paid: boolean } | null>(null);
+  const [done, setDone] = useState<{ id: string; label: string; amount: number } | null>(null);
 
   const st = STALLS.find((s) => s.id === stall)!;
   const ok = f.company.trim().length > 1 && f.contact.trim().length > 1 && /^[6-9]\d{9}$/.test(f.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email);
@@ -48,11 +47,8 @@ export function StallBooking() {
     setError("");
     setBusy(true);
     try {
-      const o = await post<{ bookingId: string; amount: number; label: string; razorpay: RzpOrder | null }>("/api/stall", { stall, ...f, gstin: f.gstin.toUpperCase() });
-      if (!o.razorpay) return setDone({ id: o.bookingId, label: o.label, amount: o.amount, paid: false });
-      const paid = await razorpayPay(o.razorpay, { description: `${o.label} · Baramunda Ground`, prefill: { name: f.contact, email: f.email, contact: "+91" + f.phone }, notes: { booking_id: o.bookingId } });
-      await post("/api/verify", { ref: o.bookingId, ...paid });
-      setDone({ id: o.bookingId, label: o.label, amount: o.amount, paid: true });
+      const o = await post<{ bookingId: string; amount: number; label: string }>("/api/stall", { stall, ...f, gstin: f.gstin.toUpperCase() });
+      setDone({ id: o.bookingId, label: o.label, amount: o.amount });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -66,11 +62,9 @@ export function StallBooking() {
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-gold text-ink">
           <Icon name="check" className="size-8" />
         </span>
-        <p className="display mt-5 text-4xl">{done.paid ? "Stall booked!" : "Almost done"}</p>
+        <p className="display mt-5 text-4xl">Almost done</p>
         <p className="mt-2 text-muted">
-          {done.paid
-            ? `Payment of ${inr(done.amount)} received. AOGA will share your stall allotment and invoice on WhatsApp and email.`
-            : "Send this booking to the AOGA team on WhatsApp. They’ll confirm availability and share payment details."}
+          Send this booking to the AOGA team on WhatsApp. They’ll confirm availability and share payment details (bank transfer or UPI).
         </p>
         <div className="mt-6 rounded-xl border border-dashed border-gold/60 p-4 text-left text-sm">
           <p className="text-xs text-muted uppercase">Booking ID</p>
@@ -82,11 +76,9 @@ export function StallBooking() {
             {f.company} · {f.contact}
           </p>
         </div>
-        {!done.paid && (
-          <a href={waTo(summary(done.id))} target="_blank" rel="noopener" className="btn mt-6 w-full bg-wa text-white">
-            <WhatsAppGlyph className="size-6" /> Send booking on WhatsApp
-          </a>
-        )}
+        <a href={waTo(summary(done.id))} target="_blank" rel="noopener" className="btn mt-6 w-full bg-wa text-white">
+          <WhatsAppGlyph className="size-6" /> Send booking on WhatsApp
+        </a>
       </div>
     );
 
@@ -159,10 +151,10 @@ export function StallBooking() {
 
         {error && <p className="mt-4 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
         <button onClick={book} disabled={!ok || !agree || busy} className="btn btn-gold mt-5 w-full disabled:opacity-40">
-          {busy ? "Please wait…" : `Book & pay ${inr(st.price)}`}
+          {busy ? "Please wait…" : `Book stall — ${inr(st.price)}`}
           <Icon name="arrow" className="arr size-5" />
         </button>
-        <p className="mt-3 text-center text-xs text-muted">Secure payment by Razorpay · Netbanking, cards & UPI. Large amounts: use netbanking.</p>
+        <p className="mt-3 text-center text-xs text-muted">AOGA confirms availability on WhatsApp and shares payment details (bank transfer or UPI).</p>
       </div>
     </div>
   );
