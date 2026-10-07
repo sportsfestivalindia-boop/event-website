@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!validUtr(utr)) return Response.json({ error: "The UTR / UPI reference is the 12-digit number on your payment screen." }, { status: 400 });
 
   const c = (await toSheet("claim", { regId, utr, at: istNow() })) as Claim | null;
-  if (!c) return Response.json({ error: "We couldn’t check right now. Please send your payment screenshot on WhatsApp instead." }, { status: 503 });
+  if (!c) return Response.json({ pending: true }); // sheet slow (Apps Script cold start) or down: the page keeps polling, then falls back to WhatsApp
   if (c.error === "not-found") return Response.json({ pending: true }); // registration row may still be on its way to the sheet
   if (c.duplicate) return Response.json({ error: "This UTR is already linked to another registration. Please send your payment screenshot on WhatsApp." }, { status: 409 });
   if (c.verified) return Response.json({ verified: true, ticketUrl: c.ticketUrl || null });
