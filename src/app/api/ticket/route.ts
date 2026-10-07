@@ -4,7 +4,7 @@ import { isAdmin, seal, ticketNo, ticketReady } from "@/lib/ticket";
 
 /** Staff only: after checking the payment in the Yes Bank app, issue the athlete's ticket. */
 export async function POST(req: Request) {
-  if (!ticketReady()) return Response.json({ error: "Ticket system not set up yet (ADMIN_KEY missing in Vercel)." }, { status: 503 });
+  if (!ticketReady()) return Response.json({ error: "Ticket system not set up yet: ADMIN_KEY in Vercel is missing or shorter than 12 characters." }, { status: 503 });
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   if (!isAdmin(b.key)) return Response.json({ error: "Wrong staff password." }, { status: 401 });
 
