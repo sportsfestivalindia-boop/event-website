@@ -15,7 +15,7 @@ const EVENT = {
   name: "India’s Biggest Sports Festival 2026",
   dates: "4–6 December 2026",
   venue: "Baramunda Ground Field, Bhubaneswar, Odisha",
-  phone: "+91 99388 18919",
+  phone: "+91 80189 58655",
   site: "https://sportsfestivalindia.com",
   docs: "Government ID, age proof, a recent photograph, association / federation details, the signed athlete self-declaration and a medical declaration if applicable",
 };

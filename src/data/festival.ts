@@ -34,11 +34,11 @@ export const EVENT = {
   registrationCloses: "2026-11-20T23:59:59+05:30",
   fee: 5000,
   prizePool: 1_50_00_000,
-  phone: "+91 99388 18919",
-  phoneHref: "tel:+919938818919",
-  // registrations + payment screenshots go here (client, 2026-10-07); general questions stay on `phone`
+  phone: "+91 80189 58655",
+  phoneHref: "tel:+918018958655",
+  // all contact (calls, WhatsApp, payment screenshots) on one number — client, 2026-10-07
   paymentsWhatsApp: { display: "+91 80189 58655", wa: "918018958655" },
-  whatsappHref: "https://wa.me/919938818919?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
+  whatsappHref: "https://wa.me/918018958655?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
   email: "aogaofficial@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
   // Collection account from the Yes Bank merchant QR the client supplied (2026-10-07). payee + mc must match that QR exactly —
