@@ -39,8 +39,9 @@ export const EVENT = {
   whatsappHref: "https://wa.me/919938818919?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
   email: "aogaofficial@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
-  // AOGA's UPI ID (e.g. "aoga@sbi"). Empty = payment QR switched off; athletes send their entry to AOGA on WhatsApp instead.
-  upi: { id: "" as string, payee: "All Odisha Gym Association" },
+  // Collection account from the Yes Bank merchant QR the client supplied (2026-10-07). payee + mc must match that QR exactly —
+  // the name is what athletes see in their UPI app. Empty id = QR off; athletes send their entry to AOGA on WhatsApp instead.
+  upi: { id: "MAB0450252A0323772@Yesbank" as string, payee: "GOCHHIKAR GYM", mc: "7298", bank: "Yes Bank" },
   // Shown in the footer, Contact and Terms only when filled in.
   regdNo: "" as string,
   gstin: "" as string,

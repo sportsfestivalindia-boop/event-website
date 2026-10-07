@@ -188,7 +188,7 @@ export const PAGES: Record<string, Page> = {
         </P>
         <H>5. Payments</H>
         <P>
-          Payments are made by UPI (GPay, PhonePe, Paytm, BHIM or any UPI app) directly to the All Odisha Gym Association, using the QR shown at
+          Payments are made by UPI (GPay, PhonePe, Paytm, BHIM or any UPI app) to the organiser’s collection account ({EVENT.upi.payee}, {EVENT.upi.bank}), using the QR shown at
           registration. We never see your UPI PIN or banking credentials. Your registration is confirmed on WhatsApp once AOGA matches your UTR number.
         </P>
         <H>6. Cancellations, refunds and transfers</H>

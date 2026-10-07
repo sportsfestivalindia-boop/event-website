@@ -1,6 +1,6 @@
 import { checkEntry, regId, upiLink, type Entry } from "@/lib/pay";
 
-/** Step 3: validate the entry, reserve a registration ID and return the UPI payment link for the QR (null until AOGA's UPI ID is set). */
+/** Step 3: validate the entry, reserve a registration ID and return the UPI payment link for the QR (null until a UPI ID is set). */
 export async function POST(req: Request) {
   const entry = (await req.json().catch(() => ({}))) as Partial<Entry>;
   const check = checkEntry(entry);

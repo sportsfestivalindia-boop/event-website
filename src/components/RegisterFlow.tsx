@@ -264,7 +264,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
             <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto mt-4 size-60 rounded-lg border border-line bg-white p-2" />
             <p className="mt-3 text-xs text-muted">
-              Paying to <b className="text-ink">{EVENT.upi.payee}</b>
+              Your UPI app will show <b className="text-ink">{EVENT.upi.payee}</b> ({EVENT.upi.bank}) — the festival’s collection account
               <br />
               Reference {pending.regId}
             </p>

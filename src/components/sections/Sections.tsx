@@ -160,7 +160,7 @@ export function Trust() {
     { icon: "users", t: "Qualified judging panel", b: "Chief Judge, judges, jury and statisticians appointed by the Technical Committee. Judges must stay impartial." },
     { icon: "doc", t: "Official rules", b: "Conducted under rules approved by the Organising and Technical Committees. Weigh-in is compulsory." },
     { icon: "shield", t: "Medical support", b: "First aid, medical personnel and ambulance / emergency coordination at the venue." },
-    { icon: "lock", t: "Pay by UPI", b: "Scan AOGA’s UPI QR with GPay, PhonePe, Paytm or any UPI app. Confirmed by the AOGA team on WhatsApp." },
+    { icon: "lock", t: "Pay by UPI", b: `Scan the UPI QR (paid to ${EVENT.upi.payee}) with GPay, PhonePe, Paytm or any UPI app. Confirmed by the AOGA team on WhatsApp.` },
     { icon: "badge", t: "Official organiser", b: `${EVENT.organiser}${EVENT.regdNo ? ` · Regd. No. ${EVENT.regdNo}` : ""} · ${EVENT.address}` },
     { icon: "phone", t: "Real people, real help", b: `${EVENT.phone} · ${EVENT.email}` },
   ];
@@ -434,7 +434,7 @@ export function Footer() {
       <p className="mx-auto mt-12 w-full max-w-4xl text-xs leading-relaxed text-muted">
         {EVENT.name} is a physical sports competition. Results and prizes are decided solely by athletic performance — judges’ scores, weigh-ins, lifts,
         bouts and finish times — under published rules. There is no lottery, draw, betting or game of chance. The registration fee is a participation fee
-        for competition entry and athlete services. Payments are made by UPI directly to the All Odisha Gym Association.
+        for competition entry and athlete services. Payments are made by UPI to the organiser’s collection account ({EVENT.upi.payee}).
       </p>
       <div className="mx-auto mt-6 flex w-full flex-wrap justify-between gap-3 border-t border-line pt-6 text-xs text-muted">
         <span>© {EVENT.year} {EVENT.organiser}</span>
