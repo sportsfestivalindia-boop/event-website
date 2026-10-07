@@ -5,7 +5,7 @@ export type SheetAction = "registration" | "ticket" | "stall" | "enquiry";
 
 /** Returns the script's JSON reply, or null if the sheet is off, slow or down. */
 export async function toSheet(action: SheetAction, data: Record<string, string | number>): Promise<Record<string, unknown> | null> {
-  const url = process.env.SHEET_WEBHOOK_URL;
+  const url = process.env.SHEET_WEBHOOK_URL?.trim(); // trim() also drops a stray BOM from a pasted value
   if (!url) return null;
   try {
     const res = await fetch(url, {
