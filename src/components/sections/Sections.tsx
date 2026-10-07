@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { COMMITTEE, DANGAL_FEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, REFUND, VALUE, paidPlaces, registerHref } from "@/data/festival";
+import { COMMITTEE, DANGAL_FEE, DAYS, DOCUMENTS, EVENT, FAQ, HEADLINE_PRIZES, LEGENDS, ORGANISERS, REFUND, VALUE, minFee, paidPlaces, registerHref } from "@/data/festival";
 import { STALLS } from "@/data/partners";
 import { inr, prizeLabel } from "@/lib/format";
 import { Finder } from "../Finder";
@@ -38,7 +38,7 @@ export function Prizes() {
           </li>
         ))}
       </ul>
-      <Cta className="-mt-4" label={`Register now — ${inr(EVENT.fee)}`} />
+      <Cta className="-mt-4" label={`Register now — from ${inr(minFee)}`} />
     </Section>
   );
 }
@@ -98,7 +98,7 @@ export function Champions() {
 export function Value() {
   return (
     <Section id="value" theme="paper">
-      <SectionHead title={<>What you get for <Mark>{inr(EVENT.fee)}</Mark></>} />
+      <SectionHead title={<>What a <Mark>{inr(EVENT.fee)}</Mark> entry gets you</>} />
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {VALUE.map((v, n) => (
           <li key={v.title} className="card flex gap-4 p-5 md:p-6" data-reveal style={i(n % 3)}>
@@ -269,7 +269,7 @@ export function Register() {
           </p>
         </div>
         <div className="flex flex-col gap-4">
-          <Cta tone="ink" wide micro={false} label={`Register now — ${inr(EVENT.fee)}`} />
+          <Cta tone="ink" wide micro={false} label={`Register now — from ${inr(minFee)}`} />
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">
             <WhatsAppGlyph className="size-6" /> Team registration on WhatsApp
           </a>
@@ -382,7 +382,7 @@ export function FinalCall() {
           <CountdownBoxes glass />
         </div>
         <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3">
-          <Cta wide micro={false} label={`Register now — ${inr(EVENT.fee)}`} />
+          <Cta wide micro={false} label={`Register now — from ${inr(minFee)}`} />
           <WhatsAppLink label="Need help? WhatsApp us" />
         </div>
       </div>

@@ -217,6 +217,8 @@ export const paidPlaces = CHAMPIONSHIPS.flatMap((c) => c.divisions).reduce(
   (s, d) => s + d.classes.length * d.prizes.length + (d.extras?.length ?? 0),
   0,
 );
+/** Cheapest paid entry — "Entry from ₹600" (fees differ by championship). */
+export const minFee = Math.min(...CHAMPIONSHIPS.flatMap((c) => c.divisions.map((d) => d.fee ?? EVENT.fee)).filter((f) => f > 0));
 export const categoryCount = CHAMPIONSHIPS.flatMap((c) => c.divisions).reduce((s, d) => s + d.classes.length, 0);
 export const topPrize = Math.max(...CHAMPIONSHIPS.flatMap((c) => c.divisions.flatMap((d) => [...d.prizes, ...(d.extras ?? []).map((e) => e.prize)].map(cash))));
 

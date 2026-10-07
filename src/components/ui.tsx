@@ -94,4 +94,3 @@ export function PolicyLinks({ className = "" }: { className?: string }) {
   );
 }
 
-export const feeLabel = `Register — ${inr(EVENT.fee)}`;

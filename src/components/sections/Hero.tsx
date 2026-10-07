@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CHAMPIONSHIPS, EVENT, categoryCount, paidPlaces } from "@/data/festival";
+import { CHAMPIONSHIPS, EVENT, categoryCount, minFee, paidPlaces } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
@@ -44,8 +44,8 @@ export function Hero() {
             <div className="mt-4 flex items-center justify-center gap-3 border-t border-line pt-4 whitespace-nowrap lg:mt-10 lg:justify-start lg:border-0 lg:pt-0">
               <Icon name="ticket" className="size-7 shrink-0 text-gold sm:size-9" />
               <div className="text-left">
-                <p className="label !text-[11px] text-muted">Your entry</p>
-                <p className="display text-[clamp(1.5rem,7vw,2.25rem)]">{inr(EVENT.fee)}</p>
+                <p className="label !text-[11px] text-muted">Entry from</p>
+                <p className="display text-[clamp(1.5rem,7vw,2.25rem)]">{inr(minFee)}</p>
               </div>
             </div>
           </div>

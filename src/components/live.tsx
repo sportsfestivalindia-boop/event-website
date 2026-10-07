@@ -164,7 +164,7 @@ export function Chrome() {
             <WhatsAppGlyph className="size-5" />
           </a>
           <Link href={registerHref()} className={`btn btn-gold hidden !min-h-11 !px-5 !text-sm md:inline-flex ${past ? "" : "pointer-events-none opacity-0"} transition-opacity`} tabIndex={past ? 0 : -1}>
-            Register {inr(EVENT.fee)}
+            Register now
           </Link>
         </div>
       </header>
