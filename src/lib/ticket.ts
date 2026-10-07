@@ -3,6 +3,8 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { CHAMPIONSHIPS } from "@/data/festival";
 import { istNow, toSheet } from "@/lib/sheet";
+import { sendTicketWhatsApp } from "@/lib/whatsapp";
+import { after } from "next/server";
 
 export type Ticket = {
   t: string; // ticket number
@@ -60,7 +62,9 @@ export function unseal(token: string): Ticket | null {
 export const whenFor = (category: string) => CHAMPIONSHIPS.find((c) => category.startsWith(c.sport))?.when ?? "";
 
 /**
- * Seals the ticket and records it in the sheet, which marks the athlete Verified and emails them.
+ * Seals the ticket and records it in the sheet, which marks the athlete Verified and emails them, then sends it to
+ * their registered number on WhatsApp (after the response, so nobody waits on it). Every ticket — athlete's own UTR,
+ * Make's bank-SMS match, staff desk — passes through here.
  * Refused when the sheet says this UTR already has a ticket for someone else (reused screenshot / UTR).
  */
 export async function issueTicket(
@@ -72,5 +76,6 @@ export async function issueTicket(
   const url = new URL(`/ticket/${token}`, origin).toString();
   const sheet = await toSheet("ticket", { regId: p.regId ?? "", utr: p.utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow(), name: p.name, phone: p.phone, category: p.category, fee: p.amount });
   if (sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
+  after(() => sendTicketWhatsApp({ phone: p.phone, name: p.name, amount: p.amount, category: p.category, ticketNo: t, url }));
   return { ticketNo: t, url };
 }

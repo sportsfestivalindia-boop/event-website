@@ -61,5 +61,18 @@ import("./ticket").then(({ seal, unseal, ticketNo, isAdmin }) => {
     posts = 0;
     assert.equal(await toSheet("registration", {}), null, "registration: lost reply stays lost");
     assert.equal(posts, 1, "registration sent once (an append, never repeated)");
+  })
+  // WhatsApp ticket: off without a key; with one, goes to 91+mobile with the template values in {{1}}–{{5}} order
+  .then(async () => {
+    const { sendTicketWhatsApp } = await import("./whatsapp");
+    const t = { phone: "9876543210", name: "Test Athlete", amount: 600, category: "Marathon · Open", ticketNo: "SFT-1234ABCD", url: "https://x.test/ticket/abc" };
+    assert.equal(await sendTicketWhatsApp(t), false, "WhatsApp off until AISENSY_API_KEY is set");
+    process.env.AISENSY_API_KEY = "test-key";
+    let sent: Record<string, unknown> = {};
+    globalThis.fetch = (async (_u: unknown, init?: RequestInit) => ((sent = JSON.parse(String(init?.body))), new Response("{}"))) as typeof fetch;
+    assert.equal(await sendTicketWhatsApp(t), true, "WhatsApp sent");
+    assert.equal(sent.destination, "919876543210", "to the registered mobile with 91");
+    assert.deepEqual(sent.templateParams, ["Test Athlete", "600", "Marathon · Open", "SFT-1234ABCD", "https://x.test/ticket/abc"], "template values in order");
+    assert.equal(await sendTicketWhatsApp({ ...t, phone: "12345" }), false, "bad number skipped");
     console.log("pay.check: all passed");
   });
