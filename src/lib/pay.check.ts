@@ -1,6 +1,7 @@
 // Run: npx tsx src/lib/pay.check.ts — fails loudly if the money path breaks.
 import assert from "node:assert/strict";
 import { checkEntry, checkStall, upiLink, validUtr } from "./pay";
+import { UPI_APPS, upiAppLink } from "./upi";
 
 const base = { sport: "bodybuilding", division: "mens-bb", cls: "75 kg", name: "Test Athlete", dob: "1998-05-10", phone: "9876543210", email: "a@b.in", city: "Bhubaneswar" };
 
@@ -34,6 +35,11 @@ assert.ok(validUtr("123456789012"), "12-digit UTR accepted");
 assert.equal(validUtr("12345"), false, "short UTR rejected");
 assert.equal(validUtr("12345678901a"), false, "non-numeric UTR rejected");
 assert.equal(upiLink(5000, "SF26-ABC123") === null || upiLink(5000, "SF26-ABC123")!.includes("am=5000.00"), true, "UPI link carries the amount (or is off until the UPI ID is set)");
+const u = "upi://pay?pa=x@ybl&am=600.00&cu=INR";
+const gpay = upiAppLink(u, UPI_APPS[0], false);
+assert.ok(gpay.startsWith("intent://pay?pa=x@ybl&am=600.00&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;"), "Android: same payment, pinned to GPay");
+assert.ok(gpay.endsWith(";end") && gpay.includes("S.browser_fallback_url=https%3A%2F%2Fplay.google.com"), "Android: Play Store if the app is missing");
+assert.equal(upiAppLink(u, UPI_APPS[1], true), "phonepe://pay?pa=x@ybl&am=600.00&cu=INR", "iPhone: PhonePe's own scheme");
 
 // tickets: sealed with ADMIN_KEY — tamper-proof, one UTR = one ticket number
 process.env.ADMIN_KEY = "test-key-for-checks-only";
