@@ -180,6 +180,12 @@ function doPost(e) {
   }
 }
 
+// Make calls with GET + query parameters: Apps Script's POST → 302 → reply hop is unreliable inside Make, GET is not.
+// Same actions as doPost (the /exec URL itself is the secret).
+function doGet(e) {
+  return doPost({ postData: { contents: JSON.stringify(e.parameter || {}) } });
+}
+
 /* ───────────────────────── staff verifies → confirmation ───────────────────────── */
 
 function onStatusEdit(e) {
