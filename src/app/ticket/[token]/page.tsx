@@ -73,7 +73,10 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
             </p>
           </div>
         </div>
-        <p className="mt-4 text-center text-xs text-muted">Show this ticket (screenshot is fine) and your Government ID at the check-in desk.</p>
+        <a href={`/ticket/${token}/image`} download className="btn btn-gold mt-6 w-full">
+          Download ticket
+        </a>
+        <p className="mt-3 text-center text-xs text-muted">Show this ticket (screenshot is fine) and your Government ID at the check-in desk.</p>
 
         <div className="card mt-6 p-5">
           <p className="text-sm font-semibold">Bring on event day</p>

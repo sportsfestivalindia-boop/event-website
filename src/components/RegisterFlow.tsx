@@ -575,11 +575,16 @@ function Verified({ claim, regId, label, email }: { claim: Claim; regId: string;
         <p className="display mt-1 text-4xl tracking-wider text-gold">{claim.ticketNo ?? regId}</p>
       </div>
       {claim.ticketUrl && (
-        <a href={claim.ticketUrl} className="btn btn-gold mt-6 w-full">
-          Open my ticket <Icon name="arrow" className="arr size-5" />
-        </a>
+        <>
+          <a href={`${claim.ticketUrl}/image`} download className="btn btn-gold mt-6 w-full">
+            Download ticket
+          </a>
+          <a href={claim.ticketUrl} className="btn btn-line mt-3 w-full">
+            Open my ticket <Icon name="arrow" className="arr size-5" />
+          </a>
+        </>
       )}
-      <p className="mt-4 text-xs text-muted">Screenshot your ticket and bring it with your Government ID to check-in.</p>
+      <p className="mt-4 text-xs text-muted">Save your ticket and bring it with your Government ID to check-in.</p>
       <Link href="/" className="btn btn-line mt-8 w-full">
         Back to home
       </Link>

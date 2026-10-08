@@ -61,9 +61,14 @@ export function VerifyForm() {
         <p className="display mt-4 text-4xl">Payment verified</p>
         {result.ticketNo && <p className="display mt-2 text-3xl tracking-wider text-gold">{result.ticketNo}</p>}
         {result.ticketUrl ? (
-          <a href={result.ticketUrl} className="btn btn-gold mt-6 w-full">
-            Open my ticket <Icon name="arrow" className="arr size-5" />
-          </a>
+          <>
+            <a href={`${result.ticketUrl}/image`} download className="btn btn-gold mt-6 w-full">
+              Download ticket
+            </a>
+            <a href={result.ticketUrl} className="btn btn-line mt-3 w-full">
+              Open my ticket <Icon name="arrow" className="arr size-5" />
+            </a>
+          </>
         ) : (
           <p className="mt-3 text-muted">Your ticket has been emailed to you.</p>
         )}
