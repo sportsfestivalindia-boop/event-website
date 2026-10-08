@@ -23,7 +23,10 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function RegisterFlow({ initial }: { initial: { sport?: string; division?: string; cls?: string } }) {
+export function RegisterFlow({ initial }: { initial: { sport?: string; division?: string; cls?: string; test?: boolean } }) {
+  // staff test mode (?test=1): with the staff password the fee is ₹1; no Meta events, so ads stay clean
+  const testing = !!initial.test;
+  const [testKey, setTestKey] = useState("");
   const champ0 = open.find((c) => c.id === initial.sport) ?? open[0];
   const div0 = champ0.divisions.find((d) => d.id === initial.division) ?? champ0.divisions[0];
   const [f, setF] = useState<Form>({
@@ -60,12 +63,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setBusy(true);
     try {
       const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null }>("/api/order", { ...f, tracking });
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null }>("/api/order", { ...f, tracking, ...(testing && { testKey }) });
       if (o.free) {
-        track("freeRegistered", { label: o.label, regId: o.regId });
+        if (!testing) track("freeRegistered", { label: o.label, regId: o.regId });
         return setDone({ regId: o.regId, label: o.label, paid: 0 });
       }
-      track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
+      if (!testing) track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
       const qr = o.upi ? await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" }) : null;
       setPending({ regId: o.regId, amount: o.amount, label: o.label, upi: o.upi ?? null, qr });
       setStep(4);
@@ -106,7 +109,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
       const c = await waitForTicket({ regId: p.regId, utr });
       if (c) {
         // Purchase fires only once the bank has confirmed the money (not on a click)
-        track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
+        if (!testing) track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
         return setVerified(c);
       }
       setDone({ regId: p.regId, label: p.label, paid: p.amount, utr }); // bank alert still not in: Make finishes it, ticket comes by email
@@ -290,6 +293,12 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               <Icon name="rupee" className="size-5 shrink-0 text-gold" /> Next: pay by UPI QR with GPay, PhonePe, Paytm, BHIM or any UPI app.
             </p>
           )}
+          {testing && (
+            <label className="block rounded-lg border border-amber-400/50 bg-amber-400/10 p-4 text-sm">
+              <b className="block">Staff test mode — pay ₹1 instead of the fee</b>
+              <input type="password" value={testKey} onChange={(e) => setTestKey(e.target.value)} placeholder="Staff password" autoComplete="current-password" className="mt-2 h-11 w-full rounded-lg border border-line bg-raise px-3 outline-none focus:border-gold" />
+            </label>
+          )}
           <label className="flex items-start gap-3 rounded-lg border border-line p-4 text-sm">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#ffb81c]" />
             <span>
@@ -424,7 +433,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           )}
           {step === 3 && (
             <button onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 disabled:opacity-40">
-              {busy ? "Please wait…" : fee ? `Pay ${inr(fee)} by UPI` : "Confirm free registration"}
+              {busy ? "Please wait…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} by UPI` : "Confirm free registration"}
             </button>
           )}
           {step === 4 && pending?.qr && (

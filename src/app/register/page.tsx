@@ -8,7 +8,7 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   return (
     <main className="t-ink min-h-[100svh]">
-      <RegisterFlow initial={{ sport: one(q.sport), division: one(q.division), cls: one(q.class) }} />
+      <RegisterFlow initial={{ sport: one(q.sport), division: one(q.division), cls: one(q.class), test: one(q.test) === "1" }} />
     </main>
   );
 }
