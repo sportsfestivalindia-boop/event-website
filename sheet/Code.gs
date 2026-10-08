@@ -99,7 +99,7 @@ function doPost(e) {
       const sh = ss.getSheetByName(d.source === "STAFF TEST" ? "Tests" : "Registrations");
       const row = new Array(TABS.Registrations.length).fill("");
       const set = (h, v) => (row[R[h] - 1] = v);
-      set("Reg ID", d.regId); set("Created", d.created); set("Name", d.name); set("DOB", d.dob); set("Mobile", d.phone);
+      set("Reg ID", d.regId); set("Created", new Date()); set("Name", d.name); set("DOB", d.dob); set("Mobile", d.phone);
       set("Email", d.email); set("City", d.city); set("Association", d.association); set("Category", d.category);
       set("Fee (₹)", d.fee); set("Status", d.status); set("Source", d.source);
       sh.appendRow(row);
@@ -144,6 +144,24 @@ function doPost(e) {
       const at = findReg(ss, R["UTR"], utr);
       const waiting = at.r && cell(at, "Status") !== "Verified";
       return json({ ok: true, utr, match: waiting ? cell(at, "Reg ID") : "" });
+    } else if (d.action === "lookup") {
+      // read-only: the athlete's personal payment link (/pay?id=…) reopens their payment page
+      const at = findReg(ss, R["Reg ID"], d.regId);
+      if (!at.r) return json({ ok: false });
+      const c = (h) => cell(at, h);
+      return json({
+        ok: true,
+        regId: c("Reg ID"),
+        name: c("Name"),
+        phone: String(c("Mobile")),
+        email: c("Email"),
+        city: c("City"),
+        dob: String(c("DOB")),
+        category: c("Category"),
+        fee: Number(c("Fee (₹)")),
+        status: c("Status"),
+        ticketUrl: c("Ticket"),
+      });
     } else if (d.action === "summary") {
       // daily report for the organisers (Make → email / WhatsApp)
       const reg = ss.getSheetByName("Registrations");
@@ -270,6 +288,41 @@ function watchdog() {
   const orphans = credits.filter(
     (x) => !gb(x, "Matched Reg ID") && FEES.includes(Number(gb(x, "Amount (₹)"))) && waited(gb(x, "Received")) && !seen.includes("bank:" + gb(x, "UTR")),
   );
+  // Reached the payment page 30+ min ago but never verified (didn't pay, or paid and forgot the UTR): one friendly
+  // email with their personal payment link and the WhatsApp-screenshot route. Old rows with no real time are skipped.
+  const created = (x) => asDate(g(x, "Created"));
+  const abandoned = regs
+    .concat(tests)
+    .filter((x) => g(x, "Status") === "Awaiting payment" && g(x, "Email") && created(x) && Date.now() - created(x).getTime() > 30 * 60 * 1000 && !seen.includes("remind:" + g(x, "Reg ID")));
+  abandoned.forEach((x) => {
+    if (MailApp.getRemainingDailyQuota() < 5) return;
+    const id = g(x, "Reg ID");
+    const wa = `https://wa.me/${EVENT.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`PAYMENT SCREENSHOT for registration ${id} (${g(x, "Name")})`)}`;
+    MailApp.sendEmail({
+      to: g(x, "Email"),
+      subject: `Complete your registration — ${id} · ${EVENT.name}`,
+      name: "All Odisha Gym Association",
+      body: [
+        `Hi ${g(x, "Name")},`,
+        "",
+        `You started registering for ${g(x, "Category")} (₹${g(x, "Fee (₹)")}) at ${EVENT.name}, but we haven't received your payment confirmation yet.`,
+        "",
+        "HAVEN'T PAID YET? Complete your payment here (your QR is ready):",
+        `${EVENT.site}/pay?id=${id}`,
+        "",
+        "ALREADY PAID? Don't worry — your money is safe. Open the same link and enter the 12-digit UTR from your payment screen, or send your payment screenshot on WhatsApp and we'll send your ticket there:",
+        wa,
+        "",
+        "Please don't pay twice.",
+        `Questions? WhatsApp or call ${EVENT.phone}.`,
+        "",
+        "All Odisha Gym Association",
+      ].join("\n"),
+    });
+    seen.push("remind:" + id);
+  });
+  if (abandoned.length) props.setProperty("alerted", JSON.stringify(seen.slice(-2000)));
+
   if ((!stuck.length && !orphans.length) || MailApp.getRemainingDailyQuota() < 2) return;
 
   stuck.forEach((x) => {
@@ -356,6 +409,13 @@ function latestFor(ss, phone) {
     }
   }
   return any;
+}
+
+// a sheet time: a real Date, or the website's old "d/m/yyyy, hh:mm:ss" IST text; null when unknown
+function asDate(v) {
+  if (v instanceof Date) return v;
+  const m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0)) - 330 * 60 * 1000) : null;
 }
 
 function when(t) {

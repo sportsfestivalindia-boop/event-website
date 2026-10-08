@@ -10,7 +10,9 @@ import { PolicyLinks } from "./ui";
 import { track } from "@/lib/track";
 import { type Claim, waitForTicket } from "@/lib/claim";
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
-type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
+export type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
+/** Reopening a saved registration from its personal link (/pay?id=…): straight to the payment step. */
+export type Resume = { pending: Pending; sport?: string; name: string; dob: string; phone: string; email: string; city: string };
 type Done = { regId: string; label: string; paid: number; utr?: string };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
@@ -23,28 +25,28 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function RegisterFlow({ initial }: { initial: { sport?: string; division?: string; cls?: string; test?: boolean } }) {
+export function RegisterFlow({ initial, resume }: { initial: { sport?: string; division?: string; cls?: string; test?: boolean }; resume?: Resume }) {
   // staff test mode (?test=1): with the staff password the fee is ₹1; no Meta events, so ads stay clean
   const testing = !!initial.test;
   const [testKey, setTestKey] = useState("");
-  const champ0 = open.find((c) => c.id === initial.sport) ?? open[0];
+  const champ0 = open.find((c) => c.id === (resume?.sport ?? initial.sport)) ?? open[0];
   const div0 = champ0.divisions.find((d) => d.id === initial.division) ?? champ0.divisions[0];
   const [f, setF] = useState<Form>({
     sport: champ0.id,
     division: div0.id,
     cls: div0.classes.includes(initial.cls ?? "") ? initial.cls! : div0.classes[0],
-    name: "",
-    dob: "",
-    phone: "",
-    email: "",
-    city: "",
+    name: resume?.name ?? "",
+    dob: resume?.dob ?? "",
+    phone: resume?.phone ?? "",
+    email: resume?.email ?? "",
+    city: resume?.city ?? "",
     association: "",
   });
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(resume ? 4 : 1);
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [pending, setPending] = useState<Pending | null>(null);
+  const [pending, setPending] = useState<Pending | null>(resume?.pending ?? null);
   const [copied, setCopied] = useState(false);
   const [done, setDone] = useState<Done | null>(null);
   const [utr, setUtr] = useState("");
