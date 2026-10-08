@@ -156,7 +156,7 @@ function doPost(e) {
         phone: String(c("Mobile")),
         email: c("Email"),
         city: c("City"),
-        dob: String(c("DOB")),
+        dob: c("DOB") instanceof Date ? Utilities.formatDate(c("DOB"), "Asia/Kolkata", "yyyy-MM-dd") : String(c("DOB")),
         category: c("Category"),
         fee: Number(c("Fee (₹)")),
         status: c("Status"),
