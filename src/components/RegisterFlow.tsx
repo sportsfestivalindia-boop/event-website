@@ -323,7 +323,7 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
             <p className="mt-1 text-sm text-muted">3 simple steps · takes about 2 minutes · keep this page open</p>
           </div>
 
-          <TutorialVideo title="New to UPI? Watch how to pay" note="Scan, pay, copy the UTR, get your ticket · 45 seconds" start={33} />
+          <TutorialVideo title="New to UPI? Watch how to pay" note="Save the QR, pay in your UPI app, copy the UTR, get your ticket · 1 minute" start={33} />
 
           <PayStep n={1} title="Open any UPI app">
             <p>Google Pay, PhonePe, Paytm, BHIM or your bank’s app — any app with UPI works.</p>
