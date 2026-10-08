@@ -7,6 +7,7 @@ import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
+import { TutorialVideo } from "./TutorialVideo";
 import { track } from "@/lib/track";
 import { type Claim, waitForTicket } from "@/lib/claim";
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
@@ -133,6 +134,12 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
         Register <span className="text-gold">now</span>
       </h1>
       <p className="mt-2 text-muted">India’s Biggest Sports Festival · 4–6 Dec 2026 · Bhubaneswar</p>
+
+      {step === 1 && (
+        <div className="mt-6">
+          <TutorialVideo title="Watch first: how to register & pay" note="1-minute video · step by step, from this form to your ticket" />
+        </div>
+      )}
 
       <ol className="mt-8 grid grid-cols-4 gap-2 text-xs font-semibold">
         {["Category", "Details", "Review", "Pay"].map((s, i) => (
@@ -315,6 +322,8 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
             </p>
             <p className="mt-1 text-sm text-muted">3 simple steps · takes about 2 minutes · keep this page open</p>
           </div>
+
+          <TutorialVideo title="New to UPI? Watch how to pay" note="Scan, pay, copy the UTR, get your ticket · 45 seconds" start={33} />
 
           <PayStep n={1} title="Open any UPI app">
             <p>Google Pay, PhonePe, Paytm, BHIM or your bank’s app — any app with UPI works.</p>
