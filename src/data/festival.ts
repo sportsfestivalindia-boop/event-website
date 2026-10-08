@@ -43,7 +43,7 @@ export const EVENT = {
   circularRef: "AOGA/AGC/2026/001",
   // Collection account from the Yes Bank merchant QR the client supplied (2026-10-07). payee + mc must match that QR exactly —
   // the name is what athletes see in their UPI app. Empty id = QR off; athletes send their entry to AOGA on WhatsApp instead.
-  upi: { id: "MAB0450252A0323772@Yesbank" as string, payee: "GOCHHIKAR GYM", mc: "7298", bank: "Yes Bank" },
+  upi: { id: "MAB0450252A0323772@Yesbank" as string, payee: "ANIL GOCHHIKAR", mc: "7298", bank: "Yes Bank" },
   // Shown in the footer, Contact and Terms only when filled in.
   regdNo: "" as string,
   gstin: "" as string,
