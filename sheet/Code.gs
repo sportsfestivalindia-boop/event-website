@@ -29,8 +29,13 @@ const STATUSES = ["Awaiting payment", "Pending", "Verified", "Rejected"];
 const FEES = [600, 1000, 5000]; // entry fees — any other credit to the gym's account is not a festival payment
 const ALERT_TO = "sportsfestivalindia@gmail.com,rupesh.zenvy@gmail.com"; // staff alerts from the watchdog
 
+const REG_COLS = ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes", "Ticket"];
+// Tests: staff ₹1 test mode (/register?test=1) — same columns and same flow, kept out of the report and the totals
+const REGS = ["Registrations", "Tests"];
+
 const TABS = {
-  Registrations: ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes", "Ticket"],
+  Registrations: REG_COLS,
+  Tests: REG_COLS,
   // Yes Bank credit alerts (SMS / email), parsed by the Make scenario — the proof a UTR was really paid
   Bank: ["Received", "Amount (₹)", "UTR", "Payer", "Source", "Raw", "Matched Reg ID"],
   Stalls: ["Booking ID", "Created", "Stall", "Price (₹)", "Company", "Contact", "Mobile", "Email", "GSTIN", "Sector", "Status", "Notes"],
@@ -48,23 +53,25 @@ function setup() {
     sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight("bold").setBackground("#0a0a0a").setFontColor("#ffb81c");
     sh.setFrozenRows(1);
   }
-  const reg = ss.getSheetByName("Registrations");
-  // text formats so mobiles / UTRs keep their leading digits
-  ["Mobile", "UTR", "DOB"].forEach((h) => reg.getRange(2, R[h], reg.getMaxRows() - 1).setNumberFormat("@"));
   const bank = ss.getSheetByName("Bank");
   bank.getRange(2, B["UTR"], bank.getMaxRows() - 1).setNumberFormat("@");
-  reg.getRange(2, R["Status"], reg.getMaxRows() - 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).build());
-
   const col = (h) => String.fromCharCode(64 + R[h]);
-  const st = reg.getRange(2, R["Status"], reg.getMaxRows() - 1);
-  const utr = reg.getRange(2, R["UTR"], reg.getMaxRows() - 1);
   const rule = (range, formula, colour) => SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(formula).setBackground(colour).setRanges([range]).build();
-  reg.setConditionalFormatRules([
-    rule(utr, `=AND(${col("UTR")}2<>"",COUNTIF($${col("UTR")}:$${col("UTR")},${col("UTR")}2)>1)`, "#f4a3a3"), // same UTR used twice
-    rule(st, `=${col("Status")}2="Verified"`, "#b7e1cd"),
-    rule(st, `=${col("Status")}2="Pending"`, "#fce8b2"),
-    rule(st, `=${col("Status")}2="Rejected"`, "#e6b8af"),
-  ]);
+  REGS.forEach((name) => {
+    const reg = ss.getSheetByName(name);
+    // text formats so mobiles / UTRs keep their leading digits
+    ["Mobile", "UTR", "DOB"].forEach((h) => reg.getRange(2, R[h], reg.getMaxRows() - 1).setNumberFormat("@"));
+    reg.getRange(2, R["Status"], reg.getMaxRows() - 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).build());
+    const st = reg.getRange(2, R["Status"], reg.getMaxRows() - 1);
+    const utr = reg.getRange(2, R["UTR"], reg.getMaxRows() - 1);
+    reg.setConditionalFormatRules([
+      rule(utr, `=AND(${col("UTR")}2<>"",COUNTIF($${col("UTR")}:$${col("UTR")},${col("UTR")}2)>1)`, "#f4a3a3"), // same UTR used twice
+      rule(st, `=${col("Status")}2="Verified"`, "#b7e1cd"),
+      rule(st, `=${col("Status")}2="Pending"`, "#fce8b2"),
+      rule(st, `=${col("Status")}2="Rejected"`, "#e6b8af"),
+    ]);
+  });
+  ss.getSheetByName("Tests").setTabColor("#ffb81c");
   ["Stalls", "Sponsors"].forEach((n) => {
     const sh = ss.getSheetByName(n);
     const c = TABS[n].indexOf("Status") + 1;
@@ -89,7 +96,7 @@ function doPost(e) {
     const d = JSON.parse(e.postData.contents);
     const ss = book();
     if (d.action === "registration") {
-      const sh = ss.getSheetByName("Registrations");
+      const sh = ss.getSheetByName(d.source === "STAFF TEST" ? "Tests" : "Registrations");
       const row = new Array(TABS.Registrations.length).fill("");
       const set = (h, v) => (row[R[h] - 1] = v);
       set("Reg ID", d.regId); set("Created", d.created); set("Name", d.name); set("DOB", d.dob); set("Mobile", d.phone);
@@ -103,15 +110,15 @@ function doPost(e) {
       // athlete (or Make) says "registration X was paid with UTR Y": record it, and tell the website whether
       // Yes Bank's own alert for that UTR is already here — the website issues the ticket only if it is
       // by Reg ID (payment screen) or by mobile number (the /verify page, for athletes who closed the screen)
-      const sh = ss.getSheetByName("Registrations");
-      const v = (r, h) => sh.getRange(r, R[h]).getValue();
       // by mobile: the registration that already carries this UTR (athlete registered twice) — else their latest unconfirmed one
-      const own = d.regId ? 0 : findRow(sh, R["UTR"], d.utr);
-      const r = d.regId ? findRow(sh, R["Reg ID"], d.regId) : own && String(v(own, "Mobile")) === String(d.phone) ? own : latestFor(sh, d.phone);
+      const own = findReg(ss, R["UTR"], d.utr);
+      const ownsUtr = !d.regId && own.r && String(cell(own, "Mobile")) === String(d.phone);
+      const at = d.regId ? findReg(ss, R["Reg ID"], d.regId) : ownsUtr ? own : latestFor(ss, d.phone);
+      const { sh, r } = at;
+      const v = (row, h) => sh.getRange(row, R[h]).getValue();
       if (!r) return json({ ok: false, error: "not-found" });
       if (v(r, "Status") === "Verified") return json({ ok: true, verified: true, regId: v(r, "Reg ID"), ticketUrl: v(r, "Ticket") });
-      const u = findRow(sh, R["UTR"], d.utr);
-      if (u && u !== r && v(u, "Status") === "Verified") return json({ ok: false, duplicate: true });
+      if (own.r && !(own.sh.getName() === sh.getName() && own.r === r) && cell(own, "Status") === "Verified") return json({ ok: false, duplicate: true });
       asText(sh.getRange(r, R["UTR"]), d.utr);
       sh.getRange(r, R["UTR at"]).setValue(new Date()); // a real time: the watchdog measures how long it has waited
       sh.getRange(r, R["Status"]).setValue("Pending");
@@ -134,10 +141,9 @@ function doPost(e) {
         bank.appendRow([d.received || new Date(), amount, "", d.payer || "", d.source || "", String(d.raw || "").slice(0, 500), ""]);
         asText(bank.getRange(bank.getLastRow(), B["UTR"]), utr);
       }
-      const reg = ss.getSheetByName("Registrations");
-      const r = findRow(reg, R["UTR"], utr);
-      const waiting = r && reg.getRange(r, R["Status"]).getValue() !== "Verified";
-      return json({ ok: true, utr, match: waiting ? reg.getRange(r, R["Reg ID"]).getValue() : "" });
+      const at = findReg(ss, R["UTR"], utr);
+      const waiting = at.r && cell(at, "Status") !== "Verified";
+      return json({ ok: true, utr, match: waiting ? cell(at, "Reg ID") : "" });
     } else if (d.action === "summary") {
       // daily report for the organisers (Make → email / WhatsApp)
       const reg = ss.getSheetByName("Registrations");
@@ -158,12 +164,12 @@ function doPost(e) {
     } else if (d.action === "ticket") {
       // staff issued a ticket on the website → refuse a UTR already ticketed for someone else (reused screenshot),
       // else mark the athlete's row Verified and email them; no matching row (no Reg ID) → log the ticket as a new row
-      const sh = ss.getSheetByName("Registrations");
-      const v = (r, h) => sh.getRange(r, R[h]).getValue();
-      const u = findRow(sh, R["UTR"], d.utr);
-      if (u && v(u, "Status") === "Verified" && (d.regId ? v(u, "Reg ID") !== d.regId : v(u, "Name") !== d.name))
-        return json({ ok: false, duplicate: `${v(u, "Reg ID") || "no Reg ID"} · ${v(u, "Name")}` });
-      let r = d.regId ? findRow(sh, R["Reg ID"], d.regId) : u;
+      const u = findReg(ss, R["UTR"], d.utr);
+      if (u.r && cell(u, "Status") === "Verified" && (d.regId ? cell(u, "Reg ID") !== d.regId : cell(u, "Name") !== d.name))
+        return json({ ok: false, duplicate: `${cell(u, "Reg ID") || "no Reg ID"} · ${cell(u, "Name")}` });
+      const at = d.regId ? findReg(ss, R["Reg ID"], d.regId) : u;
+      const sh = at.sh;
+      let r = at.r;
       if (!r) {
         const row = new Array(TABS.Registrations.length).fill("");
         const set = (h, val) => (row[R[h] - 1] = val);
@@ -201,7 +207,7 @@ function doGet(e) {
 
 function onStatusEdit(e) {
   const sh = e.range.getSheet();
-  if (sh.getName() !== "Registrations" || e.range.getColumn() !== R["Status"] || e.range.getRow() < 2) return;
+  if (!REGS.includes(sh.getName()) || e.range.getColumn() !== R["Status"] || e.range.getRow() < 2) return;
   if (e.value === "Verified") confirm(sh, e.range.getRow());
 }
 
@@ -236,12 +242,11 @@ function confirm(sh, r) {
 }
 
 function retryEmails() {
-  const sh = book().getSheetByName("Registrations");
-  const last = sh.getLastRow();
-  if (last < 2) return;
-  const vals = sh.getRange(2, 1, last - 1, TABS.Registrations.length).getValues();
-  vals.forEach((row, i) => {
-    if (row[R["Status"] - 1] === "Verified" && (!row[R["Email sent"] - 1] || String(row[R["Email sent"] - 1]).indexOf("Quota") === 0)) confirm(sh, i + 2);
+  REGS.forEach((name) => {
+    const sh = book().getSheetByName(name);
+    values(sh, REG_COLS.length).forEach((row, i) => {
+      if (row[R["Status"] - 1] === "Verified" && (!row[R["Email sent"] - 1] || String(row[R["Email sent"] - 1]).indexOf("Quota") === 0)) confirm(sh, i + 2);
+    });
   });
 }
 
@@ -252,7 +257,8 @@ function retryEmails() {
 // bank credits nobody claimed → staff alert listing the likely registrations. Each item alerts once.
 function watchdog() {
   const ss = book();
-  const regs = values(ss.getSheetByName("Registrations"), TABS.Registrations.length);
+  const regs = values(ss.getSheetByName("Registrations"), REG_COLS.length);
+  const tests = values(ss.getSheetByName("Tests"), REG_COLS.length);
   const credits = values(ss.getSheetByName("Bank"), TABS.Bank.length);
   const g = (x, h) => x[R[h] - 1];
   const gb = (x, h) => x[B[h] - 1];
@@ -260,7 +266,7 @@ function watchdog() {
   const seen = JSON.parse(props.getProperty("alerted") || "[]");
   const waited = (t) => !(t instanceof Date) || Date.now() - t.getTime() > 15 * 60 * 1000;
 
-  const stuck = regs.filter((x) => g(x, "Status") === "Pending" && waited(g(x, "UTR at")) && !seen.includes("reg:" + g(x, "Reg ID")));
+  const stuck = regs.concat(tests).filter((x) => g(x, "Status") === "Pending" && waited(g(x, "UTR at")) && !seen.includes("reg:" + g(x, "Reg ID")));
   const orphans = credits.filter(
     (x) => !gb(x, "Matched Reg ID") && FEES.includes(Number(gb(x, "Amount (₹)"))) && waited(gb(x, "Received")) && !seen.includes("bank:" + gb(x, "UTR")),
   );
@@ -321,16 +327,33 @@ function values(sh, width) {
   return last < 2 ? [] : sh.getRange(2, 1, last - 1, width).getValues();
 }
 
+// the tab + row whose `col` holds `value` — real registrations first, then tests; not found → Registrations, row 0
+function findReg(ss, col, value) {
+  for (const name of REGS) {
+    const sh = ss.getSheetByName(name);
+    const r = findRow(sh, col, value);
+    if (r) return { sh, r };
+  }
+  return { sh: ss.getSheetByName("Registrations"), r: 0 };
+}
+
+function cell(at, h) {
+  return at.sh.getRange(at.r, R[h]).getValue();
+}
+
 // the athlete's latest unconfirmed registration for this mobile (else their latest one, to hand back a ticket)
-function latestFor(sh, phone) {
+function latestFor(ss, phone) {
   const p = String(phone || "").replace(/\D/g, "").slice(-10);
-  if (p.length !== 10) return 0;
-  const rows = values(sh, TABS.Registrations.length);
-  let any = 0;
-  for (let i = rows.length - 1; i >= 0; i--) {
-    if (String(rows[i][R["Mobile"] - 1]) !== p) continue;
-    if (rows[i][R["Status"] - 1] !== "Verified") return i + 2;
-    any = any || i + 2;
+  let any = { sh: ss.getSheetByName("Registrations"), r: 0 };
+  if (p.length !== 10) return any;
+  for (const name of REGS) {
+    const sh = ss.getSheetByName(name);
+    const rows = values(sh, REG_COLS.length);
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (String(rows[i][R["Mobile"] - 1]) !== p) continue;
+      if (rows[i][R["Status"] - 1] !== "Verified") return { sh, r: i + 2 };
+      if (!any.r) any = { sh, r: i + 2 };
+    }
   }
   return any;
 }

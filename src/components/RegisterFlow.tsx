@@ -315,61 +315,72 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
       )}
 
       {step === 4 && pending && pending.qr && (
-        <section className="mt-8 space-y-5">
-          <div className="t-paper rounded-2xl p-6 text-center">
+        <section className="mt-8 space-y-4">
+          <div className="text-center">
             <p className="text-xs font-semibold text-muted uppercase">Registration {pending.regId}</p>
-            <p className="mt-2 text-sm font-semibold">Pay exactly</p>
-            <p className="display text-6xl">{inr(pending.amount)}</p>
-            {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
-            <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto mt-4 size-60 rounded-lg border border-line bg-white p-2" />
-            <p className="mt-3 text-xs text-muted">
-              Your UPI app will show <b className="text-ink">{EVENT.upi.payee}</b> ({EVENT.upi.bank}) — the festival’s collection account
+            <p className="display mt-1 text-5xl">
+              Pay <span className="text-gold">{inr(pending.amount)}</span>
             </p>
-            {/* No "open GPay/PhonePe" buttons: this is an in-shop merchant QR, and UPI apps cap or block payments opened
-                from a link ("merchant received maximum amount"). A scan — even of a saved image — always works. */}
-            <div className="mt-5 md:hidden">
-              <p className="text-sm font-semibold">Paying on this phone?</p>
-              <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="btn btn-ink mt-3 w-full">
-                Save QR to gallery
-              </a>
-              <p className="mt-2 text-xs leading-relaxed text-muted">
-                Then open GPay / PhonePe / Paytm → <b className="text-ink">Scan</b> → tap the <b className="text-ink">gallery</b> icon → choose this QR. iPhone: press and hold the QR → Save to Photos.
-              </p>
-            </div>
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs">
-              <span className="text-muted">UPI ID</span>
-              <code className="rounded bg-ink/5 px-2 py-1 font-semibold">{EVENT.upi.id}</code>
-              <button
-                onClick={() => navigator.clipboard?.writeText(EVENT.upi.id).then(() => setCopied(true))}
-                className="rounded border border-line px-2 py-1 font-semibold hover:border-ink"
-              >
-                {copied ? "Copied ✓" : "Copy"}
-              </button>
-            </div>
+            <p className="mt-1 text-sm text-muted">4 simple steps · takes about 2 minutes · keep this page open</p>
           </div>
 
-          <div className="card p-5">
-            <p className="text-sm font-semibold">How to pay — 3 easy steps</p>
-            <ol className="mt-3 space-y-3 text-sm">
-              {[
-                ["Pay", <>Scan the QR with GPay, PhonePe, Paytm or any UPI app. <b className="text-white">Paying on this phone?</b> Tap “Save QR to gallery” (or take a screenshot), then in your UPI app tap Scan → gallery and choose the QR.</>],
-                ["Check", <>Make sure the amount is exactly <b className="text-white">{inr(pending.amount)}</b> and the name shown is <b className="text-white">{EVENT.upi.payee}</b>.</>],
-                ["Confirm", <>On the “Payment successful” screen, find the <b className="text-white">12-digit UTR / UPI Ref. No. / UPI transaction ID</b>, type it below and tap <b className="text-white">Verify my payment</b>. We match it with the bank and your <b className="text-white">ticket appears here</b> — usually within a minute.</>],
-              ].map(([t, b], i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-ink">{i + 1}</span>
-                  <span className="text-muted">
-                    <b className="text-white">{t}.</b> {b}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="card p-5">
-            <label htmlFor="utr" className="text-sm font-semibold">
-              UTR / UPI reference number
+          <PayStep n={1} title="Open any UPI app">
+            <p>Google Pay, PhonePe, Paytm, BHIM or your bank’s app — any app with UPI works.</p>
+          </PayStep>
+
+          {/* No "open GPay/PhonePe" buttons: this is an in-shop merchant QR, and UPI apps cap or block payments opened
+              from a link ("merchant received maximum amount"). A scan — even of a saved image — always works. */}
+          <PayStep n={2} title="Scan this QR code">
+            {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
+            <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto size-60 rounded-lg bg-white p-2" />
+            <p>
+              In your UPI app, tap <b className="text-white">Scan</b> (or “Scan & Pay”) and point the camera at this QR.
+            </p>
+            <div className="rounded-lg bg-raise p-3 md:hidden">
+              <p className="font-semibold text-white">Only one phone?</p>
+              <p className="mt-1">
+                Tap the button below to save the QR. Then in your UPI app tap <b className="text-white">Scan</b> → tap the <b className="text-white">photo / gallery icon</b> → choose the QR. (iPhone: press and hold the QR → Save to Photos.)
+              </p>
+              <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="btn btn-gold mt-3 w-full">
+                Save QR to gallery
+              </a>
+            </div>
+            <p className="text-xs">
+              Can’t scan? Pay to UPI ID <code className="rounded bg-raise px-1.5 py-0.5 font-semibold text-white">{EVENT.upi.id}</code>{" "}
+              <button onClick={() => navigator.clipboard?.writeText(EVENT.upi.id).then(() => setCopied(true))} className="font-semibold text-gold underline underline-offset-2">
+                {copied ? "Copied ✓" : "Copy"}
+              </button>
+            </p>
+          </PayStep>
+
+          <PayStep n={3} title="Check, then enter your UPI PIN">
+            <p>Your app will show:</p>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div className="rounded-lg bg-raise p-3">
+                <p className="text-xs uppercase">Paying to</p>
+                <p className="font-semibold text-white">{EVENT.upi.payee}</p>
+              </div>
+              <div className="rounded-lg bg-raise p-3">
+                <p className="text-xs uppercase">Amount</p>
+                <p className="font-semibold text-white">{inr(pending.amount)}</p>
+              </div>
+            </div>
+            <p>
+              If both match, enter your <b className="text-white">UPI PIN</b> to pay. {EVENT.upi.payee} ({EVENT.upi.bank}) is the festival’s collection account. Don’t change the amount.
+            </p>
+          </PayStep>
+
+          <PayStep n={4} title="Copy the 12-digit number and verify">
+            <p>
+              On the <b className="text-white">“Payment successful”</b> screen, copy the 12-digit number:
+              <br />
+              GPay: <b className="text-white">UPI transaction ID</b> · PhonePe: <b className="text-white">UTR</b> · Paytm: <b className="text-white">UPI Ref. No.</b>
+            </p>
+            <p>Come back to this page, tap <b className="text-white">Paste</b>, then <b className="text-white">Verify my payment</b>. Your ticket appears here in about 30 seconds.</p>
+            <label htmlFor="utr" className="block text-sm font-semibold text-white">
+              Your 12-digit UTR / UPI reference number
             </label>
-            <div className="mt-3 flex gap-2">
+            <div className="flex gap-2">
               <input
                 id="utr"
                 className={`${input} tnum min-w-0 text-center text-xl tracking-[0.2em]`}
@@ -384,19 +395,47 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
                 Paste
               </button>
             </div>
-            <span className="mt-2 block text-xs text-muted">Copy it in your UPI app, then tap Paste. GPay: “UPI transaction ID” · PhonePe: “UTR” · Paytm: “UPI Ref. No.”</span>
+            {checking && <p className="text-sm text-gold">Checking with the bank… keep this page open (up to 3 minutes).</p>}
+          </PayStep>
+
+          <div className="rounded-2xl border border-wa/40 bg-wa/10 p-5">
+            <p className="flex items-center gap-2 text-base font-semibold">
+              <Icon name="shield" className="size-5 text-wa" /> Your money is safe
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Paid, but your ticket didn’t appear? <b className="text-white">Don’t worry and don’t pay again.</b> Send us a screenshot of your “Payment successful” screen on WhatsApp — our team checks it with the bank and sends your ticket to you <b className="text-white">manually</b>.
+            </p>
+            <button onClick={sendScreenshot} className="btn mt-4 w-full bg-wa text-white">
+              <WhatsAppGlyph className="size-5" /> Send screenshot on WhatsApp
+            </button>
           </div>
-          {checking && <p className="text-center text-sm text-gold">Checking with the bank… keep this page open (up to 3 minutes).</p>}
-          <button onClick={sendScreenshot} className="flex w-full items-center justify-center gap-2 text-sm text-muted underline underline-offset-2 hover:text-white">
-            <WhatsAppGlyph className="size-4" /> Can’t find the UTR? Send your payment screenshot on WhatsApp instead
-          </button>
-          <p className="text-center text-xs text-muted">
-            Closed this page or paid later? Verify any time at{" "}
-            <Link href="/verify" className="font-semibold text-white underline underline-offset-2">
-              sportsfestivalindia.com/verify
-            </Link>{" "}
-            with your mobile number + UTR. Don’t pay twice — if money was deducted without success, WhatsApp {EVENT.paymentsWhatsApp.display}.
-          </p>
+
+          <div className="card p-5">
+            <p className="text-base font-semibold">Need help? We’re here</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted">
+              <li>
+                <b className="text-white">Payment failed but money was deducted?</b> It usually comes back to your account within 48 hours. Send us the screenshot and we’ll check.
+              </li>
+              <li>
+                <b className="text-white">Can’t find the 12-digit number?</b> Open your UPI app’s payment history and tap this payment — or just send us the screenshot.
+              </li>
+              <li>
+                <b className="text-white">Closed this page?</b> Verify any time at{" "}
+                <Link href="/verify" className="font-semibold text-white underline underline-offset-2">
+                  sportsfestivalindia.com/verify
+                </Link>{" "}
+                with your mobile number + the 12-digit number.
+              </li>
+            </ul>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <a href={EVENT.phoneHref} className="btn btn-line !px-3 text-sm">
+                <Icon name="phone" className="size-4" /> Call us
+              </a>
+              <a href={waHref(pending)} target="_blank" rel="noopener" className="btn btn-line !px-3 text-sm">
+                <WhatsAppGlyph className="size-4" /> WhatsApp us
+              </a>
+            </div>
+          </div>
         </section>
       )}
 
@@ -445,6 +484,19 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
         {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">Fill name, date of birth, a 10-digit mobile, email and city</p>}
         {step === 4 && pending?.qr && utr.length !== 12 && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">After paying, type the 12-digit UTR from your payment screen</p>}
       </div>
+    </div>
+  );
+}
+
+/** One numbered step of the pay screen — big number, plain words, for first-time UPI payers. */
+function PayStep({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <div className="card p-5">
+      <p className="flex items-center gap-3 text-base font-semibold">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gold text-sm font-bold text-ink">{n}</span>
+        {title}
+      </p>
+      <div className="mt-3 space-y-3 text-sm text-muted">{children}</div>
     </div>
   );
 }
