@@ -8,10 +8,10 @@ import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
 import { track } from "@/lib/track";
+import { type Claim, waitForTicket } from "@/lib/claim";
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
 type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
 type Done = { regId: string; label: string; paid: number; utr?: string };
-type Claim = { verified?: boolean; pending?: boolean; ticketUrl?: string | null; ticketNo?: string };
 
 const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
 const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
@@ -103,14 +103,11 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     setError("");
     setChecking(true);
     try {
-      for (let i = 0; i < 20; i++) {
-        const c = await post<Claim>("/api/claim", { regId: p.regId, utr });
-        if (c.verified) {
-          // Purchase fires only once the bank has confirmed the money (not on a click)
-          track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
-          return setVerified(c);
-        }
-        await new Promise((r) => setTimeout(r, 9000));
+      const c = await waitForTicket({ regId: p.regId, utr });
+      if (c) {
+        // Purchase fires only once the bank has confirmed the money (not on a click)
+        track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
+        return setVerified(c);
       }
       setDone({ regId: p.regId, label: p.label, paid: p.amount, utr }); // bank alert still not in: Make finishes it, ticket comes by email
     } catch (e) {
@@ -384,7 +381,13 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
           <button onClick={sendScreenshot} className="flex w-full items-center justify-center gap-2 text-sm text-muted underline underline-offset-2 hover:text-white">
             <WhatsAppGlyph className="size-4" /> Can’t find the UTR? Send your payment screenshot on WhatsApp instead
           </button>
-          <p className="text-center text-xs text-muted">Don’t pay twice. If the payment failed or money was deducted without success, WhatsApp {EVENT.paymentsWhatsApp.display} — we’ll sort it out.</p>
+          <p className="text-center text-xs text-muted">
+            Closed this page or paid later? Verify any time at{" "}
+            <Link href="/verify" className="font-semibold text-white underline underline-offset-2">
+              sportsfestivalindia.com/verify
+            </Link>{" "}
+            with your mobile number + UTR. Don’t pay twice — if money was deducted without success, WhatsApp {EVENT.paymentsWhatsApp.display}.
+          </p>
         </section>
       )}
 
@@ -447,7 +450,7 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
       <h1 className="display mt-5 text-5xl">Payment submitted</h1>
       {done.utr ? (
         <p className="mt-3 text-muted">
-          Thank you! The bank hasn’t confirmed your {inr(done.paid)} payment (UTR {done.utr}) yet — this sometimes takes a little longer. Your <b className="text-white">ticket will be emailed</b> to you automatically as soon as it does.
+          Thank you — your payment details are <b className="text-white">saved</b> ({inr(done.paid)}, UTR {done.utr}). The bank’s confirmation is taking a little longer; your <b className="text-white">ticket will be emailed</b> to you automatically as soon as it arrives. <b className="text-white">Don’t pay again.</b> Check any time at sportsfestivalindia.com/verify.
         </p>
       ) : (
         <p className="mt-3 text-muted">
@@ -462,7 +465,7 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
       <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-left text-sm">
         {done.utr ? (
           <>
-            <b>No ticket within 2 hours?</b> Send your “Payment successful” screenshot on WhatsApp to <b>{EVENT.paymentsWhatsApp.display}</b>.
+            <b>Our team is notified automatically</b> if confirmation takes more than 15 minutes. Want to be extra safe? Send your “Payment successful” screenshot on WhatsApp to <b>{EVENT.paymentsWhatsApp.display}</b>.
           </>
         ) : (
           <>

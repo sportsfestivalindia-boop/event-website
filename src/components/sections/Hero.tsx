@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { CHAMPIONSHIPS, EVENT, categoryCount, minFee, paidPlaces } from "@/data/festival";
 import { inr } from "@/lib/format";
@@ -58,6 +59,11 @@ export function Hero() {
           </div>
           <p className="rise mt-3 text-xs text-muted" style={d(4)}>
             {PAY_LINE}
+            <br />
+            Already paid?{" "}
+            <Link href="/verify" className="font-semibold text-gold underline underline-offset-2">
+              Verify your payment
+            </Link>
           </p>
 
           <ul className="rise mt-8 flex flex-col items-center gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:gap-x-6 lg:items-start" style={d(5)}>

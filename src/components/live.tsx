@@ -154,6 +154,7 @@ export function Chrome() {
               ["Organisers", "#trust"],
               ["FAQ", "#faq"],
               ["Book a stall", "/partner#stalls"],
+              ["Verify payment", "/verify"],
             ].map(([l, h]) => (
               <a key={h} href={h} className="transition-colors hover:text-gold">
                 {l}

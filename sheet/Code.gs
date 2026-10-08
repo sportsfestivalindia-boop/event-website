@@ -26,6 +26,8 @@ const EVENT = {
 };
 
 const STATUSES = ["Awaiting payment", "Pending", "Verified", "Rejected"];
+const FEES = [600, 1000, 5000]; // entry fees — any other credit to the gym's account is not a festival payment
+const ALERT_TO = "sportsfestivalindia@gmail.com,rupesh.zenvy@gmail.com"; // staff alerts from the watchdog
 
 const TABS = {
   Registrations: ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes", "Ticket"],
@@ -75,6 +77,7 @@ function setup() {
   ScriptApp.getProjectTriggers().forEach((t) => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger("onStatusEdit").forSpreadsheet(ss).onEdit().create();
   ScriptApp.newTrigger("retryEmails").timeBased().everyHours(1).create();
+  ScriptApp.newTrigger("watchdog").timeBased().everyMinutes(10).create();
 }
 
 /* ───────────────────────── website → sheet ───────────────────────── */
@@ -99,20 +102,24 @@ function doPost(e) {
     } else if (d.action === "claim") {
       // athlete (or Make) says "registration X was paid with UTR Y": record it, and tell the website whether
       // Yes Bank's own alert for that UTR is already here — the website issues the ticket only if it is
+      // by Reg ID (payment screen) or by mobile number (the /verify page, for athletes who closed the screen)
       const sh = ss.getSheetByName("Registrations");
       const v = (r, h) => sh.getRange(r, R[h]).getValue();
-      const r = findRow(sh, R["Reg ID"], d.regId);
+      // by mobile: the registration that already carries this UTR (athlete registered twice) — else their latest unconfirmed one
+      const own = d.regId ? 0 : findRow(sh, R["UTR"], d.utr);
+      const r = d.regId ? findRow(sh, R["Reg ID"], d.regId) : own && String(v(own, "Mobile")) === String(d.phone) ? own : latestFor(sh, d.phone);
       if (!r) return json({ ok: false, error: "not-found" });
-      if (v(r, "Status") === "Verified") return json({ ok: true, verified: true, ticketUrl: v(r, "Ticket") });
+      if (v(r, "Status") === "Verified") return json({ ok: true, verified: true, regId: v(r, "Reg ID"), ticketUrl: v(r, "Ticket") });
       const u = findRow(sh, R["UTR"], d.utr);
       if (u && u !== r && v(u, "Status") === "Verified") return json({ ok: false, duplicate: true });
       asText(sh.getRange(r, R["UTR"]), d.utr);
-      sh.getRange(r, R["UTR at"]).setValue(d.at);
+      sh.getRange(r, R["UTR at"]).setValue(new Date()); // a real time: the watchdog measures how long it has waited
       sh.getRange(r, R["Status"]).setValue("Pending");
       const bank = ss.getSheetByName("Bank");
       const b = findRow(bank, B["UTR"], d.utr);
       return json({
         ok: true,
+        regId: v(r, "Reg ID"),
         row: { name: v(r, "Name"), phone: String(v(r, "Mobile")), category: v(r, "Category"), fee: Number(v(r, "Fee (₹)")) },
         bank: b ? { amount: Number(bank.getRange(b, B["Amount (₹)"]).getValue()) } : null,
       });
@@ -145,7 +152,8 @@ function doPost(e) {
       });
       const bank = ss.getSheetByName("Bank");
       const bn = bank.getLastRow() - 1;
-      const unmatched = bn > 0 ? bank.getRange(2, B["Matched Reg ID"], bn, 1).getValues().filter((x) => !x[0]).length : 0;
+      // festival-sized only: the gym's other income (₹82 etc.) also lands in this account
+      const unmatched = values(bank, TABS.Bank.length).filter((x) => !x[B["Matched Reg ID"] - 1] && FEES.includes(Number(x[B["Amount (₹)"] - 1]))).length;
       return json({ ok: true, total: rows.length, byStatus, collected, unmatchedBankCredits: unmatched });
     } else if (d.action === "ticket") {
       // staff issued a ticket on the website → refuse a UTR already ticketed for someone else (reused screenshot),
@@ -237,7 +245,99 @@ function retryEmails() {
   });
 }
 
+/* ───────────────────────── watchdog: nobody who paid is left waiting ───────────────────────── */
+
+// Every 10 min (trigger from setup). Payments still unconfirmed after 15 min → one reassurance email to the athlete and
+// a staff alert (with when the last bank SMS arrived — a long gap means the forwarder phone is asleep). Festival-sized
+// bank credits nobody claimed → staff alert listing the likely registrations. Each item alerts once.
+function watchdog() {
+  const ss = book();
+  const regs = values(ss.getSheetByName("Registrations"), TABS.Registrations.length);
+  const credits = values(ss.getSheetByName("Bank"), TABS.Bank.length);
+  const g = (x, h) => x[R[h] - 1];
+  const gb = (x, h) => x[B[h] - 1];
+  const props = PropertiesService.getScriptProperties();
+  const seen = JSON.parse(props.getProperty("alerted") || "[]");
+  const waited = (t) => !(t instanceof Date) || Date.now() - t.getTime() > 15 * 60 * 1000;
+
+  const stuck = regs.filter((x) => g(x, "Status") === "Pending" && waited(g(x, "UTR at")) && !seen.includes("reg:" + g(x, "Reg ID")));
+  const orphans = credits.filter(
+    (x) => !gb(x, "Matched Reg ID") && FEES.includes(Number(gb(x, "Amount (₹)"))) && waited(gb(x, "Received")) && !seen.includes("bank:" + gb(x, "UTR")),
+  );
+  if ((!stuck.length && !orphans.length) || MailApp.getRemainingDailyQuota() < 2) return;
+
+  stuck.forEach((x) => {
+    if (!g(x, "Email") || MailApp.getRemainingDailyQuota() < 2) return;
+    MailApp.sendEmail({
+      to: g(x, "Email"),
+      subject: `Payment details received — ${g(x, "Reg ID")} · ${EVENT.name}`,
+      name: "All Odisha Gym Association",
+      body: [
+        `Hi ${g(x, "Name")},`,
+        "",
+        `We have received your payment details (₹${g(x, "Fee (₹)")}, UTR ${g(x, "UTR")}) for ${EVENT.name}.`,
+        "We are confirming it with the bank — your ticket will be emailed to you as soon as it is confirmed. Please don't pay again.",
+        "",
+        `Check any time: ${EVENT.site}/verify (your mobile number + UTR).`,
+        `Questions? WhatsApp ${EVENT.phone}.`,
+        "",
+        "All Odisha Gym Association",
+      ].join("\n"),
+    });
+  });
+
+  const lastSms = credits.length ? gb(credits[credits.length - 1], "Received") : "never";
+  const lines = [];
+  if (stuck.length) {
+    lines.push(`PAID, NOT YET CONFIRMED (${stuck.length}) — check each UTR in the Yes Bank app, then issue the ticket at ${EVENT.site}/admin/tickets`);
+    stuck.forEach((x) => lines.push(`• ${g(x, "Reg ID")} · ${g(x, "Name")} · +91 ${g(x, "Mobile")} · ₹${g(x, "Fee (₹)")} · UTR ${g(x, "UTR")}`));
+    lines.push(`Last bank SMS received: ${when(lastSms)}. If that is long ago, the SMS forwarder phone is asleep or offline — open the app.`, "");
+  }
+  if (orphans.length) {
+    lines.push(`BANK CREDITS NOBODY CLAIMED (${orphans.length}) — someone paid but didn't enter the UTR`);
+    orphans.forEach((x) => {
+      const amount = Number(gb(x, "Amount (₹)"));
+      lines.push(`• ₹${amount} · UTR ${gb(x, "UTR")} · ${when(gb(x, "Received"))}`);
+      regs
+        .filter((y) => g(y, "Status") === "Awaiting payment" && Number(g(y, "Fee (₹)")) === amount)
+        .slice(-5)
+        .reverse()
+        .forEach((y) => lines.push(`    maybe: ${g(y, "Reg ID")} · ${g(y, "Name")} · +91 ${g(y, "Mobile")} · registered ${g(y, "Created")}`));
+    });
+    lines.push(`Call them, confirm, then issue the ticket at ${EVENT.site}/admin/tickets with that UTR.`, "");
+  }
+  lines.push(`Sheet: ${ss.getUrl()}`);
+  MailApp.sendEmail({ to: ALERT_TO, subject: `⚠️ Sports Festival: ${stuck.length + orphans.length} payment(s) need attention`, body: lines.join("\n"), name: "Sports Festival payments" });
+
+  stuck.forEach((x) => seen.push("reg:" + g(x, "Reg ID")));
+  orphans.forEach((x) => seen.push("bank:" + gb(x, "UTR")));
+  props.setProperty("alerted", JSON.stringify(seen.slice(-2000)));
+}
+
 /* ───────────────────────── helpers ───────────────────────── */
+
+function values(sh, width) {
+  const last = sh.getLastRow();
+  return last < 2 ? [] : sh.getRange(2, 1, last - 1, width).getValues();
+}
+
+// the athlete's latest unconfirmed registration for this mobile (else their latest one, to hand back a ticket)
+function latestFor(sh, phone) {
+  const p = String(phone || "").replace(/\D/g, "").slice(-10);
+  if (p.length !== 10) return 0;
+  const rows = values(sh, TABS.Registrations.length);
+  let any = 0;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (String(rows[i][R["Mobile"] - 1]) !== p) continue;
+    if (rows[i][R["Status"] - 1] !== "Verified") return i + 2;
+    any = any || i + 2;
+  }
+  return any;
+}
+
+function when(t) {
+  return t instanceof Date ? Utilities.formatDate(t, "Asia/Kolkata", "d MMM, h:mm a") : String(t);
+}
 
 function json(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
