@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import QRCode from "qrcode";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
@@ -88,16 +88,6 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
     // Fallback: athlete attaches the payment screenshot in WhatsApp; AOGA checks it against Yes Bank and sends the ticket.
     window.open(waHref(pending!, true), "_blank", "noopener");
     setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount });
-  }
-
-  /** The UTR copied in the UPI app (often inside a longer text) → the 12-digit number. */
-  async function pasteUtr() {
-    try {
-      const text = await navigator.clipboard.readText();
-      setUtr(text.match(/\d{12}/)?.[0] ?? text.replace(/\D/g, "").slice(0, 12));
-    } catch {
-      setError("Couldn’t read the copied text — please type the 12 digits.");
-    }
   }
 
   /** Matches the typed UTR with Yes Bank's own credit alert (logged by Make). Most payments confirm within a minute. */
@@ -321,7 +311,7 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             <p className="display mt-1 text-5xl">
               Pay <span className="text-gold">{inr(pending.amount)}</span>
             </p>
-            <p className="mt-1 text-sm text-muted">4 simple steps · takes about 2 minutes · keep this page open</p>
+            <p className="mt-1 text-sm text-muted">3 simple steps · takes about 2 minutes · keep this page open</p>
           </div>
 
           <PayStep n={1} title="Open any UPI app">
@@ -330,11 +320,11 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
 
           {/* No "open GPay/PhonePe" buttons: this is an in-shop merchant QR, and UPI apps cap or block payments opened
               from a link ("merchant received maximum amount"). A scan — even of a saved image — always works. */}
-          <PayStep n={2} title="Scan this QR code">
+          <PayStep n={2} title={`Scan the QR and pay ${inr(pending.amount)}`}>
             {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
             <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto size-60 rounded-lg bg-white p-2" />
             <p>
-              In your UPI app, tap <b className="text-white">Scan</b> (or “Scan & Pay”) and point the camera at this QR.
+              In your UPI app tap <b className="text-white">Scan</b>, scan this QR and pay. Your app will show <b className="text-white">{EVENT.upi.payee}</b> (the festival’s {EVENT.upi.bank} collection account) and <b className="text-white">{inr(pending.amount)}</b> — don’t change the amount.
             </p>
             <div className="rounded-lg bg-raise p-3 md:hidden">
               <p className="font-semibold text-white">Only one phone?</p>
@@ -353,49 +343,41 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
             </p>
           </PayStep>
 
-          <PayStep n={3} title="Check, then enter your UPI PIN">
-            <p>Your app will show:</p>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="rounded-lg bg-raise p-3">
-                <p className="text-xs uppercase">Paying to</p>
-                <p className="font-semibold text-white">{EVENT.upi.payee}</p>
-              </div>
-              <div className="rounded-lg bg-raise p-3">
-                <p className="text-xs uppercase">Amount</p>
-                <p className="font-semibold text-white">{inr(pending.amount)}</p>
-              </div>
+          <PayStep n={3} title="Enter your UTR number to get your ticket">
+            <p>
+              After paying, your app shows <b className="text-white">“Payment successful”</b>. On that screen there is a <b className="text-white">12-digit number</b> — this is your UTR. Each app names it differently:
+            </p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-lg bg-raise p-3">
+              <span>Google Pay</span>
+              <b className="text-white">UPI transaction ID</b>
+              <span>PhonePe</span>
+              <b className="text-white">UTR</b>
+              <span>Paytm</span>
+              <b className="text-white">UPI Ref. No.</b>
+              <span>Other apps</span>
+              <b className="text-white">UTR / Reference No.</b>
             </div>
             <p>
-              If both match, enter your <b className="text-white">UPI PIN</b> to pay. {EVENT.upi.payee} ({EVENT.upi.bank}) is the festival’s collection account. Don’t change the amount.
+              It looks like this: <b className="tnum text-white">6281 5012 9971</b>. Press and hold the number → <b className="text-white">Copy</b>, come back here, paste it in the box and tap <b className="text-white">Verify</b>.
             </p>
-          </PayStep>
-
-          <PayStep n={4} title="Copy the 12-digit number and verify">
-            <p>
-              On the <b className="text-white">“Payment successful”</b> screen, copy the 12-digit number:
-              <br />
-              GPay: <b className="text-white">UPI transaction ID</b> · PhonePe: <b className="text-white">UTR</b> · Paytm: <b className="text-white">UPI Ref. No.</b>
-            </p>
-            <p>Come back to this page, tap <b className="text-white">Paste</b>, then <b className="text-white">Verify my payment</b>. Your ticket appears here in about 30 seconds.</p>
-            <label htmlFor="utr" className="block text-sm font-semibold text-white">
-              Your 12-digit UTR / UPI reference number
-            </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 id="utr"
-                className={`${input} tnum min-w-0 text-center text-xl tracking-[0.2em]`}
+                aria-label="Your 12-digit UTR number"
+                className={`${input} tnum min-w-0 text-center text-xl tracking-[0.15em] placeholder:text-sm placeholder:tracking-normal`}
                 value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                onChange={(e) => setUtr(e.target.value.match(/\d{12}/)?.[0] ?? e.target.value.replace(/\D/g, "").slice(0, 12))}
                 inputMode="numeric"
                 autoComplete="off"
-                placeholder="12 digits"
+                placeholder="Paste your UTR number here"
                 disabled={checking}
               />
-              <button onClick={pasteUtr} disabled={checking} className="btn btn-line shrink-0 !px-4 text-sm">
-                Paste
+              <button onClick={verify} disabled={utr.length !== 12 || checking} className="btn btn-gold w-full shrink-0 !px-6 disabled:opacity-40 sm:w-auto">
+                Verify
               </button>
             </div>
-            {checking && <p className="text-sm text-gold">Checking with the bank… keep this page open (up to 3 minutes).</p>}
+            {utr.length > 0 && utr.length < 12 && <p className="text-xs text-amber-300">{12 - utr.length} more digit{utr.length === 11 ? "" : "s"} — the UTR has 12 digits.</p>}
+            {error && <p className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
           </PayStep>
 
           <div className="rounded-2xl border border-wa/40 bg-wa/10 p-5">
@@ -454,11 +436,13 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
         </section>
       )}
 
-      {error && <p className="mt-6 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {error && step !== 4 && <p className="mt-6 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
       <PolicyLinks className="mt-14" />
 
-      <div className="t-ink fixed inset-x-0 bottom-0 z-40 border-t border-line px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))]">
+      {checking && pending && <Verifying regId={pending.regId} amount={pending.amount} utr={utr} />}
+
+      <div className={`t-ink fixed inset-x-0 bottom-0 z-40 border-t border-line px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] ${step === 4 ? "hidden" : ""}`}>
         <div className="mx-auto flex max-w-xl gap-3">
           {step > 1 && step < 4 && (
             <button onClick={() => setStep(step - 1)} className="btn btn-line !px-5">
@@ -475,14 +459,8 @@ export function RegisterFlow({ initial }: { initial: { sport?: string; division?
               {busy ? "Please wait…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} by UPI` : "Confirm free registration"}
             </button>
           )}
-          {step === 4 && pending?.qr && (
-            <button onClick={verify} disabled={utr.length !== 12 || checking} className="btn btn-gold flex-1 disabled:opacity-40">
-              {checking ? "Checking with the bank…" : "Verify my payment"}
-            </button>
-          )}
         </div>
         {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">Fill name, date of birth, a 10-digit mobile, email and city</p>}
-        {step === 4 && pending?.qr && utr.length !== 12 && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-muted">After paying, type the 12-digit UTR from your payment screen</p>}
       </div>
     </div>
   );
@@ -501,40 +479,76 @@ function PayStep({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-/** Paid by QR: screenshot sent to AOGA, ticket follows after verification. */
+/** Full screen while the bank check runs (up to 3 min), so nobody wonders whether to close the page or pay again. */
+function Verifying({ regId, amount, utr }: { regId: string; amount: number; utr: string }) {
+  const [left, setLeft] = useState(180);
+  useEffect(() => {
+    const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div role="alertdialog" aria-live="polite" aria-label="Verifying your payment" className="t-ink fixed inset-0 z-50 grid place-items-center bg-ink px-6 text-center">
+      <div className="max-w-sm">
+        <span className="mx-auto block size-16 animate-spin rounded-full border-4 border-line border-t-gold" />
+        <h2 className="display mt-6 text-4xl">Verifying your payment</h2>
+        <p className="mt-3 text-muted">We’re checking your {inr(amount)} payment with the bank. This usually takes less than a minute.</p>
+        <p className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 font-semibold">Please don’t close this window and don’t pay again.</p>
+        <p className="display tnum mt-6 text-5xl text-gold">
+          {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+        </p>
+        <p className="mt-4 text-xs text-muted">
+          Registration {regId} · UTR {utr}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Paid by QR: the bank hasn't confirmed within ~3 min (or the athlete chose WhatsApp) — reassure, and get the screenshot. */
 function Submitted({ done, resend }: { done: Done; resend: () => void }) {
+  if (done.utr)
+    return (
+      <div className="mx-auto w-full max-w-md px-5 py-10 text-center">
+        <span className="mx-auto grid size-16 place-items-center rounded-full bg-wa text-white">
+          <Icon name="shield" className="size-9" />
+        </span>
+        <h1 className="display mt-5 text-5xl">Don’t worry — your payment is safe</h1>
+        <p className="mt-3 text-muted">
+          The bank hasn’t confirmed your {inr(done.paid)} payment yet. <b className="text-white">Send a screenshot of your “Payment successful” screen on WhatsApp</b> — our team will check it and send your ticket to you on WhatsApp <b className="text-white">manually</b>. Please don’t pay again.
+        </p>
+        <button onClick={resend} className="btn mt-6 w-full bg-wa text-white">
+          <WhatsAppGlyph className="size-6" /> Send payment screenshot on WhatsApp
+        </button>
+        <div className="card mt-6 p-6">
+          <p className="text-xs text-muted uppercase">Your registration ID</p>
+          <p className="display mt-1 text-4xl tracking-wider text-gold">{done.regId}</p>
+          <p className="mt-2 text-sm font-semibold">{done.label}</p>
+          <p className="mt-1 text-xs text-muted">UTR {done.utr}</p>
+        </div>
+        <p className="mt-6 text-sm text-muted">If the bank confirms it first, your ticket is also emailed to you automatically — and our team is alerted, so nobody is forgotten.</p>
+        <Link href="/" className="btn btn-line mt-8 w-full">
+          Back to home
+        </Link>
+      </div>
+    );
   return (
     <div className="mx-auto w-full max-w-md px-5 py-10 text-center">
       <span className="mx-auto grid size-16 place-items-center rounded-full bg-gold text-ink">
         <Icon name="check" className="size-9" />
       </span>
       <h1 className="display mt-5 text-5xl">Payment submitted</h1>
-      {done.utr ? (
-        <p className="mt-3 text-muted">
-          Thank you — your payment details are <b className="text-white">saved</b> ({inr(done.paid)}, UTR {done.utr}). The bank’s confirmation is taking a little longer; your <b className="text-white">ticket will be emailed</b> to you automatically as soon as it arrives. <b className="text-white">Don’t pay again.</b> Check any time at sportsfestivalindia.com/verify.
-        </p>
-      ) : (
-        <p className="mt-3 text-muted">
-          Thank you! Our team will check your {inr(done.paid)} payment and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.
-        </p>
-      )}
+      <p className="mt-3 text-muted">
+        Thank you! Our team will check your {inr(done.paid)} payment and send your <b className="text-white">ticket on WhatsApp</b>, usually within 24 hours.
+      </p>
       <div className="card mt-8 p-6">
         <p className="text-xs text-muted uppercase">Your registration ID</p>
         <p className="display mt-1 text-4xl tracking-wider text-gold">{done.regId}</p>
         <p className="mt-2 text-sm font-semibold">{done.label}</p>
       </div>
       <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-left text-sm">
-        {done.utr ? (
-          <>
-            <b>Our team is notified automatically</b> if confirmation takes more than 15 minutes. Want to be extra safe? Send your “Payment successful” screenshot on WhatsApp to <b>{EVENT.paymentsWhatsApp.display}</b>.
-          </>
-        ) : (
-          <>
-            <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and send it to <b>{EVENT.paymentsWhatsApp.display}</b>. Didn’t open?
-          </>
-        )}
+        <b>Did the screenshot go through?</b> In WhatsApp, attach the “Payment successful” screenshot and send it to <b>{EVENT.paymentsWhatsApp.display}</b>. Didn’t open?
         <button onClick={resend} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-wa py-3 font-semibold text-white">
-          <WhatsAppGlyph className="size-5" /> {done.utr ? "Send screenshot on WhatsApp" : "Open WhatsApp again"}
+          <WhatsAppGlyph className="size-5" /> Open WhatsApp again
         </button>
       </div>
       <p className="mt-6 text-xs text-muted">Keep your registration ID and payment screenshot until you receive your ticket.</p>
