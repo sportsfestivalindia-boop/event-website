@@ -137,7 +137,7 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
 
       {step === 1 && (
         <div className="mt-6">
-          <TutorialVideo title="Watch first: how to register & pay" note="1-minute video · step by step, from this form to your ticket" />
+          <TutorialVideo tag="Must watch" title="Watch this before you register" note="1-minute video: how to fill the form, pay by UPI and get your ticket" />
         </div>
       )}
 

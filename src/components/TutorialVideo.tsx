@@ -9,7 +9,7 @@ const SRC = "/video/how-to-register.mp4";
 const POSTER = "/video/how-to-register.jpg";
 
 /** Tappable card → full-screen player. `start` (seconds) jumps straight to a part, e.g. the payment steps. */
-export function TutorialVideo({ title, note, start = 0 }: { title: string; note: string; start?: number }) {
+export function TutorialVideo({ title, note, tag, start = 0 }: { title: string; note: string; tag?: string; start?: number }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -25,6 +25,7 @@ export function TutorialVideo({ title, note, start = 0 }: { title: string; note:
           </span>
         </span>
         <span>
+          {tag && <span className="mb-1 inline-block rounded bg-gold px-2 py-0.5 text-[11px] font-bold tracking-wider text-ink uppercase">{tag}</span>}
           <span className="block font-semibold">{title}</span>
           <span className="mt-0.5 block text-sm text-muted">{note}</span>
         </span>
