@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
+const SHOW_EVERY_LOAD = true;
+
 const VIDEO_URL = "https://res.cloudinary.com/jxvpizz0/video/upload/f_auto,q_auto/v1793168532/BULL_LOADING.mp4";
 const VIDEO_FALLBACK_URL = "https://res.cloudinary.com/jxvpizz0/video/upload/v1793168532/BULL_LOADING.mp4";
 
@@ -11,10 +13,9 @@ if (typeof window !== "undefined") {
 
 export function BullIntro() {
   const [isMounted, setIsMounted] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const touchStartY = useRef<number | null>(null);
   const exitTriggered = useRef(false);
 
   const handleDismiss = useCallback(() => {
@@ -22,29 +23,28 @@ export function BullIntro() {
     exitTriggered.current = true;
     (window as any).__introDismissed = true;
 
+    try {
+      sessionStorage.setItem("introSeen", "true");
+    } catch {}
+
     // Immediately BEFORE dispatching "intro-dismissed" call window.scrollTo(0, 0), then unlock the scroll
     window.scrollTo(0, 0);
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
 
-    // Notify Hero video so it starts playback from 0:00 as intro leaves
+    // Dispatch event contract exactly once
     window.dispatchEvent(new CustomEvent("intro-dismissed"));
 
-    if (reducedMotion) {
-      setIsMounted(false);
-      return;
-    }
-
     setIsExiting(true);
-    // Guarantee cleanup even if onTransitionEnd does not fire
+    // 0.3s fade-out before unmounting
     setTimeout(() => {
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       setIsMounted(false);
-    }, 850);
-  }, [reducedMotion]);
+    }, 300);
+  }, []);
 
-  // Video play helper ensuring muted properties are set at the DOM level
+  // Video play helper ensuring muted properties are set at DOM level
   const startVideoPlayback = useCallback((video: HTMLVideoElement) => {
     video.muted = true;
     video.defaultMuted = true;
@@ -53,12 +53,11 @@ export function BullIntro() {
     const playPromise = video.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
-        console.warn("Bull intro play prevented, retrying on user touch:", err);
+        console.warn("Bull intro play prevented:", err);
       });
     }
   }, []);
 
-  // Callback ref so we play immediately when the element attaches to the DOM
   const setVideoRef = useCallback(
     (el: HTMLVideoElement | null) => {
       videoRef.current = el;
@@ -70,38 +69,63 @@ export function BullIntro() {
   );
 
   useEffect(() => {
+    // If SHOW_EVERY_LOAD is false, show once per session using sessionStorage
+    if (!SHOW_EVERY_LOAD) {
+      try {
+        if (sessionStorage.getItem("introSeen") === "true") {
+          (window as any).__introDismissed = true;
+          window.scrollTo(0, 0);
+          document.documentElement.style.overflow = "";
+          document.body.style.overflow = "";
+          window.dispatchEvent(new CustomEvent("intro-dismissed"));
+          return;
+        }
+      } catch {}
+    }
+
+    // prefers-reduced-motion: do NOT show the popup at all; dispatch "intro-dismissed" right after mount
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (motionQuery.matches) {
+      (window as any).__introDismissed = true;
+      window.scrollTo(0, 0);
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      window.dispatchEvent(new CustomEvent("intro-dismissed"));
+      return;
+    }
+
     setIsMounted(true);
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
 
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (motionQuery.matches) {
-      setReducedMotion(true);
-    }
+    // Trigger enter animation on next frame
+    const raf = requestAnimationFrame(() => {
+      setHasEntered(true);
+    });
 
-    // If ref already exists, trigger playback
     if (videoRef.current) {
       startVideoPlayback(videoRef.current);
     }
 
-    // Safety fallback: dismiss after 10s so user is never trapped if video cannot finish
+    // Safety fallback: dismiss after 8s so user is never trapped
     const safetyTimer = setTimeout(() => {
       handleDismiss();
-    }, 10000);
+    }, 8000);
 
     return () => {
+      cancelAnimationFrame(raf);
       clearTimeout(safetyTimer);
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
     };
   }, [handleDismiss, startVideoPlayback]);
 
-  // Keyboard skip listener
+  // Keyboard listener: close on Escape, Enter, Space
   useEffect(() => {
     if (!isMounted || isExiting) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (["ArrowUp", "ArrowDown", "PageDown", "Enter", "Escape", " "].includes(e.key)) {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         handleDismiss();
       }
@@ -111,28 +135,6 @@ export function BullIntro() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMounted, isExiting, handleDismiss]);
 
-  // Touch swipe-up handling (deliberate swipe > 70px)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
-    const touchEndY = e.changedTouches[0].clientY;
-    const diff = touchStartY.current - touchEndY;
-    if (diff > 70) {
-      handleDismiss();
-    }
-    touchStartY.current = null;
-  };
-
-  // Mouse wheel / trackpad scrolling handling (deliberate scroll > 80px)
-  const handleWheel = (e: React.WheelEvent) => {
-    if (Math.abs(e.deltaY) > 80 || Math.abs(e.deltaX) > 80) {
-      handleDismiss();
-    }
-  };
-
   if (!isMounted) return null;
 
   return (
@@ -141,83 +143,95 @@ export function BullIntro() {
       role="dialog"
       aria-label="Sports Festival India Intro"
       aria-modal="true"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onWheel={handleWheel}
-      onTransitionEnd={(e) => {
+      onClick={(e) => {
+        // Close on backdrop click (clicking outside dialog card)
         if (e.target === e.currentTarget) {
-          document.documentElement.style.overflow = "";
-          document.body.style.overflow = "";
-          setIsMounted(false);
+          handleDismiss();
         }
       }}
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm select-none cursor-default transition-opacity duration-300"
       style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100svh",
-        zIndex: 99999,
-        backgroundColor: "#000000",
-        overflow: "hidden",
-        userSelect: "none",
-        cursor: "default",
-        transform: isExiting ? "translateY(-100%)" : "translateY(0)",
-        transition: reducedMotion
-          ? "opacity 300ms ease"
-          : "transform 800ms cubic-bezier(0.16, 1, 0.3, 1)",
-        opacity: reducedMotion && isExiting ? 0 : 1,
+        opacity: isExiting ? 0 : 1,
       }}
     >
-      <video
-        ref={setVideoRef}
-        src={VIDEO_URL}
-        playsInline
-        muted
-        autoPlay
-        preload="auto"
-        onCanPlay={(e) => {
-          const v = e.currentTarget;
-          v.muted = true;
-          v.defaultMuted = true;
-          if (v.paused) {
-            v.play().catch(() => {});
-          }
-        }}
-        onEnded={handleDismiss}
-        onError={(e) => {
-          console.warn("Video primary URL error, trying fallback:", e);
-          const v = e.currentTarget;
-          if (v.src !== VIDEO_FALLBACK_URL) {
-            v.src = VIDEO_FALLBACK_URL;
-            v.play().catch(() => {});
-          } else {
-            setTimeout(handleDismiss, 1000);
-          }
-        }}
+      {/* Centered Dialog Card */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-[min(92vw,420px)] sm:w-[min(92vw,640px)] aspect-video rounded-3xl overflow-hidden bg-black border border-white/12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_50px_rgba(255,106,0,0.18)]"
         style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          objectPosition: "center",
-          backgroundColor: "#000000",
-          pointerEvents: "none",
-          display: "block",
+          transform: isExiting
+            ? "scale(0.98)"
+            : hasEntered
+            ? "scale(1)"
+            : "scale(0.96)",
+          opacity: isExiting ? 0 : hasEntered ? 1 : 0,
+          transition: isExiting
+            ? "transform 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease"
+            : "transform 350ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease",
         }}
-      />
-
-      {/* Sleek Skip Button */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDismiss();
-        }}
-        className="absolute top-5 right-5 sm:top-8 sm:right-8 z-20 flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white/90 hover:text-yellow hover:border-yellow/50 transition-all duration-200 text-xs font-bold uppercase tracking-wider cursor-pointer"
-        aria-label="Skip Intro"
       >
-        <span>Skip</span>
-        <span aria-hidden="true">›</span>
-      </button>
+        {/* Intro Video - Original Aspect Ratio */}
+        <video
+          ref={setVideoRef}
+          src={VIDEO_URL}
+          playsInline
+          muted
+          autoPlay
+          preload="auto"
+          onCanPlay={(e) => {
+            const v = e.currentTarget;
+            v.muted = true;
+            v.defaultMuted = true;
+            if (v.paused) {
+              v.play().catch(() => {});
+            }
+          }}
+          onEnded={handleDismiss}
+          onError={(e) => {
+            console.warn("Video primary URL error, trying fallback:", e);
+            const v = e.currentTarget;
+            if (v.src !== VIDEO_FALLBACK_URL) {
+              v.src = VIDEO_FALLBACK_URL;
+              v.play().catch(() => {});
+            } else {
+              setTimeout(handleDismiss, 1000);
+            }
+          }}
+          className="size-full object-cover object-center bg-black block pointer-events-none"
+        />
+
+        {/* SKIP Button inside card at top right (min tap size 44px) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDismiss();
+          }}
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[44px] min-w-[44px] rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white/90 hover:text-yellow hover:border-yellow/50 transition-all duration-200 text-xs font-bold uppercase tracking-wider cursor-pointer active:scale-95 shadow-md"
+          aria-label="Skip Intro"
+        >
+          <span>Skip</span>
+          <span aria-hidden="true">›</span>
+        </button>
+
+        {/* 2px Gradient Progress Line along bottom edge */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 inset-x-0 h-[2px] pointer-events-none z-20 origin-left"
+          style={{
+            background: "linear-gradient(135deg, #FFE600, #FF9A00, #FF6A00)",
+            animation: "bull-progress 5.2s linear forwards",
+          }}
+        />
+
+        <style>{`
+          @keyframes bull-progress {
+            0% { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+          }
+        `}</style>
+      </div>
     </div>
   );
 }
+

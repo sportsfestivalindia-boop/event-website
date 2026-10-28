@@ -90,7 +90,7 @@ export function FinalCall() {
   const ref = useRef<HTMLElement>(null);
   const play = useReplayOnScroll(ref);
   return (
-    <section ref={ref} data-play={play} id="final" className="t-ink relative isolate overflow-hidden w-full page-gutter py-24 md:py-32">
+    <section ref={ref} data-play={play} id="final" className="t-ink relative isolate overflow-hidden w-full page-gutter py-12 md:py-24 lg:py-32">
       <div aria-hidden className="slash absolute inset-0 -z-10 opacity-35 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]" />
       <div className="content-contain mx-auto w-full text-center">
         <p className="label text-gold">Last call · 4–6 December 2026</p>

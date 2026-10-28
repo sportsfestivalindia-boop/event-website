@@ -63,19 +63,21 @@ export function useReplayOnScroll(
           return;
         }
 
-        // Set play = true when the section has entered:
-        // intersectionRatio >= 0.2 OR height >= 0.2 * window.innerHeight (for tall sections)
+        // Set play = true when the section enters the viewport:
+        // Responsive for both mobile and desktop (works on tall sections with low intersection ratios)
         const isEntered =
-          entry.intersectionRatio >= 0.2 ||
-          entry.intersectionRect.height >= 0.2 * window.innerHeight;
+          entry.isIntersecting &&
+          (entry.intersectionRatio >= 0.05 ||
+            entry.intersectionRect.height >= 24 ||
+            entry.boundingClientRect.top < window.innerHeight * 0.95);
 
         if (isEntered) {
           setPlay(true);
         }
       },
       {
-        threshold: [0, 0.05, 0.2],
-        rootMargin: options?.rootMargin,
+        threshold: [0, 0.05, 0.1, 0.2],
+        rootMargin: options?.rootMargin || "0px 0px -4% 0px",
       }
     );
 

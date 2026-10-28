@@ -12,44 +12,6 @@ import { PAY_LINE } from "../ui";
 
 const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
-/** Floating golden embers overlay matching the championship arena atmosphere */
-function HeroEmbers() {
-  const embers = [
-    { left: "8%", delay: "0s", dur: "7.2s", size: "3px", drift: "-20px" },
-    { left: "16%", delay: "2.4s", dur: "8.5s", size: "4px", drift: "30px" },
-    { left: "26%", delay: "1.1s", dur: "7.8s", size: "2px", drift: "18px" },
-    { left: "36%", delay: "3.9s", dur: "9.5s", size: "3.5px", drift: "-25px" },
-    { left: "46%", delay: "0.6s", dur: "7s", size: "2.5px", drift: "15px" },
-    { left: "56%", delay: "3.1s", dur: "8.2s", size: "3px", drift: "-20px" },
-    { left: "66%", delay: "1.7s", dur: "9s", size: "4px", drift: "35px" },
-    { left: "76%", delay: "4.5s", dur: "7.6s", size: "2px", drift: "-15px" },
-    { left: "86%", delay: "2s", dur: "8.4s", size: "3.5px", drift: "25px" },
-    { left: "92%", delay: "0.3s", dur: "9.2s", size: "2.5px", drift: "-30px" },
-    { left: "21%", delay: "5.2s", dur: "8s", size: "3px", drift: "15px" },
-    { left: "81%", delay: "3.7s", dur: "7.4s", size: "4px", drift: "-18px" },
-  ];
-
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-0">
-      {embers.map((e, idx) => (
-        <span
-          key={idx}
-          className="absolute rounded-full bg-gradient-to-t from-yellow via-orange-400 to-amber-200 shadow-[0_0_8px_#ffde00]"
-          style={{
-            left: e.left,
-            bottom: "-10px",
-            width: e.size,
-            height: e.size,
-            animation: `ember-float ${e.dur} linear infinite`,
-            animationDelay: e.delay,
-            ["--drift" as string]: e.drift,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function Hero() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const play = useReplayOnScroll(sectionRef);
@@ -114,15 +76,16 @@ export function Hero() {
       ref={sectionRef}
       id="top"
       data-play={isRevealed}
-      className="t-ink relative isolate overflow-hidden h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-between pt-16 md:pt-20 pb-4 md:pb-6 page-gutter w-full"
+      className="t-ink relative isolate overflow-hidden min-h-[100svh] sm:h-[100dvh] sm:min-h-[100dvh] sm:max-h-[100dvh] flex flex-col justify-between pt-16 md:pt-20 pb-4 md:pb-6 page-gutter w-full bg-[radial-gradient(ellipse_at_top,_rgba(255,106,0,0.18)_0%,_rgba(0,0,0,0.95)_60%,_#000000_100%)]"
     >
-      {/* Hero background video - starts after intro, pauses off-screen, restarts on return */}
-      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden bg-black">
-        <HeroVideo active={introDismissed && play} />
+      {/* Hero background video - 16:9 on mobile showing both title and athlete, full-bleed on desktop */}
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden flex flex-col items-center justify-start">
+        <div className="relative w-full aspect-video sm:aspect-auto sm:h-full sm:w-full">
+          <HeroVideo active={introDismissed && play} />
+          {/* Subtle gradient blending video bottom into background */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/95 via-black/50 to-transparent sm:hidden" />
+        </div>
       </div>
-
-      {/* Atmospheric floating golden embers */}
-      <HeroEmbers />
 
       <span className="sr-only">Champion bodybuilder at India’s Biggest Sports Festival 2026</span>
 
@@ -132,15 +95,9 @@ export function Hero() {
       </h1>
 
       {/* Inner full-width container capped at content-contain */}
-      <div className="content-contain relative z-10 flex flex-1 flex-col justify-between w-full">
+      <div className="content-contain relative z-10 flex flex-1 flex-col justify-end w-full pb-1 sm:pb-0">
         {/* Main Content Area: Interactive CTAs & Ticket Fee positioned below the artwork graphic */}
-        <div className="relative w-full flex-1 flex flex-col justify-end items-center lg:items-start pb-4 sm:pb-6 max-w-[580px] text-center lg:text-left mx-auto lg:mx-0 z-10">
-          {/* Atmospheric ambient glow behind the CTA container */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-10 -bottom-8 w-80 sm:w-96 h-72 sm:h-80 bg-[radial-gradient(circle,rgba(255,100,0,0.2)_0%,rgba(255,222,0,0.08)_40%,transparent_70%)] blur-2xl -z-10 animate-pulse"
-            style={{ animationDuration: "5s" }}
-          />
+        <div className="relative w-full flex flex-col items-center lg:items-start pt-2 pb-2 sm:pb-6 max-w-[580px] text-center lg:text-left mx-auto lg:mx-0 z-10">
 
           {/* Ticket pricing badge with glassmorphism and pulsing ticket icon */}
           <div

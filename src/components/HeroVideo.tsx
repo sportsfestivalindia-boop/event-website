@@ -89,7 +89,7 @@ export function HeroVideo({ active }: { active?: boolean }) {
       playsInline
       preload="auto"
       onError={(e) => console.error("Hero video error:", e.currentTarget.error)}
-      className={`size-full object-cover object-[78%_center] sm:object-[75%_center] lg:object-[82%_center] transition-all duration-1000 ease-out ${
+      className={`size-full object-contain sm:object-cover sm:object-[75%_center] lg:object-[82%_center] transition-all duration-1000 ease-out ${
         isPlaying ? "opacity-100 scale-100 filter-none" : "opacity-40 scale-[1.03] blur-[1px]"
       }`}
     />

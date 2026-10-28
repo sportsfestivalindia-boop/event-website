@@ -116,11 +116,11 @@ export function StatsSection() {
       ref={ref}
       data-play={play}
       id="stats"
-      className="relative w-full overflow-hidden bg-black py-20 sm:py-28"
+      className="relative w-full overflow-hidden bg-black py-10 sm:py-20 lg:py-28"
     >
       <div className="content-contain page-gutter relative w-full">
         {/* A) HERO PRIZE BLOCK (full width) */}
-        <div className="relative mb-14 sm:mb-20">
+        <div className="relative mb-8 sm:mb-16">
           {/* Soft orange radial glow behind prize (#FF6A00 at 20% opacity, blur 120px) */}
           <div
             aria-hidden

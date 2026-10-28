@@ -30,7 +30,7 @@ export function Championships() {
       ref={ref}
       data-play={play}
       id="championships"
-      className="relative w-full overflow-hidden bg-black py-20 sm:py-28"
+      className="relative w-full overflow-hidden bg-black py-10 sm:py-20 lg:py-28"
     >
       {/* Orange glow (Register button ke color se match) */}
       <div
@@ -40,7 +40,7 @@ export function Championships() {
 
       <div className="content-contain page-gutter relative w-full">
         {/* Heading */}
-        <div className="mb-12 sm:mb-16">
+        <div className="mb-8 sm:mb-16">
           <p
             className="cp-up text-sm font-semibold uppercase tracking-[0.3em] text-[#FF6A00]"
             style={{ ["--d" as string]: "0s" }}
