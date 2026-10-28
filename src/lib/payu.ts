@@ -57,8 +57,8 @@ export function payuFields(o: PayUOrder, origin: string): Record<string, string>
     firstname:   o.firstname,
     email:       o.email,
     phone:       o.phone,
-    surl:        o.surl || `${origin}/payu/return`,
-    furl:        o.furl || `${origin}/payu/return`,
+    surl:        o.surl || `${origin}/api/payu/return`,
+    furl:        o.furl || `${origin}/api/payu/return`,
     hash:        payuHash(o),
   };
 }

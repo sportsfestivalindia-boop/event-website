@@ -42,8 +42,8 @@ export async function POST(req: Request) {
       firstname:   name.split(" ")[0].slice(0, 60),
       email,
       phone,
-      surl:        `${origin}/payu/return`,
-      furl:        `${origin}/payu/return`,
+      surl:        `${origin}/api/payu/return`,
+      furl:        `${origin}/api/payu/return`,
     },
     origin,
   );
