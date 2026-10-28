@@ -6,25 +6,55 @@ import { EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { unseal } from "@/lib/ticket";
 
-// The ticket as a PNG the athlete saves to their phone ("Download ticket"). Same data and check-in code as the ticket page.
-const file = (f: string) => readFile(join(process.cwd(), f));
-const [anton, poppins, poppinsRupee, poppinsBold, poppinsBoldRupee, mark] = await Promise.all(
-  [
-    "assets/anton-latin-400-normal.woff",
-    "assets/poppins-latin-400-normal.woff",
-    "assets/poppins-devanagari-400-normal.woff", // the subset that carries ₹
-    "assets/poppins-latin-700-normal.woff",
-    "assets/poppins-devanagari-700-normal.woff",
-    "public/img/mark.png",
-  ].map(file),
-);
-const logo = `data:image/png;base64,${mark.toString("base64")}`;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+interface TicketAssets {
+  anton: Buffer;
+  poppins: Buffer;
+  poppinsRupee: Buffer;
+  poppinsBold: Buffer;
+  poppinsBoldRupee: Buffer;
+  logo: string;
+}
+
+let cachedAssets: TicketAssets | null = null;
+let assetsPromise: Promise<TicketAssets> | null = null;
+
+async function loadTicketAssets(): Promise<TicketAssets> {
+  if (cachedAssets) return cachedAssets;
+  if (!assetsPromise) {
+    assetsPromise = (async () => {
+      const file = (f: string) => readFile(join(process.cwd(), f));
+      const [anton, poppins, poppinsRupee, poppinsBold, poppinsBoldRupee, mark] = await Promise.all([
+        file("assets/anton-latin-400-normal.woff"),
+        file("assets/poppins-latin-400-normal.woff"),
+        file("assets/poppins-devanagari-400-normal.woff"), // the subset that carries ₹
+        file("assets/poppins-latin-700-normal.woff"),
+        file("assets/poppins-devanagari-700-normal.woff"),
+        file("public/img/mark.png"),
+      ]);
+      cachedAssets = {
+        anton,
+        poppins,
+        poppinsRupee,
+        poppinsBold,
+        poppinsBoldRupee,
+        logo: `data:image/png;base64,${mark.toString("base64")}`,
+      };
+      return cachedAssets;
+    })();
+  }
+  return assetsPromise;
+}
 
 const INK = "#000000", GOLD = "#ffde00", ORANGE = "#ff4500", MUTED = "#ffffffaa", LINE = "#ffffff33";
 
 export async function GET(_req: Request, { params }: RouteContext<"/ticket/[token]/image">) {
   const t = unseal((await params).token);
   if (!t) return new Response("Ticket not valid", { status: 404 });
+
+  const { anton, poppins, poppinsRupee, poppinsBold, poppinsBoldRupee, logo } = await loadTicketAssets();
 
   const qr = await QRCode.toDataURL(`${t.t} · ${t.n} · ${t.c}`, { margin: 1, width: 360 });
   const issued = new Date(t.i).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
