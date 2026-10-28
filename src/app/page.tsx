@@ -4,14 +4,14 @@ import { Glance, Hero } from "@/components/sections/Hero";
 import { Championships } from "@/components/Championships";
 import { SportsIcons } from "@/components/SportsIcons";
 import { Arena, Champions, Days, Faq, FinalCall, Footer, Prizes, Register, Trust, Value, Venue } from "@/components/sections/Sections";
-import { RegisterModal } from "@/components/RegisterModal";
+import { RegisterPopup } from "@/components/RegisterPopup";
 
 export default function Home() {
   return (
     <>
       <BullIntro />
       <Chrome />
-      <RegisterModal />
+      <RegisterPopup />
       <main>
         <Hero />
         <SportsIcons />

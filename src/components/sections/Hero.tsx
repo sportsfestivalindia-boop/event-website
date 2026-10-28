@@ -9,7 +9,6 @@ import { HeroVideo } from "../HeroVideo";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
 import { PAY_LINE } from "../ui";
-import { openRegisterModal } from "../RegisterModal";
 
 const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
@@ -173,11 +172,7 @@ export function Hero() {
             <Link
               id="hero-cta"
               href={registerHref()}
-              onClick={(e) => {
-                e.preventDefault();
-                openRegisterModal();
-              }}
-              className="btn btn-gold hero-shimmer hero-cta-glow relative group w-full sm:w-auto px-7 py-3.5 min-h-[50px] flex items-center justify-center gap-2.5 text-sm sm:text-base font-extrabold uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
+              className="btn btn-gold hero-shimmer hero-cta-glow relative group w-full sm:w-auto px-7 py-3.5 min-h-[50px] flex items-center justify-center gap-2.5 text-sm sm:text-base font-extrabold uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
               data-cta="hero-cta"
             >
               <span>Register now</span>
