@@ -26,7 +26,17 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function RegisterFlow({ initial, resume }: { initial: { sport?: string; division?: string; cls?: string; test?: boolean }; resume?: Resume }) {
+export function RegisterFlow({
+  initial,
+  resume,
+  isModal = false,
+  onClose,
+}: {
+  initial: { sport?: string; division?: string; cls?: string; test?: boolean };
+  resume?: Resume;
+  isModal?: boolean;
+  onClose?: () => void;
+}) {
   // staff test mode (?test=1): with the staff password the fee is ₹1; no Meta events, so ads stay clean
   const testing = !!initial.test;
   const [testKey, setTestKey] = useState("");
@@ -103,7 +113,7 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
       const qr = o.upi ? await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" }) : null;
       setPending({ regId: o.regId, amount: o.amount, label: o.label, upi: o.upi ?? null, qr });
       setStep(4);
-      window.scrollTo({ top: 0 });
+      if (!isModal) window.scrollTo({ top: 0 });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -141,32 +151,42 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
     }
   }
 
-  if (verified) return <Verified claim={verified} regId={pending!.regId} label={pending!.label} email={f.email} />;
-  if (done && done.paid) return <Submitted done={done} resend={() => window.open(waHref(pending!, true), "_blank", "noopener")} />;
-  if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} />;
+  if (verified) return <Verified claim={verified} regId={pending!.regId} label={pending!.label} email={f.email} isModal={isModal} onClose={onClose} />;
+  if (done && done.paid) return <Submitted done={done} resend={() => window.open(waHref(pending!, true), "_blank", "noopener")} isModal={isModal} onClose={onClose} />;
+  if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} isModal={isModal} onClose={onClose} />;
 
   const input = "h-13 w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 text-base text-white outline-none transition-all focus:border-yellow focus:bg-black focus:ring-2 focus:ring-yellow/20";
 
   return (
-    <div className="relative min-h-[100svh] w-full overflow-hidden bg-black px-4 py-8 md:py-16 flex flex-col justify-center items-center">
+    <div className={isModal ? "relative w-full overflow-hidden bg-black p-3 sm:p-6 md:p-8 flex flex-col justify-center items-center" : "relative min-h-[100svh] w-full overflow-hidden bg-black px-4 py-8 md:py-16 flex flex-col justify-center items-center"}>
       {/* Ambient background glow orbs */}
       <div className="pointer-events-none absolute -top-40 -left-40 size-[500px] rounded-full bg-orange/15 blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 size-[500px] rounded-full bg-yellow/15 blur-[120px]" />
 
       {/* Main Boxed Card Container */}
-      <div className="relative w-full max-w-2xl rounded-3xl border border-white/15 bg-black/85 p-6 shadow-[0_25px_80px_-20px_rgba(255,69,0,0.35),0_0_0_1px_rgba(255,222,0,0.15)] backdrop-blur-2xl sm:p-10 z-10 pb-28 md:pb-10">
+      <div className={`relative w-full ${isModal ? "max-w-2xl rounded-2xl sm:rounded-3xl border border-white/15 bg-black/95 p-5 sm:p-8 md:p-10 shadow-2xl backdrop-blur-2xl z-10" : "max-w-2xl rounded-3xl border border-white/15 bg-black/85 p-6 shadow-[0_25px_80px_-20px_rgba(255,69,0,0.35),0_0_0_1px_rgba(255,222,0,0.15)] backdrop-blur-2xl sm:p-10 z-10 pb-28 md:pb-10"}`}>
         
         {/* Top Header of the Box */}
         <div className="flex items-center justify-between border-b border-white/10 pb-5">
-          <Link href="/" aria-label="Back to home" className="hover:opacity-90 transition-opacity">
+          <Link href="/" onClick={(e) => { if (onClose) { e.preventDefault(); onClose(); } }} aria-label="Back to home" className="hover:opacity-90 transition-opacity">
             <Wordmark />
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:border-yellow hover:text-yellow hover:bg-yellow/10"
-          >
-            ✕ Close
-          </Link>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:border-yellow hover:text-yellow hover:bg-yellow/10 cursor-pointer"
+            >
+              ✕ Close
+            </button>
+          ) : (
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 transition-all hover:border-yellow hover:text-yellow hover:bg-yellow/10"
+            >
+              ✕ Close
+            </Link>
+          )}
         </div>
 
         {/* Headline & Festival Badge */}
@@ -587,9 +607,9 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
 
       {error && step !== 4 && <p className="mt-6 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
-      {/* Desktop In-Box Action Buttons */}
+      {/* Desktop & In-Modal Action Buttons */}
       {step < 4 && (
-        <div className="mt-8 hidden md:flex items-center gap-3 pt-6 border-t border-white/10">
+        <div className={`mt-8 ${isModal ? "flex" : "hidden md:flex"} items-center gap-3 pt-6 border-t border-white/10`}>
           {step > 1 && (
             <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !min-h-13 !px-6 rounded-xl border-white/20 text-white hover:border-yellow hover:text-yellow">
               Back
@@ -613,29 +633,31 @@ export function RegisterFlow({ initial, resume }: { initial: { sport?: string; d
       </div> {/* Close Main Box Card Container */}
 
       {/* Policy Links outside the box */}
-      <PolicyLinks className="mt-8 text-white/50" />
+      {!isModal && <PolicyLinks className="mt-8 text-white/50" />}
 
-      {/* Mobile Pinned Bottom Action Bar */}
-      <div className={`t-ink fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-black/95 backdrop-blur-xl px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden ${step === 4 ? "hidden" : ""}`}>
-        <div className="mx-auto flex max-w-xl gap-3">
-          {step > 1 && step < 4 && (
-            <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !px-5 rounded-xl border-white/20 text-white">
-              Back
-            </button>
-          )}
-          {step < 3 && (
-            <button type="button" onClick={() => setStep(step + 1)} disabled={step === 2 && !detailsOk} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
-              Continue <Icon name="arrow" className="arr size-5" />
-            </button>
-          )}
-          {step === 3 && (
-            <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
-              {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} securely` : "Confirm free registration"}
-            </button>
-          )}
+      {/* Mobile Pinned Bottom Action Bar (only when not in modal) */}
+      {!isModal && (
+        <div className={`t-ink fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-black/95 backdrop-blur-xl px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden ${step === 4 ? "hidden" : ""}`}>
+          <div className="mx-auto flex max-w-xl gap-3">
+            {step > 1 && step < 4 && (
+              <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !px-5 rounded-xl border-white/20 text-white">
+                Back
+              </button>
+            )}
+            {step < 3 && (
+              <button type="button" onClick={() => setStep(step + 1)} disabled={step === 2 && !detailsOk} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
+                Continue <Icon name="arrow" className="arr size-5" />
+              </button>
+            )}
+            {step === 3 && (
+              <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
+                {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} securely` : "Confirm free registration"}
+              </button>
+            )}
+          </div>
+          {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-white/60">Fill name, date of birth, a 10-digit mobile, email and city</p>}
         </div>
-        {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-white/60">Fill name, date of birth, a 10-digit mobile, email and city</p>}
-      </div>
+      )}
     </div>
   );
 }
@@ -679,10 +701,10 @@ function Verifying({ regId, amount, utr }: { regId: string; amount: number; utr:
 }
 
 /** Paid by QR: the bank hasn't confirmed within ~3 min (or the athlete chose WhatsApp) — reassure, and get the screenshot. */
-function Submitted({ done, resend }: { done: Done; resend: () => void }) {
+function Submitted({ done, resend, isModal, onClose }: { done: Done; resend: () => void; isModal?: boolean; onClose?: () => void }) {
   if (done.utr)
     return (
-      <div className="relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center">
+      <div className={isModal ? "relative w-full bg-black px-4 py-8 flex flex-col justify-center items-center" : "relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center"}>
         <div className="w-full max-w-md rounded-3xl border border-white/15 bg-black/90 p-8 text-center shadow-2xl">
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-wa text-white">
             <Icon name="shield" className="size-9" />
@@ -701,14 +723,20 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
             <p className="mt-1 text-xs text-white/50">UTR {done.utr}</p>
           </div>
           <p className="mt-6 text-xs text-white/50">If the bank confirms it first, your ticket is also emailed to you automatically — and our team is alerted, so nobody is forgotten.</p>
-          <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
-            Back to home
-          </Link>
+          {onClose ? (
+            <button type="button" onClick={onClose} className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow cursor-pointer">
+              Close &amp; Back to festival
+            </button>
+          ) : (
+            <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
+              Back to home
+            </Link>
+          )}
         </div>
       </div>
     );
   return (
-    <div className="relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center">
+    <div className={isModal ? "relative w-full bg-black px-4 py-8 flex flex-col justify-center items-center" : "relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center"}>
       <div className="w-full max-w-md rounded-3xl border border-white/15 bg-black/90 p-8 text-center shadow-2xl">
         <span className="mx-auto grid size-16 place-items-center rounded-full bg-yellow text-black font-extrabold">
           <Icon name="check" className="size-9" />
@@ -729,18 +757,24 @@ function Submitted({ done, resend }: { done: Done; resend: () => void }) {
           </button>
         </div>
         <p className="mt-6 text-xs text-white/50">Keep your registration ID and payment screenshot until you receive your ticket.</p>
-        <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
-          Back to home
-        </Link>
+        {onClose ? (
+          <button type="button" onClick={onClose} className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow cursor-pointer">
+            Close &amp; Back to festival
+          </button>
+        ) : (
+          <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
+            Back to home
+          </Link>
+        )}
       </div>
     </div>
   );
 }
 
 /** Bank confirmed the payment: ticket right here (also emailed by the sheet). */
-function Verified({ claim, regId, label, email }: { claim: Claim; regId: string; label: string; email: string }) {
+function Verified({ claim, regId, label, email, isModal, onClose }: { claim: Claim; regId: string; label: string; email: string; isModal?: boolean; onClose?: () => void }) {
   return (
-    <div className="relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center">
+    <div className={isModal ? "relative w-full bg-black px-4 py-8 flex flex-col justify-center items-center" : "relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center"}>
       <div className="w-full max-w-md rounded-3xl border border-white/15 bg-black/90 p-8 text-center shadow-2xl">
         <span className="mx-auto grid size-16 place-items-center rounded-full bg-wa text-white">
           <Icon name="check" className="size-9" />
@@ -762,19 +796,25 @@ function Verified({ claim, regId, label, email }: { claim: Claim; regId: string;
           </>
         )}
         <p className="mt-4 text-xs text-white/50">Save your ticket and bring it with your Government ID to check-in.</p>
-        <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
-          Back to home
-        </Link>
+        {onClose ? (
+          <button type="button" onClick={onClose} className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow cursor-pointer">
+            Close &amp; Back to festival
+          </button>
+        ) : (
+          <Link href="/" className="btn btn-line mt-8 w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
+            Back to home
+          </Link>
+        )}
       </div>
     </div>
   );
 }
 
 /** Success: the athlete pass (free registrations). */
-function Pass({ done, name, city, when }: { done: Done; name: string; city: string; when: string }) {
+function Pass({ done, name, city, when, isModal, onClose }: { done: Done; name: string; city: string; when: string; isModal?: boolean; onClose?: () => void }) {
   const share = encodeURIComponent(`I just registered for India’s Biggest Sports Festival 2026 — 6 championships, 4–6 Dec, Bhubaneswar. Register: ${typeof location !== "undefined" ? location.origin : ""}`);
   return (
-    <div className="relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center">
+    <div className={isModal ? "relative w-full bg-black px-4 py-8 flex flex-col justify-center items-center" : "relative min-h-[100svh] w-full bg-black px-4 py-12 flex flex-col justify-center items-center"}>
       <div className="w-full max-w-md">
         <div className="text-center">
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-yellow text-black font-extrabold">
@@ -832,9 +872,15 @@ function Pass({ done, name, city, when }: { done: Done; name: string; city: stri
           <a href={`https://wa.me/?text=${share}`} target="_blank" rel="noopener" className="btn w-full bg-wa text-white font-bold">
             <WhatsAppGlyph className="size-6" /> Share with friends
           </a>
-          <Link href="/" className="btn btn-line w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
-            Back to home
-          </Link>
+          {onClose ? (
+            <button type="button" onClick={onClose} className="btn btn-line w-full border-white/20 text-white hover:border-yellow hover:text-yellow cursor-pointer">
+              Close &amp; Back to festival
+            </button>
+          ) : (
+            <Link href="/" className="btn btn-line w-full border-white/20 text-white hover:border-yellow hover:text-yellow">
+              Back to home
+            </Link>
+          )}
         </div>
       </div>
     </div>

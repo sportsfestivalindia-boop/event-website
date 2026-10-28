@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { EVENT, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
+import { openRegisterModal } from "./RegisterModal";
 
 /** One observer for every [data-reveal] / [data-rule] element on the page. */
 export function Reveal() {
@@ -171,7 +172,14 @@ export function Chrome() {
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" aria-label="WhatsApp us" className="ml-auto grid size-10 place-items-center rounded-full border border-line text-wa hover:border-wa lg:ml-0">
             <WhatsAppGlyph className="size-5" />
           </a>
-          <Link href={registerHref()} className="btn btn-gold hidden !min-h-10 !px-5 !text-xs font-extrabold uppercase tracking-wider md:inline-flex shadow-md">
+          <Link
+            href={registerHref()}
+            onClick={(e) => {
+              e.preventDefault();
+              openRegisterModal();
+            }}
+            className="btn btn-gold hidden !min-h-10 !px-5 !text-xs font-extrabold uppercase tracking-wider md:inline-flex shadow-md cursor-pointer"
+          >
             Register now
           </Link>
         </div>
@@ -192,7 +200,15 @@ export function Chrome() {
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" aria-label="WhatsApp us" className="grid size-12 shrink-0 place-items-center rounded-md bg-wa text-white" tabIndex={showBar ? 0 : -1}>
             <WhatsAppGlyph className="size-6" />
           </a>
-          <Link href={registerHref()} className="btn btn-gold !min-h-12 !px-4 !text-sm" tabIndex={showBar ? 0 : -1}>
+          <Link
+            href={registerHref()}
+            onClick={(e) => {
+              e.preventDefault();
+              openRegisterModal();
+            }}
+            className="btn btn-gold !min-h-12 !px-4 !text-sm cursor-pointer"
+            tabIndex={showBar ? 0 : -1}
+          >
             Register
             <Icon name="arrow" className="arr size-4" />
           </Link>
