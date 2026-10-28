@@ -69,7 +69,28 @@ export function RegisterFlow({
   const fee = div.fee ?? EVENT.fee;
   const label = `${champ.sport} · ${div.name}${div.classes.length > 1 ? ` · ${f.cls}` : ""}`;
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const handlePhone = (val: string) => {
+    let digits = val.replace(/\D/g, "");
+    if (digits.length >= 12 && digits.startsWith("91")) digits = digits.slice(2);
+    if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
+    setF({ ...f, phone: digits.slice(0, 10) });
+  };
   const detailsOk = f.name.trim().length > 1 && !!f.dob && /^[6-9]\d{9}$/.test(f.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && f.city.trim().length > 1;
+  const missingDetailHint = !f.name.trim() || f.name.trim().length <= 1
+    ? "Please enter your full name as on ID"
+    : !f.dob
+    ? "Please select your date of birth"
+    : !f.phone
+    ? "Please enter your 10-digit WhatsApp mobile number"
+    : f.phone.length < 10
+    ? `Mobile number needs ${10 - f.phone.length} more digit${10 - f.phone.length > 1 ? "s" : ""}`
+    : !/^[6-9]\d{9}$/.test(f.phone)
+    ? "Mobile number must start with 6, 7, 8, or 9 (do not include leading 0)"
+    : !f.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)
+    ? "Please enter a valid email address"
+    : !f.city.trim() || f.city.trim().length <= 1
+    ? "Please enter your city / district"
+    : null;
 
   async function submit() {
     setError("");
@@ -396,16 +417,31 @@ export function RegisterFlow({
               <input
                 className={`${input} rounded-l-none`}
                 value={f.phone}
-                onChange={(e) => setF({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                onChange={(e) => handlePhone(e.target.value)}
                 inputMode="numeric"
                 autoComplete="tel-national"
                 placeholder="10-digit number"
               />
             </div>
+            {f.phone.length > 0 && f.phone.length < 10 && (
+              <span className="mt-1.5 block text-xs text-amber-400 font-medium">
+                10 digits required ({10 - f.phone.length} more digit{10 - f.phone.length > 1 ? "s" : ""})
+              </span>
+            )}
+            {f.phone.length === 10 && !/^[6-9]\d{9}$/.test(f.phone) && (
+              <span className="mt-1.5 block text-xs text-red-400 font-medium">
+                Mobile number must start with 6, 7, 8, or 9 (do not enter leading 0)
+              </span>
+            )}
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold tracking-wider text-white/80 uppercase">Email</span>
             <input className={input} value={f.email} onChange={set("email")} type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" />
+            {f.email.length > 3 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && (
+              <span className="mt-1.5 block text-xs text-amber-400 font-medium">
+                Enter a valid email address (e.g. you@example.com)
+              </span>
+            )}
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold tracking-wider text-white/80 uppercase">City</span>
@@ -609,21 +645,26 @@ export function RegisterFlow({
 
       {/* Desktop & In-Modal Action Buttons */}
       {step < 4 && (
-        <div className={`mt-8 ${isModal ? "flex" : "hidden md:flex"} items-center gap-3 pt-6 border-t border-white/10`}>
-          {step > 1 && (
-            <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !min-h-13 !px-6 rounded-xl border-white/20 text-white hover:border-yellow hover:text-yellow">
-              Back
-            </button>
-          )}
-          {step < 3 && (
-            <button type="button" onClick={() => setStep(step + 1)} disabled={step === 2 && !detailsOk} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
-              Continue <Icon name="arrow" className="arr size-5" />
-            </button>
-          )}
-          {step === 3 && (
-            <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
-              {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} Securely` : "Confirm Free Registration"}
-            </button>
+        <div className={`mt-8 ${isModal ? "flex flex-col" : "hidden md:flex md:flex-col"} gap-2 pt-6 border-t border-white/10`}>
+          <div className="flex items-center gap-3 w-full">
+            {step > 1 && (
+              <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !min-h-13 !px-6 rounded-xl border-white/20 text-white hover:border-yellow hover:text-yellow">
+                Back
+              </button>
+            )}
+            {step < 3 && (
+              <button type="button" onClick={() => setStep(step + 1)} disabled={step === 2 && !detailsOk} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
+                Continue <Icon name="arrow" className="arr size-5" />
+              </button>
+            )}
+            {step === 3 && (
+              <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
+                {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} Securely` : "Confirm Free Registration"}
+              </button>
+            )}
+          </div>
+          {step === 2 && !detailsOk && missingDetailHint && (
+            <p className="text-center text-xs text-amber-300/90 font-medium">{missingDetailHint}</p>
           )}
         </div>
       )}
@@ -655,7 +696,11 @@ export function RegisterFlow({
               </button>
             )}
           </div>
-          {step === 2 && !detailsOk && <p className="mx-auto mt-2 max-w-xl text-center text-xs text-white/60">Fill name, date of birth, a 10-digit mobile, email and city</p>}
+          {step === 2 && !detailsOk && missingDetailHint && (
+            <p className="mx-auto mt-2 max-w-xl text-center text-xs text-amber-300 font-medium">
+              {missingDetailHint}
+            </p>
+          )}
         </div>
       )}
     </div>

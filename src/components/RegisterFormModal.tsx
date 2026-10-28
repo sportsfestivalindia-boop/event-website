@@ -414,7 +414,10 @@ export default function RegisterFormModal({
                         autoComplete="tel"
                         value={phone}
                         onChange={(e) => {
-                          setPhone(e.target.value);
+                          let digits = e.target.value.replace(/\D/g, "");
+                          if (digits.length >= 12 && digits.startsWith("91")) digits = digits.slice(2);
+                          if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
+                          setPhone(digits.slice(0, 10));
                           if (errors.phone) setErrors({ ...errors, phone: "" });
                         }}
                         placeholder="10-digit number"
