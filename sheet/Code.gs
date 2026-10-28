@@ -27,7 +27,7 @@ const EVENT = {
 
 const STATUSES = ["Awaiting payment", "Pending", "Verified", "Rejected"];
 const FEES = [600, 1000, 5000]; // entry fees — any other credit to the gym's account is not a festival payment
-const ALERT_TO = "sportsfestivalindia@gmail.com,rupesh.zenvy@gmail.com"; // staff alerts from the watchdog
+const ALERT_TO = "sportsfestivalindia@gmail.com,rupesh.zenvy@gmail.com,sportsfestivalindia@illusorydesignstudios.com"; // staff alerts from the watchdog
 
 const REG_COLS = ["Reg ID", "Created", "Name", "DOB", "Mobile", "Email", "City", "Association", "Category", "Fee (₹)", "UTR", "UTR at", "Status", "Verified at", "Email sent", "WhatsApp", "Source", "Notes", "Ticket"];
 // Tests: staff ₹1 test mode (/register?test=1) — same columns and same flow, kept out of the report and the totals
