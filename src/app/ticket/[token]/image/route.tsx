@@ -20,7 +20,7 @@ const [anton, poppins, poppinsRupee, poppinsBold, poppinsBoldRupee, mark] = awai
 );
 const logo = `data:image/png;base64,${mark.toString("base64")}`;
 
-const INK = "#0a0a0a", GOLD = "#ffb81c", MUTED = "#a3a3a3", LINE = "#2a2a2a";
+const INK = "#000000", GOLD = "#ffde00", ORANGE = "#ff4500", MUTED = "#ffffffaa", LINE = "#ffffff33";
 
 export async function GET(_req: Request, { params }: RouteContext<"/ticket/[token]/image">) {
   const t = unseal((await params).token);

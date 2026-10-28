@@ -2,6 +2,7 @@ import { checkEntry, regId, upiLink, type Entry } from "@/lib/pay";
 import { istNow, toSheet } from "@/lib/sheet";
 import { isAdmin } from "@/lib/ticket";
 import { after } from "next/server";
+import { saveRegistrationToFirestore } from "@/lib/firebase";
 
 /** Step 3: validate the entry, reserve a registration ID, record it in AOGA's sheet and return the UPI payment link for the QR (null until a UPI ID is set). */
 export async function POST(req: Request) {
@@ -17,21 +18,37 @@ export async function POST(req: Request) {
 
   const id = regId();
   const t = entry.tracking ?? {};
-  // logged after the response: the athlete sees the QR at once, the sheet (0.5–10 s) catches up while they pay
-  after(() => toSheet("registration", {
-    regId: id,
-    created: istNow(),
-    name: entry.name!.trim(),
-    dob: entry.dob!,
-    phone: entry.phone!,
-    email: entry.email!.trim(),
-    city: entry.city!.trim(),
-    association: (entry.association ?? "").trim(),
-    category: label,
-    fee,
-    status: fee === 0 ? "Verified" : "Awaiting payment",
-    source: test ? "STAFF TEST" : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
-  }));
+  // logged after the response: the athlete proceeds, while sheet and Firestore sync in background
+  after(async () => {
+    toSheet("registration", {
+      regId: id,
+      created: istNow(),
+      name: entry.name!.trim(),
+      dob: entry.dob!,
+      phone: entry.phone!,
+      email: entry.email!.trim(),
+      city: entry.city!.trim(),
+      association: (entry.association ?? "").trim(),
+      category: label,
+      fee,
+      status: fee === 0 ? "Verified" : "Awaiting payment",
+      source: test ? "STAFF TEST" : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
+    });
+
+    await saveRegistrationToFirestore({
+      regId: id,
+      name: entry.name!.trim(),
+      dob: entry.dob,
+      phone: entry.phone!,
+      email: entry.email!.trim(),
+      city: entry.city?.trim(),
+      association: (entry.association ?? "").trim(),
+      category: label,
+      fee,
+      status: fee === 0 ? "Verified" : "Awaiting payment",
+      source: test ? "STAFF TEST" : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
+    });
+  });
 
   if (fee === 0) return Response.json({ free: true, regId: id, label });
   return Response.json({ regId: id, amount: fee, label, upi: upiLink(fee, id) });

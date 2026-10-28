@@ -1,15 +1,20 @@
+import { BullIntro } from "@/components/BullIntro";
 import { Chrome, Reveal } from "@/components/live";
-import { Glance, Hero, Ticker } from "@/components/sections/Hero";
+import { Glance, Hero } from "@/components/sections/Hero";
+import { Championships } from "@/components/Championships";
+import { SportsIcons } from "@/components/SportsIcons";
 import { Arena, Champions, Days, Faq, FinalCall, Footer, Prizes, Register, Trust, Value, Venue } from "@/components/sections/Sections";
 
 export default function Home() {
   return (
     <>
+      <BullIntro />
       <Chrome />
       <main>
         <Hero />
-        <Ticker />
+        <SportsIcons />
         <Glance />
+        <Championships />
         <Arena />
         <Prizes />
         <Champions />

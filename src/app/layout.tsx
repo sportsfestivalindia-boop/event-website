@@ -1,11 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Poppins } from "next/font/google";
+import { Anton, Montserrat } from "next/font/google";
 import Script from "next/script";
+import { ScrollTopOnLoad } from "./ScrollTopOnLoad";
 import "./globals.css";
 
-// Anton: display, Poppins: body — both carry the ₹ glyph.
-const anton = Anton({ variable: "--font-anton", weight: "400", subsets: ["latin", "latin-ext"] });
-const poppins = Poppins({ variable: "--font-poppins", weight: ["400", "500", "600", "700"], subsets: ["latin", "latin-ext"] });
+// Anton: display for all primary headings; Montserrat: all body and normal text
+const anton = Anton({
+  variable: "--font-anton",
+  weight: "400",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
 
 const title = "India’s Biggest Sports Festival 2026 · Bodybuilding, Powerlifting, Dangal & more · Bhubaneswar";
 const description =
@@ -22,16 +34,22 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title, description, images: [cover] },
 };
 
-export const viewport: Viewport = { themeColor: "#0a0a0a" };
+export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${anton.variable} ${poppins.variable} antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${anton.variable} ${montserrat.variable} antialiased`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
         {/* reveal-on-scroll only when JS runs; ?shot disables it for QA screenshots */}
         <script dangerouslySetInnerHTML={{ __html: "if(!/[?&]shot/.test(location.search))document.documentElement.classList.add('js')" }} />
+        {/* Early scroll reset to prevent flash of restored scroll position before hydration */}
+        <script dangerouslySetInnerHTML={{ __html: "if('scrollRestoration' in history){history.scrollRestoration='manual';}window.scrollTo(0,0);window.addEventListener('pageshow',function(e){if(e.persisted)window.scrollTo(0,0);});" }} />
       </head>
       <body className="t-ink">
+        <ScrollTopOnLoad />
         {children}
         {/* Meta Pixel + ad attribution, supplied by the ads team. Do not add a second pixel snippet. */}
         <Script src="/aoga-tracking.js" strategy="afterInteractive" />

@@ -14,7 +14,8 @@ export function Reveal() {
         entries.forEach((e) => {
           if (e.isIntersecting) {
             e.target.classList.add("in");
-            io.unobserve(e.target);
+          } else {
+            e.target.classList.remove("in");
           }
         }),
       { rootMargin: "0px 0px -8% 0px" },
@@ -78,14 +79,20 @@ export function Odometer({ value, className = "" }: { value: string; className?:
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
-        setTimeout(() => setRun(true), 400);
-        io.disconnect();
+        timer = setTimeout(() => setRun(true), 400);
+      } else {
+        clearTimeout(timer);
+        setRun(false);
       }
     });
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      clearTimeout(timer);
+      io.disconnect();
+    };
   }, []);
   let di = 0;
   return (
@@ -142,7 +149,7 @@ export function Chrome() {
   return (
     <>
       <header className={`t-ink fixed inset-x-0 top-0 z-50 !bg-transparent transition-[background-color,border-color] duration-300 ${past ? "border-b border-line !bg-ink/85 backdrop-blur-xl" : "border-b border-transparent"}`}>
-        <div className="mx-auto flex h-16 w-full items-center gap-8 px-5 md:h-20 md:px-10">
+        <div className="content-contain page-gutter flex h-16 w-full items-center gap-8 md:h-20">
           <Link href="#top" aria-label="Sports Festival — back to top">
             <Wordmark />
           </Link>
@@ -164,7 +171,7 @@ export function Chrome() {
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" aria-label="WhatsApp us" className="ml-auto grid size-10 place-items-center rounded-full border border-line text-wa hover:border-wa lg:ml-0">
             <WhatsAppGlyph className="size-5" />
           </a>
-          <Link href={registerHref()} className={`btn btn-gold hidden !min-h-11 !px-5 !text-sm md:inline-flex ${past ? "" : "pointer-events-none opacity-0"} transition-opacity`} tabIndex={past ? 0 : -1}>
+          <Link href={registerHref()} className="btn btn-gold hidden !min-h-10 !px-5 !text-xs font-extrabold uppercase tracking-wider md:inline-flex shadow-md">
             Register now
           </Link>
         </div>

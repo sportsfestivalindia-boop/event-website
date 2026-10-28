@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { EVENT, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
@@ -58,14 +59,25 @@ export function SectionHead({ title, lead, className = "", center = false }: { t
 }
 
 export const Gold = ({ children }: { children: React.ReactNode }) => <span className="text-gold">{children}</span>;
+export const Orange = ({ children }: { children: React.ReactNode }) => <span className="text-orange">{children}</span>;
+export const Yellow = ({ children }: { children: React.ReactNode }) => <span className="text-yellow">{children}</span>;
 
-export function Section({ id, theme = "ink", children, className = "" }: { id?: string; theme?: "ink" | "paper" | "gold"; children: React.ReactNode; className?: string }) {
+export const Section = React.forwardRef<
+  HTMLElement,
+  {
+    id?: string;
+    theme?: "ink" | "paper" | "gold" | "orange";
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: any;
+  }
+>(function Section({ id, theme = "ink", children, className = "", ...props }, ref) {
   return (
-    <section id={id} className={`t-${theme} relative scroll-mt-16 px-5 py-20 md:px-10 md:py-28 ${className}`}>
-      <div className="mx-auto w-full">{children}</div>
+    <section ref={ref} id={id} className={`t-${theme} relative scroll-mt-16 w-full page-gutter py-20 md:py-28 ${className}`} {...props}>
+      <div className="content-contain w-full">{children}</div>
     </section>
   );
-}
+});
 
 /** One line under every CTA: how payment works. */
 export const PAY_LINE = "2-min signup · Pay by UPI QR · Confirmation on WhatsApp";

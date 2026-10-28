@@ -140,7 +140,7 @@ export function StallBooking() {
             </Field>
           </div>
           <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#ffb81c]" />
+            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#ff4500]" />
             <span className="text-muted">
               I agree that stall location is allotted by AOGA, to the exhibitor rules shared with the booking, and to the{" "}
               <Link href="/terms" target="_blank" className="underline underline-offset-2">Terms</Link> and{" "}

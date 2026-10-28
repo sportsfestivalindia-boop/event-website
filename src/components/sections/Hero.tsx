@@ -1,80 +1,230 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { CHAMPIONSHIPS, EVENT, categoryCount, minFee, paidPlaces } from "@/data/festival";
+import { CHAMPIONSHIPS, EVENT, categoryCount, minFee, paidPlaces, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
+import { useReplayOnScroll } from "@/hooks/useReplayOnScroll";
+import { HeroVideo } from "../HeroVideo";
 import { Icon } from "../icons";
 import { Countdown, Odometer } from "../live";
-import { Cta, PAY_LINE } from "../ui";
+import { PAY_LINE } from "../ui";
 
 const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
-export function Hero() {
+/** Floating golden embers overlay matching the championship arena atmosphere */
+function HeroEmbers() {
+  const embers = [
+    { left: "8%", delay: "0s", dur: "7.2s", size: "3px", drift: "-20px" },
+    { left: "16%", delay: "2.4s", dur: "8.5s", size: "4px", drift: "30px" },
+    { left: "26%", delay: "1.1s", dur: "7.8s", size: "2px", drift: "18px" },
+    { left: "36%", delay: "3.9s", dur: "9.5s", size: "3.5px", drift: "-25px" },
+    { left: "46%", delay: "0.6s", dur: "7s", size: "2.5px", drift: "15px" },
+    { left: "56%", delay: "3.1s", dur: "8.2s", size: "3px", drift: "-20px" },
+    { left: "66%", delay: "1.7s", dur: "9s", size: "4px", drift: "35px" },
+    { left: "76%", delay: "4.5s", dur: "7.6s", size: "2px", drift: "-15px" },
+    { left: "86%", delay: "2s", dur: "8.4s", size: "3.5px", drift: "25px" },
+    { left: "92%", delay: "0.3s", dur: "9.2s", size: "2.5px", drift: "-30px" },
+    { left: "21%", delay: "5.2s", dur: "8s", size: "3px", drift: "15px" },
+    { left: "81%", delay: "3.7s", dur: "7.4s", size: "4px", drift: "-18px" },
+  ];
+
   return (
-    <section id="top" className="t-ink relative isolate overflow-hidden lg:flex lg:min-h-[100svh] lg:items-center">
-      {/* athletes + bolt (client artwork). Mobile: square crop on top. Desktop: right side, fading into black. */}
-      <div aria-hidden className="strike relative mt-14 md:mt-0 -z-10 aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:w-[64%]">
-        <Image src="/img/hero-athletes.webp" alt="" fill priority sizes="100vw" className="object-cover lg:hidden" />
-        <Image src="/img/hero-desktop.webp" alt="" fill priority sizes="64vw" className="hidden object-cover object-[80%_center] [mask-image:linear-gradient(to_right,transparent,#000_30%)] lg:block" />
-        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-ink via-ink/70 to-transparent lg:hidden" />
-        <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-ink to-transparent lg:block" />
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-0">
+      {embers.map((e, idx) => (
+        <span
+          key={idx}
+          className="absolute rounded-full bg-gradient-to-t from-yellow via-orange-400 to-amber-200 shadow-[0_0_8px_#ffde00]"
+          style={{
+            left: e.left,
+            bottom: "-10px",
+            width: e.size,
+            height: e.size,
+            animation: `ember-float ${e.dur} linear infinite`,
+            animationDelay: e.delay,
+            ["--drift" as string]: e.drift,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function Hero() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const play = useReplayOnScroll(sectionRef);
+  const [introDismissed, setIntroDismissed] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  useEffect(() => {
+    // Check if intro was already dismissed in this session
+    if (typeof window !== "undefined" && (window as any).__introDismissed) {
+      setIntroDismissed(true);
+      return;
+    }
+
+    const hasIntro =
+      typeof window !== "undefined" &&
+      ((window as any).__hasBullIntro || document.getElementById("bull-intro"));
+
+    // If there is truly no intro, start immediately
+    if (!hasIntro) {
+      setIntroDismissed(true);
+      return;
+    }
+
+    // Intro exists: wait for dismissal
+    const onDismissed = () => {
+      setIntroDismissed(true);
+    };
+    window.addEventListener("intro-dismissed", onDismissed, { once: true });
+
+    // Fallback in case intro element is removed from DOM directly
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById("bull-intro")) {
+        observer.disconnect();
+        setIntroDismissed(true);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener("intro-dismissed", onDismissed);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Text animation starts ONLY after intro is dismissed AND hero is in view;
+  // resets when scrolled away, replays when scrolled back in
+  useEffect(() => {
+    if (!introDismissed) {
+      setIsRevealed(false);
+      return;
+    }
+    if (play) {
+      const t = setTimeout(() => setIsRevealed(true), 60);
+      return () => clearTimeout(t);
+    } else {
+      setIsRevealed(false);
+    }
+  }, [introDismissed, play]);
+
+  return (
+    <section
+      ref={sectionRef}
+      id="top"
+      data-play={isRevealed}
+      className="t-ink relative isolate overflow-hidden h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-between pt-16 md:pt-20 pb-4 md:pb-6 page-gutter w-full"
+    >
+      {/* Hero background video - starts after intro, pauses off-screen, restarts on return */}
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden bg-black">
+        <HeroVideo active={introDismissed && play} />
       </div>
-      <span className="sr-only">Anil Gochhikar, Ranu Mohanty and Dutee Chand</span>
 
-      {/* Mobile reads like a poster: centred title on the photo's faded edge, when & where, one prize card, CTA — all in the first screen. Desktop: left column. */}
-      <div className="relative mx-auto -mt-24 w-full px-5 pb-10 text-center md:px-10 lg:mt-0 lg:pt-24 lg:pb-10 lg:text-left">
-        <div className="mx-auto max-w-[640px] lg:mx-0 lg:max-w-[52%]">
-          <h1 className="rise" style={d(0)}>
-            <span className="display block text-[clamp(1.6rem,7.4vw,3.6rem)] lg:text-[min(3.4vw,6.2vh)]">India’s Biggest</span>
-            <span className="display block text-[clamp(2.6rem,12.6vw,6rem)] leading-[0.95] lg:text-[min(5.6vw,10.5vh)]">
-              <span className="text-gold">Sports</span> Festival
-            </span>
-          </h1>
-          <p className="rise mt-3 lg:hidden" style={d(1)}>
-            <span className="block text-base font-bold tracking-[0.12em] text-gold uppercase">4–6 December 2026</span>
-            <span className="block text-sm text-muted">{EVENT.venue}, Bhubaneswar</span>
-          </p>
-          <span className="rise mx-auto mt-5 block h-[3px] w-24 bg-gold md:w-56 lg:mx-0" style={d(1)} />
+      {/* Atmospheric floating golden embers */}
+      <HeroEmbers />
 
-          <div className="rise mt-6 rounded-2xl border border-gold/40 bg-gold/[0.06] px-4 py-5 md:mt-8 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0" style={d(2)}>
-            <p>
-              <span className="display block text-[clamp(3.2rem,15.5vw,10rem)] leading-[0.9] lg:text-[min(8.6vw,17vh)]">
-                <span className="text-gold">₹1.5</span> Crore
+      <span className="sr-only">Champion bodybuilder at India’s Biggest Sports Festival 2026</span>
+
+      {/* Hidden for accessibility & SEO since it's already in the Sports.webp artwork */}
+      <h1 className="sr-only">
+        India’s Biggest Sports Festival 2026 · 4–6 December 2026 · Baramunda Ground Field, Bhubaneswar · ₹1.5 Crore Prize Pool
+      </h1>
+
+      {/* Inner full-width container capped at content-contain */}
+      <div className="content-contain relative z-10 flex flex-1 flex-col justify-between w-full">
+        {/* Main Content Area: Interactive CTAs & Ticket Fee positioned below the artwork graphic */}
+        <div className="relative w-full flex-1 flex flex-col justify-end items-center lg:items-start pb-4 sm:pb-6 max-w-[580px] text-center lg:text-left mx-auto lg:mx-0 z-10">
+          {/* Atmospheric ambient glow behind the CTA container */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-10 -bottom-8 w-80 sm:w-96 h-72 sm:h-80 bg-[radial-gradient(circle,rgba(255,100,0,0.2)_0%,rgba(255,222,0,0.08)_40%,transparent_70%)] blur-2xl -z-10 animate-pulse"
+            style={{ animationDuration: "5s" }}
+          />
+
+          {/* Ticket pricing badge with glassmorphism and pulsing ticket icon */}
+          <div
+            className={`hero-enter flex items-center justify-center lg:justify-start ${
+              isRevealed ? "hero-enter-active" : ""
+            }`}
+            style={{ "--delay": "100ms" } as React.CSSProperties}
+          >
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-yellow/35 bg-black/60 backdrop-blur-md shadow-[0_0_20px_rgba(255,222,0,0.15)]">
+              <span className="relative flex size-5 sm:size-6 items-center justify-center">
+                <Icon name="ticket" className="size-4 sm:size-5 text-yellow animate-pulse shrink-0" />
               </span>
-              <span className="tracked mt-2 block pl-[0.3em] text-[clamp(1rem,4.6vw,2.4rem)] lg:mt-3 lg:text-[min(2.3vw,4.4vh)]">Prize money</span>
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-3 border-t border-line pt-4 whitespace-nowrap lg:mt-10 lg:justify-start lg:border-0 lg:pt-0">
-              <Icon name="ticket" className="size-7 shrink-0 text-gold sm:size-9" />
-              <div className="text-left">
-                <p className="label !text-[11px] text-muted">Entry from</p>
-                <p className="display text-[clamp(1.5rem,7vw,2.25rem)]">{inr(minFee)}</p>
+              <div className="text-left flex items-baseline gap-1.5">
+                <span className="text-[11px] sm:text-xs uppercase tracking-wider text-white/80 font-bold">Entry from</span>
+                <span className="display text-xl sm:text-2xl text-yellow font-extrabold drop-shadow-[0_2px_8px_rgba(255,222,0,0.5)]">
+                  {inr(minFee)}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="rise mt-6 flex flex-col gap-3 sm:flex-row md:mt-8" style={d(4)}>
-            <Cta id="hero-cta" micro={false} />
-            <a href="#arena" className="btn btn-line w-full sm:w-auto">
-              Find my category <Icon name="down" className="size-5" />
+          {/* Action Buttons: Register CTA with gold shimmer/glow + Find Category with down arrow bounce */}
+          <div
+            className={`hero-enter mt-3.5 flex flex-col sm:flex-row items-center sm:items-stretch gap-3 w-full sm:w-auto justify-center lg:justify-start ${
+              isRevealed ? "hero-enter-active" : ""
+            }`}
+            style={{ "--delay": "260ms" } as React.CSSProperties}
+          >
+            <Link
+              id="hero-cta"
+              href={registerHref()}
+              className="btn btn-gold hero-shimmer hero-cta-glow relative group w-full sm:w-auto px-7 py-3.5 min-h-[50px] flex items-center justify-center gap-2.5 text-sm sm:text-base font-extrabold uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              data-cta="hero-cta"
+            >
+              <span>Register now</span>
+              <Icon name="arrow" className="size-5 transition-transform duration-300 group-hover:translate-x-1.5 shrink-0" />
+            </Link>
+
+            <a
+              href="#arena"
+              className="btn btn-line group w-full sm:w-auto px-6 py-3.5 min-h-[50px] flex items-center justify-center gap-2.5 border-1.5 border-white/25 bg-black/45 backdrop-blur-sm text-white hover:border-yellow hover:text-yellow hover:bg-yellow/10 text-sm sm:text-base font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+            >
+              <span>Find my category</span>
+              <Icon name="down" className="size-5 down-arrow-bounce text-yellow transition-transform group-hover:translate-y-1 shrink-0" />
             </a>
           </div>
-          <p className="rise mt-3 text-xs text-muted" style={d(4)}>
-            {PAY_LINE}
-            <br />
-            Already paid?{" "}
-            <Link href="/verify" className="font-semibold text-gold underline underline-offset-2">
+
+          {/* Microcopy with verification link */}
+          <p
+            className={`hero-enter mt-2.5 text-xs text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] ${
+              isRevealed ? "hero-enter-active" : ""
+            }`}
+            style={{ "--delay": "380ms" } as React.CSSProperties}
+          >
+            {PAY_LINE} · Already paid?{" "}
+            <Link href="/verify" className="font-semibold text-yellow underline underline-offset-2 hover:text-white transition-colors whitespace-nowrap">
               Verify your payment
             </Link>
           </p>
+        </div>
 
-          <ul className="rise mt-8 flex flex-col items-center gap-3 border-t border-line pt-6 text-sm sm:flex-row sm:flex-wrap sm:gap-x-6 lg:items-start" style={d(5)}>
-            <li className="hidden items-center gap-2.5 lg:flex">
-              <Icon name="calendar" className="size-5 text-gold" /> <b className="font-semibold">4–6 DEC 2026</b>
+        {/* Bottom Metadata Row (Always visible in single screen hero with live radar indicator) */}
+        <div
+          className={`hero-enter relative w-full border-t border-white/15 pt-3 sm:pt-4 backdrop-blur-[2px] z-10 ${
+            isRevealed ? "hero-enter-active" : ""
+          }`}
+          style={{ "--delay": "480ms" } as React.CSSProperties}
+        >
+          <ul className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2.5 text-xs sm:text-sm text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+            <li className="flex items-center gap-2 hover:text-yellow transition-colors cursor-default">
+              <Icon name="calendar" className="size-4 sm:size-5 text-yellow" />
+              <b className="font-semibold text-white tracking-wide">4–6 DEC 2026</b>
             </li>
-            <li className="hidden items-center gap-2.5 lg:flex">
-              <Icon name="pin" className="size-5 text-gold" /> {EVENT.venue}, Bhubaneswar
+            <li className="flex items-center gap-2 hover:text-yellow transition-colors cursor-default">
+              <Icon name="pin" className="size-4 sm:size-5 text-yellow" />
+              <span>{EVENT.venue}, Bhubaneswar</span>
             </li>
-            <li className="flex items-center gap-2.5">
-              <Icon name="users" className="size-5 text-gold" /> Registrations close in <Countdown className="font-semibold text-gold" />
+            <li className="flex items-center gap-2 bg-black/45 px-3 py-1 rounded-full border border-yellow/25">
+              <span className="relative flex size-2.5 items-center justify-center">
+                <span className="absolute inline-flex size-full rounded-full bg-yellow opacity-75 animate-ping" />
+                <span className="relative inline-flex size-2 rounded-full bg-yellow" />
+              </span>
+              <span>Registrations close in</span>
+              <Countdown className="font-bold text-yellow tracking-wide" />
             </li>
           </ul>
         </div>
@@ -101,26 +251,4 @@ export function Ticker() {
   );
 }
 
-/** Festival at a glance — four big numbers anyone can read in one second. */
-export function Glance() {
-  const stats = [
-    { icon: "rupee", v: <Odometer value={inr(EVENT.prizePool)} />, l: "Total prize money" },
-    { icon: "trophy", v: String(CHAMPIONSHIPS.length), l: "Championships" },
-    { icon: "medal", v: `${paidPlaces}+`, l: "Podium places with cash awards" },
-    { icon: "users", v: `${categoryCount}+`, l: "Categories" },
-    { icon: "calendar", v: "3 Days", l: "4–6 December 2026" },
-  ];
-  return (
-    <div className="t-ink border-b border-line px-5 py-12 md:px-10 md:py-16">
-      <ul className="mx-auto grid w-full grid-cols-2 gap-3 md:gap-4 lg:grid-cols-6">
-        {stats.map((s, i) => (
-          <li key={s.l} className={`card p-5 md:p-6 ${i === 0 ? "col-span-2" : ""}`} data-reveal style={d(i)}>
-            <Icon name={s.icon} className="size-7 text-gold" />
-            <p className="display mt-4 text-[clamp(2rem,4vw,3rem)] leading-none whitespace-nowrap">{s.v}</p>
-            <p className="mt-2 text-sm text-muted">{s.l}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+export { StatsSection as Glance, StatsSection } from "@/components/StatsSection";

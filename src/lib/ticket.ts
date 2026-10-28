@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 import { CHAMPIONSHIPS } from "@/data/festival";
 import { istNow, toSheet } from "@/lib/sheet";
 import { sendTicketWhatsApp } from "@/lib/whatsapp";
+import { updateRegistrationInFirestore } from "@/lib/firebase";
 import { after } from "next/server";
 
 export type Ticket = {
@@ -76,6 +77,16 @@ export async function issueTicket(
   const url = new URL(`/ticket/${token}`, origin).toString();
   const sheet = await toSheet("ticket", { regId: p.regId ?? "", utr: p.utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow(), name: p.name, phone: p.phone, category: p.category, fee: p.amount });
   if (sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
-  after(() => sendTicketWhatsApp({ phone: p.phone, name: p.name, amount: p.amount, category: p.category, ticketNo: t, url }));
+  after(async () => {
+    if (p.regId) {
+      await updateRegistrationInFirestore(p.regId, {
+        status: "Paid",
+        utr: p.utr,
+        ticketNo: t,
+        ticketUrl: url,
+      });
+    }
+    await sendTicketWhatsApp({ phone: p.phone, name: p.name, amount: p.amount, category: p.category, ticketNo: t, url });
+  });
   return { ticketNo: t, url };
 }

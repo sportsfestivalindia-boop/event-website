@@ -29,8 +29,8 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
   return (
     <main className="t-ink min-h-[100svh] px-5 py-10">
       <div className="mx-auto max-w-md">
-        <div className="overflow-hidden rounded-2xl bg-ink ring-1 ring-gold/60 shadow-[0_30px_80px_-30px_#ffb81c77]">
-          <div className="flex items-center justify-between bg-gold px-5 py-3 text-ink">
+        <div className="overflow-hidden rounded-2xl bg-black ring-1 ring-gold/60 shadow-[0_30px_80px_-30px_#ff450077]">
+          <div className="flex items-center justify-between bg-gold px-5 py-3 text-black">
             <span className="text-xs font-bold tracking-[0.2em] uppercase">Official athlete ticket</span>
             <span className="text-xs font-bold">4–6 DEC 2026</span>
           </div>

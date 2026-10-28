@@ -5,6 +5,20 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.0.64"],
   // fonts + logo the ticket PNG reads from disk at runtime
   outputFileTracingIncludes: { "/ticket/**": ["./assets/**/*", "./public/img/mark.png"] },
+  images: {
+    qualities: [75, 90, 100],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/jxvpizz0/**",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
   // one canonical address: www → sportsfestivalindia.com
   async redirects() {
     return [
