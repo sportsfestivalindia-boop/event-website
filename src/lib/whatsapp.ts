@@ -5,10 +5,20 @@
 // AiSensy "API campaign" bound to the approved utility template `ticket_ready`, whose body uses {{1}}–{{5}} in this order.
 const CAMPAIGN = "ticket_ready_api";
 
-export async function sendTicketWhatsApp(t: { phone: string; name: string; amount: number; category: string; ticketNo: string; url: string }) {
+export async function sendTicketWhatsApp(t: {
+  phone: string;
+  name: string;
+  amount: number;
+  category: string;
+  ticketNo: string;
+  url: string;
+  isTest?: boolean;
+}) {
   const apiKey = process.env.AISENSY_API_KEY?.trim();
   if (!apiKey || !/^[6-9]\d{9}$/.test(t.phone)) return false;
   try {
+    const displayName = t.isTest ? `[TEST] ${t.name.replace(/^\[TEST\]\s*/i, "")}` : t.name;
+    const displayCategory = t.isTest ? `[TEST ENTRY] ${t.category.replace(/^\[TEST.*?\]\s*/i, "")}` : t.category;
     const res = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -16,9 +26,9 @@ export async function sendTicketWhatsApp(t: { phone: string; name: string; amoun
         apiKey,
         campaignName: CAMPAIGN,
         destination: "91" + t.phone,
-        userName: t.name,
+        userName: displayName,
         source: "sportsfestivalindia.com",
-        templateParams: [t.name, String(t.amount), t.category, t.ticketNo, t.url],
+        templateParams: [displayName, String(t.amount), displayCategory, t.ticketNo, t.url],
       }),
       signal: AbortSignal.timeout(10_000),
     });

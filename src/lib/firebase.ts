@@ -66,6 +66,7 @@ export interface RegistrationRecord {
   utr?: string;
   ticketNo?: string;
   ticketUrl?: string;
+  isTest?: boolean;
   createdAt?: unknown;
   updatedAt?: unknown;
 }

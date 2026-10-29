@@ -23,28 +23,36 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
       </main>
     );
 
+  const isTest = Boolean(t.isTest || t.c.includes("TEST"));
   const qr = await QRCode.toDataURL(`${t.t} · ${t.n} · ${t.c}`, { margin: 1, width: 360 });
   const issued = new Date(t.i).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 
   return (
     <main className="t-ink min-h-[100svh] px-5 py-10">
       <div className="mx-auto max-w-md">
+        {isTest && (
+          <div className="mb-4 rounded-xl border border-amber-500/60 bg-amber-500/15 p-3.5 text-center text-xs font-bold text-amber-300 uppercase tracking-widest shadow-lg">
+            ⚠️ TEST TICKET — Gateway Verification Only (Not Valid for Festival Entry)
+          </div>
+        )}
         <div className="overflow-hidden rounded-2xl bg-black ring-1 ring-gold/60 shadow-[0_30px_80px_-30px_#ff450077]">
           <div className="flex items-center justify-between bg-gold px-5 py-3 text-black">
-            <span className="text-xs font-bold tracking-[0.2em] uppercase">Official athlete ticket</span>
+            <span className="text-xs font-bold tracking-[0.2em] uppercase">
+              {isTest ? "TEST VERIFICATION PASS" : "Official athlete ticket"}
+            </span>
             <span className="text-xs font-bold">4–6 DEC 2026</span>
           </div>
           <div className="p-6">
             <div className="flex items-start justify-between gap-3">
               <Wordmark />
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa/15 px-2.5 py-1 text-[10px] font-bold text-wa uppercase">
-                <Icon name="check" className="size-3" /> Payment verified
+              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${isTest ? "bg-amber-500/20 text-amber-300" : "bg-wa/15 text-wa"}`}>
+                <Icon name="check" className="size-3" /> {isTest ? "Test Payment Verified" : "Payment verified"}
               </span>
             </div>
             <p className="mt-6 text-xs text-muted uppercase">Athlete</p>
             <p className="display text-4xl leading-tight">{t.n}</p>
             <p className="mt-4 text-xs text-muted uppercase">Category</p>
-            <p className="font-semibold">{t.c}</p>
+            <p className="font-semibold text-gold">{t.c}</p>
             {t.w && <p className="mt-1 text-sm text-gold">{t.w}</p>}
 
             <div className="mt-6 grid grid-cols-[1fr_auto] items-end gap-4 border-t border-dashed border-line pt-5">
@@ -76,18 +84,22 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
         <a href={`/ticket/${token}/image`} download className="btn btn-gold mt-6 w-full">
           Download ticket
         </a>
-        <p className="mt-3 text-center text-xs text-muted">Show this ticket (screenshot is fine) and your Government ID at the check-in desk.</p>
+        <p className="mt-3 text-center text-xs text-muted">
+          {isTest ? "This is a test pass generated for live payment confirmation." : "Show this ticket (screenshot is fine) and your Government ID at the check-in desk."}
+        </p>
 
-        <div className="card mt-6 p-5">
-          <p className="text-sm font-semibold">Bring on event day</p>
-          <ul className="mt-3 space-y-1.5 text-sm text-muted">
-            {DOCUMENTS.map((d) => (
-              <li key={d} className="flex gap-2">
-                <Icon name="check" className="size-4 shrink-0 text-gold" /> {d}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {!isTest && (
+          <div className="card mt-6 p-5">
+            <p className="text-sm font-semibold">Bring on event day</p>
+            <ul className="mt-3 space-y-1.5 text-sm text-muted">
+              {DOCUMENTS.map((d) => (
+                <li key={d} className="flex gap-2">
+                  <Icon name="check" className="size-4 shrink-0 text-gold" /> {d}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Link href="/" className="btn btn-line mt-8 w-full">
           Festival website
         </Link>

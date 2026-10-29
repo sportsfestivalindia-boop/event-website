@@ -3,6 +3,7 @@
 // Response verification:    sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
 
 import { createHash } from "node:crypto";
+import { PAYU_ALLOWED_PAYMENT_METHODS, PAYU_DROP_CATEGORY } from "@/data/payuBanks";
 
 export const PAYU_KEY  = () => process.env.PAYU_MERCHANT_KEY?.trim()  ?? "";
 export const PAYU_SALT = () => process.env.PAYU_MERCHANT_SALT?.trim() ?? "";
@@ -38,6 +39,10 @@ export type PayUOrderInput = {
   udf3?: string;
   udf4?: string;
   udf5?: string;
+  enforce_paymethod?: string;
+  drop_category?: string;
+  pg?: string;
+  bankcode?: string;
 };
 
 export type PayUFields = {
@@ -56,6 +61,10 @@ export type PayUFields = {
   udf4: string;
   udf5: string;
   hash: string;
+  enforce_paymethod?: string;
+  drop_category?: string;
+  pg?: string;
+  bankcode?: string;
 };
 
 export type SharedPayUFields = Omit<PayUFields, "hash">;
@@ -138,10 +147,19 @@ export function buildPayuPayload(input: PayUOrderInput): { fields: PayUFields; h
   const hash = generatePayuHash(sharedFields, salt);
   const hashStringMasked = buildPayuHashString(sharedFields, "***");
 
+  const enforce_paymethod = input.enforce_paymethod !== undefined ? input.enforce_paymethod : PAYU_ALLOWED_PAYMENT_METHODS;
+  const drop_category = input.drop_category !== undefined ? input.drop_category : PAYU_DROP_CATEGORY;
+  const pg = input.pg?.trim();
+  const bankcode = input.bankcode?.trim();
+
   return {
     fields: {
       ...sharedFields,
       hash,
+      ...(enforce_paymethod ? { enforce_paymethod } : {}),
+      ...(drop_category ? { drop_category } : {}),
+      ...(pg ? { pg } : {}),
+      ...(bankcode ? { bankcode } : {}),
     },
     hashStringMasked,
     payuUrl,

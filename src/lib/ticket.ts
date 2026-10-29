@@ -16,6 +16,7 @@ export type Ticket = {
   u: string; // UTR
   r?: string; // registration ID
   i: string; // issued (ISO)
+  isTest?: boolean;
 };
 
 const secret = () => {
@@ -69,24 +70,77 @@ export const whenFor = (category: string) => CHAMPIONSHIPS.find((c) => category.
  * Refused when the sheet says this UTR already has a ticket for someone else (reused screenshot / UTR).
  */
 export async function issueTicket(
-  p: { name: string; phone: string; category: string; amount: number; utr: string; regId?: string; when?: string },
+  p: {
+    name: string;
+    phone: string;
+    category: string;
+    amount: number;
+    utr: string;
+    regId?: string;
+    when?: string;
+    isTest?: boolean;
+  },
   origin: string,
 ): Promise<{ ticketNo: string; url: string } | { duplicate: string }> {
-  const t = ticketNo(p.utr);
-  const token = seal({ t, n: p.name, c: p.category, w: p.when || whenFor(p.category), a: p.amount, u: p.utr, r: p.regId || undefined, i: new Date().toISOString() });
+  const isTest = Boolean(p.isTest || p.category.includes("TEST ENTRY") || p.amount === 1);
+  const t = isTest && secret()
+    ? "TEST-" + createHmac("sha256", secret()!).update(p.utr).digest("hex").slice(0, 6).toUpperCase()
+    : ticketNo(p.utr);
+
+  const token = seal({
+    t,
+    n: isTest ? `[TEST] ${p.name.replace(/^\[TEST\]\s*/i, "")}` : p.name,
+    c: p.category,
+    w: p.when || whenFor(p.category),
+    a: p.amount,
+    u: p.utr,
+    r: p.regId || undefined,
+    i: new Date().toISOString(),
+    isTest: isTest || undefined,
+  });
+
   const url = new URL(`/ticket/${token}`, origin).toString();
-  const sheet = await toSheet("ticket", { regId: p.regId ?? "", utr: p.utr, ticketNo: t, ticketUrl: url, verifiedAt: istNow(), name: p.name, phone: p.phone, category: p.category, fee: p.amount });
+  const sheet = await toSheet("ticket", {
+    regId: p.regId ?? "",
+    utr: p.utr,
+    ticketNo: t,
+    ticketUrl: url,
+    verifiedAt: istNow(),
+    name: isTest ? `[TEST] ${p.name.replace(/^\[TEST\]\s*/i, "")}` : p.name,
+    phone: p.phone,
+    category: isTest ? `[TEST] ${p.category}` : p.category,
+    fee: p.amount,
+    status: isTest ? "TEST_VERIFIED" : "Verified",
+  });
+
   if (sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
-  after(async () => {
+
+  const runTicketTasks = async () => {
     if (p.regId) {
       await updateRegistrationInFirestore(p.regId, {
         status: "Paid",
         utr: p.utr,
         ticketNo: t,
         ticketUrl: url,
+        ...(isTest ? { isTest: true } : {}),
       });
     }
-    await sendTicketWhatsApp({ phone: p.phone, name: p.name, amount: p.amount, category: p.category, ticketNo: t, url });
-  });
+    await sendTicketWhatsApp({
+      phone: p.phone,
+      name: isTest ? `[TEST] ${p.name.replace(/^\[TEST\]\s*/i, "")}` : p.name,
+      amount: p.amount,
+      category: isTest ? `[TEST] ${p.category}` : p.category,
+      ticketNo: t,
+      url,
+      isTest,
+    });
+  };
+
+  try {
+    after(runTicketTasks);
+  } catch {
+    runTicketTasks().catch((e) => console.error("[Ticket Background Tasks Error]:", e));
+  }
+
   return { ticketNo: t, url };
 }

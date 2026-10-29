@@ -29,6 +29,8 @@ export async function POST(req: Request) {
     if (mihpayid) returnUrl.searchParams.set("mihpayid", mihpayid);
     if (errorMessage) returnUrl.searchParams.set("error_Message", errorMessage);
 
+    const isTest = productinfo.includes("TEST ENTRY") || Math.round(parseFloat(amount)) === 1;
+
     // If successful and hash verified, ensure ticket is generated
     if (status === "success" && /^SF26-[0-9A-F]{6}$/.test(txnid)) {
       if (verifyPayuResponse(params)) {
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
               amount: fee,
               utr,
               regId: txnid,
+              isTest,
             },
             origin,
           );
@@ -54,6 +57,7 @@ export async function POST(req: Request) {
               utr,
               ticketNo: result.ticketNo,
               ticketUrl: result.url,
+              ...(isTest ? { isTest: true } : {}),
             });
           }
         } catch (e) {

@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import QRCode from "qrcode";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { TEST_CHAMPIONSHIP, TEST_SPORT_ID, TEST_CATEGORY_LABEL, TEST_FEE } from "@/lib/test-entry";
+import { getSortedPayUBanks } from "@/data/payuBanks";
 import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
@@ -16,8 +18,8 @@ export type Pending = { regId: string; amount: number; label: string; upi: strin
 export type Resume = { pending: Pending; sport?: string; name: string; dob: string; phone: string; email: string; city: string };
 type Done = { regId: string; label: string; paid: number; utr?: string };
 
-const open = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
-const firstClass = (sport: string, division: string) => open.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
+const baseOpen = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
+const firstClass = (sport: string, division: string) => baseOpen.find((c) => c.id === sport)?.divisions.find((d) => d.id === division)?.classes[0] ?? "";
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -31,15 +33,18 @@ export function RegisterFlow({
   resume,
   isModal = false,
   onClose,
+  testEntryToken,
 }: {
   initial: { sport?: string; division?: string; cls?: string; test?: boolean };
   resume?: Resume;
   isModal?: boolean;
   onClose?: () => void;
+  testEntryToken?: string;
 }) {
   // staff test mode (?test=1): with the staff password the fee is ₹1; no Meta events, so ads stay clean
-  const testing = !!initial.test;
+  const testing = !!initial.test || !!testEntryToken;
   const [testKey, setTestKey] = useState("");
+  const open = useMemo(() => (testEntryToken ? [TEST_CHAMPIONSHIP, ...baseOpen] : baseOpen), [testEntryToken]);
   const champ0 = open.find((c) => c.id === (resume?.sport ?? initial.sport)) ?? open[0];
   const div0 = champ0.divisions.find((d) => d.id === initial.division) ?? champ0.divisions[0];
   const [f, setF] = useState<Form>({
@@ -63,11 +68,22 @@ export function RegisterFlow({
   const [utr, setUtr] = useState("");
   const [checking, setChecking] = useState(false);
   const [verified, setVerified] = useState<Claim | null>(null);
+  const [payMethod, setPayMethod] = useState<"upi" | "card" | "nb">("upi");
+  const [selectedBank, setSelectedBank] = useState<string>("SBIB");
+  const [bankQuery, setBankQuery] = useState<string>("");
+  const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
+  const allPayuBanks = useMemo(() => getSortedPayUBanks(), []);
+  const filteredBanks = useMemo(() => {
+    if (!bankQuery.trim()) return allPayuBanks;
+    const q = bankQuery.toLowerCase().trim();
+    return allPayuBanks.filter((b) => b.name.toLowerCase().includes(q) || b.bankcode.toLowerCase().includes(q));
+  }, [allPayuBanks, bankQuery]);
 
-  const champ = open.find((c) => c.id === f.sport)!;
-  const div = champ.divisions.find((d) => d.id === f.division)!;
-  const fee = div.fee ?? EVENT.fee;
-  const label = `${champ.sport} · ${div.name}${div.classes.length > 1 ? ` · ${f.cls}` : ""}`;
+  const champ = open.find((c) => c.id === f.sport) ?? open[0];
+  const div = champ.divisions.find((d) => d.id === f.division) ?? champ.divisions[0];
+  const isTestEntry = f.sport === TEST_SPORT_ID || !!testEntryToken;
+  const fee = isTestEntry ? TEST_FEE : (div.fee ?? EVENT.fee);
+  const label = isTestEntry ? TEST_CATEGORY_LABEL : `${champ.sport} · ${div.name}${div.classes.length > 1 ? ` · ${f.cls}` : ""}`;
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const handlePhone = (val: string) => {
     let digits = val.replace(/\D/g, "");
@@ -97,7 +113,7 @@ export function RegisterFlow({
     setBusy(true);
     try {
       const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null }>("/api/order", { ...f, tracking, ...(testing && { testKey }) });
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null; testSig?: string }>("/api/order", { ...f, tracking, testToken: testEntryToken, ...(testing && !testEntryToken && { testKey }) });
       if (o.free) {
         if (!testing) track("freeRegistered", { label: o.label, regId: o.regId });
         return setDone({ regId: o.regId, label: o.label, paid: 0 });
@@ -110,7 +126,11 @@ export function RegisterFlow({
           regId: o.regId,
           amount: o.amount,
           label: o.label,
-          entry: { name: f.name, email: f.email, phone: f.phone },
+          testToken: testEntryToken,
+          testSig: o.testSig,
+          method: payMethod === "nb" ? "netbanking" : payMethod,
+          bankcode: payMethod === "nb" ? selectedBank : undefined,
+          entry: { name: f.name, email: f.email, phone: f.phone, sport: f.sport, division: f.division, cls: f.cls },
         });
         // Build a hidden form and submit it — PayU requires a form POST, not a redirect
         const form = document.createElement("form");
@@ -220,6 +240,15 @@ export function RegisterFlow({
           </h1>
           <p className="mt-1 text-sm text-white/60">Choose your championship, fill your details &amp; secure your spot</p>
         </div>
+
+        {testEntryToken && (
+          <div className="mt-6 rounded-2xl border border-yellow/40 bg-yellow/10 p-4 text-sm text-yellow">
+            <b className="block font-bold">🧪 Live Test Entry Mode Active (₹1 Entry)</b>
+            <p className="mt-1 text-xs text-white/70">
+              You are testing the live ₹1 payment &amp; confirmation pipeline. A real ₹1 test charge will be processed by PayU.
+            </p>
+          </div>
+        )}
 
         {step === 1 && (
           <div className="mt-6">
@@ -483,9 +512,179 @@ export function RegisterFlow({
             </div>
           </div>
           {fee > 0 && (
-            <div className="flex items-center gap-3 rounded-xl border border-yellow/30 bg-yellow/10 p-3.5 text-xs text-white/90">
-              <Icon name="shield" className="size-5 shrink-0 text-yellow" />
-              <span>Next: You will be redirected to the secure <b>PayU gateway</b> to complete payment via UPI, Google Pay, PhonePe, Cards or NetBanking.</span>
+            <div className="space-y-4">
+              <div>
+                <span className="block text-xs font-bold tracking-wider text-white/80 uppercase mb-2.5">
+                  Choose Payment Method
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* UPI - Shown first, popular on mobile */}
+                  <button
+                    type="button"
+                    onClick={() => setPayMethod("upi")}
+                    aria-pressed={payMethod === "upi"}
+                    className={`flex items-center sm:flex-col justify-start sm:justify-center gap-3 p-3.5 rounded-xl border text-left sm:text-center transition-all cursor-pointer min-h-[52px] ${
+                      payMethod === "upi"
+                        ? "border-2 border-yellow bg-yellow/[0.14] text-yellow shadow-[0_0_15px_rgba(255,222,0,0.2)]"
+                        : "border-white/15 bg-white/[0.03] text-white hover:border-white/30"
+                    }`}
+                  >
+                    <span className="text-xl">⚡</span>
+                    <div>
+                      <div className="text-sm font-extrabold flex items-center gap-1.5 justify-start sm:justify-center">
+                        <span>UPI / QR / Apps</span>
+                        <span className="text-[10px] bg-yellow text-black font-black px-1.5 py-0.5 rounded uppercase">Fastest</span>
+                      </div>
+                      <div className="text-[11px] text-white/60 mt-0.5">GPay, PhonePe, Paytm, BHIM</div>
+                    </div>
+                  </button>
+
+                  {/* Card Option */}
+                  <button
+                    type="button"
+                    onClick={() => setPayMethod("card")}
+                    aria-pressed={payMethod === "card"}
+                    className={`flex items-center sm:flex-col justify-start sm:justify-center gap-3 p-3.5 rounded-xl border text-left sm:text-center transition-all cursor-pointer min-h-[52px] ${
+                      payMethod === "card"
+                        ? "border-2 border-yellow bg-yellow/[0.14] text-yellow shadow-[0_0_15px_rgba(255,222,0,0.2)]"
+                        : "border-white/15 bg-white/[0.03] text-white hover:border-white/30"
+                    }`}
+                  >
+                    <span className="text-xl">💳</span>
+                    <div>
+                      <div className="text-sm font-extrabold">Debit / Credit Card</div>
+                      <div className="text-[11px] text-white/60 mt-0.5">Visa, Mastercard, RuPay</div>
+                    </div>
+                  </button>
+
+                  {/* Net Banking Option */}
+                  <button
+                    type="button"
+                    onClick={() => setPayMethod("nb")}
+                    aria-pressed={payMethod === "nb"}
+                    className={`flex items-center sm:flex-col justify-start sm:justify-center gap-3 p-3.5 rounded-xl border text-left sm:text-center transition-all cursor-pointer min-h-[52px] ${
+                      payMethod === "nb"
+                        ? "border-2 border-yellow bg-yellow/[0.14] text-yellow shadow-[0_0_15px_rgba(255,222,0,0.2)]"
+                        : "border-white/15 bg-white/[0.03] text-white hover:border-white/30"
+                    }`}
+                  >
+                    <span className="text-xl">🏦</span>
+                    <div>
+                      <div className="text-sm font-extrabold">Net Banking</div>
+                      <div className="text-[11px] text-white/60 mt-0.5">50+ Banks Supported</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Net Banking Dropdown when Net Banking is selected */}
+              {payMethod === "nb" && (
+                <div className="rounded-2xl border border-white/15 bg-black/80 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold tracking-wider text-white/80 uppercase">
+                      Select Your Bank
+                    </label>
+                    <span className="text-[11px] text-yellow font-semibold">
+                      {allPayuBanks.find((b) => b.bankcode === selectedBank)?.name}
+                    </span>
+                  </div>
+
+                  {/* Quick-select pills for top popular banks */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {[
+                      { name: "SBI", code: "SBIB" },
+                      { name: "HDFC", code: "HDFB" },
+                      { name: "ICICI", code: "ICIB" },
+                      { name: "Axis", code: "AXIB" },
+                      { name: "PNB", code: "PNBB" },
+                      { name: "BOB", code: "BBRB" },
+                      { name: "Kotak", code: "162B" },
+                    ].map((pb) => (
+                      <button
+                        type="button"
+                        key={pb.code}
+                        onClick={() => {
+                          setSelectedBank(pb.code);
+                          setBankDropdownOpen(false);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[36px] ${
+                          selectedBank === pb.code
+                            ? "bg-yellow text-black ring-2 ring-yellow/50 shadow-md"
+                            : "bg-white/10 text-white/80 hover:bg-white/20"
+                        }`}
+                      >
+                        {pb.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Searchable input with toggleable dropdown */}
+                  <div className="relative pt-1">
+                    <input
+                      type="text"
+                      value={bankDropdownOpen ? bankQuery : (allPayuBanks.find((b) => b.bankcode === selectedBank)?.name ?? "Select Bank")}
+                      onChange={(e) => {
+                        setBankQuery(e.target.value);
+                        setBankDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        setBankQuery("");
+                        setBankDropdownOpen(true);
+                      }}
+                      placeholder="Search 50+ banks (e.g. SBI, Canara, Union)..."
+                      className="h-12 w-full rounded-xl border border-white/20 bg-white/[0.05] pl-4 pr-16 text-sm text-white outline-none focus:border-yellow focus:ring-1 focus:ring-yellow"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBankDropdownOpen(!bankDropdownOpen)}
+                      className="absolute right-2.5 top-[10px] text-xs text-yellow px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 font-bold"
+                    >
+                      {bankDropdownOpen ? "✕ Close" : "▾ Browse"}
+                    </button>
+
+                    {bankDropdownOpen && (
+                      <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-white/20 bg-[#161616] shadow-2xl divide-y divide-white/10">
+                        {filteredBanks.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-white/50">
+                            No bank found matching &ldquo;{bankQuery}&rdquo;
+                          </div>
+                        ) : (
+                          filteredBanks.map((b) => {
+                            const isSel = selectedBank === b.bankcode;
+                            return (
+                              <button
+                                type="button"
+                                key={b.bankcode}
+                                onClick={() => {
+                                  setSelectedBank(b.bankcode);
+                                  setBankDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between p-3.5 text-left text-xs transition-colors hover:bg-yellow/15 cursor-pointer min-h-[44px] ${
+                                  isSel ? "bg-yellow/20 text-yellow font-bold" : "text-white/90"
+                                }`}
+                              >
+                                <span className="flex items-center gap-2">
+                                  {b.popular && <span className="text-[10px] text-yellow">★</span>}
+                                  <span>{b.name}</span>
+                                </span>
+                                <span className="text-[10px] opacity-60 font-mono shrink-0 ml-2">{b.bankcode}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Informative Security Banner */}
+              <div className="flex items-center gap-3 rounded-xl border border-yellow/30 bg-yellow/10 p-3.5 text-xs text-white/90">
+                <Icon name="shield" className="size-5 shrink-0 text-yellow" />
+                <span>
+                  Next: You will be redirected to the secure <b>PayU gateway</b> to complete your transaction with 256-bit encryption. No EMI allowed.
+                </span>
+              </div>
             </div>
           )}
           {testing && (
@@ -659,7 +858,7 @@ export function RegisterFlow({
             )}
             {step === 3 && (
               <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
-                {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} Securely` : "Confirm Free Registration"}
+                {busy ? "Redirecting to payment…" : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} Securely` : "Confirm Free Registration"}
               </button>
             )}
           </div>
@@ -692,7 +891,7 @@ export function RegisterFlow({
             )}
             {step === 3 && (
               <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
-                {busy ? "Redirecting to payment…" : fee ? `Pay ${testing ? "₹1 (test)" : inr(fee)} securely` : "Confirm free registration"}
+                {busy ? "Redirecting to payment…" : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} securely` : "Confirm free registration"}
               </button>
             )}
           </div>

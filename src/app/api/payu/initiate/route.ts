@@ -4,6 +4,20 @@
 
 import { buildPayuPayload, payuReady } from "@/lib/payu";
 import { checkEntry, type Entry } from "@/lib/pay";
+import {
+  isValidPayUBankCode,
+  PAYU_ALLOWED_PAYMENT_METHODS,
+  PAYU_DROP_CATEGORY,
+} from "@/data/payuBanks";
+import {
+  isTestEntryEnabled,
+  isTestEntryTokenValid,
+  verifyTestRegistration,
+  checkTestRateLimit,
+  TEST_SPORT_ID,
+  TEST_CATEGORY_LABEL,
+  TEST_FEE,
+} from "@/lib/test-entry";
 
 export async function POST(req: Request) {
   if (!payuReady()) {
@@ -17,7 +31,11 @@ export async function POST(req: Request) {
     regId?: string;
     amount?: number;
     label?: string;
+    testToken?: string;
+    testSig?: string;
     entry?: Partial<Entry>;
+    method?: string;
+    bankcode?: string;
   };
 
   const regId = String(b.regId ?? "").trim().toUpperCase();
@@ -25,17 +43,89 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid registration ID." }, { status: 400 });
   }
 
-  // Server-side amount validation (preserves the locked amount)
-  let amount = Number(b.amount);
-  if (b.entry && b.entry.sport && b.entry.division) {
-    const verified = checkEntry(b.entry);
-    if (verified.ok) {
-      amount = verified.fee;
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    "127.0.0.1";
+
+  // Check if test payment requested
+  const isTestRequested =
+    b.entry?.sport === TEST_SPORT_ID ||
+    b.label?.includes("TEST ENTRY") ||
+    Number(b.amount) === TEST_FEE ||
+    b.testToken !== undefined ||
+    b.testSig !== undefined;
+
+  let amount: number;
+  let productinfo: string;
+
+  if (isTestRequested) {
+    // 3. Reject test category unless flag is on AND valid token / signature is presented
+    const tokenValid = isTestEntryTokenValid(b.testToken);
+    const sigValid = verifyTestRegistration(regId, b.testSig);
+
+    if (!isTestEntryEnabled() || (!tokenValid && !sigValid)) {
+      console.warn(`[TEST ENTRY REJECTED] Unauthorized test payment attempt for regId=${regId} from IP=${clientIp}`);
+      return Response.json(
+        { error: "Test entry mode is disabled or unauthorized." },
+        { status: 403 },
+      );
     }
+
+    const rate = checkTestRateLimit(clientIp);
+    if (!rate.allowed) {
+      console.warn(`[TEST ENTRY] Rate limit exceeded on initiate for IP=${clientIp}`);
+      return Response.json(
+        { error: "Test entry rate limit exceeded. Max 5 test registrations per hour." },
+        { status: 429 },
+      );
+    }
+
+    console.log(`[TEST ENTRY] PayU initiate authorized: regId=${regId}, ip=${clientIp}, fee=₹${TEST_FEE}`);
+    amount = TEST_FEE; // strictly 1
+    productinfo = TEST_CATEGORY_LABEL;
+  } else {
+    // Standard registration amount verification (never trust browser-supplied amount)
+    if (!b.entry || !b.entry.sport || !b.entry.division) {
+      return Response.json({ error: "Invalid registration entry." }, { status: 400 });
+    }
+    const verified = checkEntry(b.entry);
+    if (!verified.ok) {
+      return Response.json({ error: verified.error }, { status: 400 });
+    }
+    // Amount is locked strictly to verified server-side category fee
+    amount = verified.fee;
+    productinfo = verified.label;
   }
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return Response.json({ error: "Invalid amount." }, { status: 400 });
+  }
+
+  // Method & Bank code handling
+  const chosenMethod = typeof b.method === "string" ? b.method.trim().toLowerCase() : "";
+  let pg: string | undefined;
+  let bankcode: string | undefined;
+  let enforce_paymethod: string | undefined;
+
+  if (chosenMethod === "nb" || chosenMethod === "netbanking") {
+    pg = "NB";
+    enforce_paymethod = "netbanking";
+    if (b.bankcode) {
+      const code = String(b.bankcode).trim().toUpperCase();
+      if (!isValidPayUBankCode(code)) {
+        return Response.json({ error: "Invalid or unsupported bank code." }, { status: 400 });
+      }
+      bankcode = code;
+    }
+  } else if (chosenMethod === "upi") {
+    pg = "UPI";
+    enforce_paymethod = "upi";
+  } else if (chosenMethod === "card" || chosenMethod === "cards" || chosenMethod === "cc") {
+    pg = "CC";
+    enforce_paymethod = "creditcard|debitcard";
+  } else {
+    enforce_paymethod = PAYU_ALLOWED_PAYMENT_METHODS;
   }
 
   const origin = new URL(req.url).origin;
@@ -45,15 +135,18 @@ export async function POST(req: Request) {
     const { fields, hashStringMasked, payuUrl } = buildPayuPayload({
       txnid: regId,
       amount,
-      productinfo: b.label ?? "Sports Festival 2026",
+      productinfo,
       firstname: b.entry?.name ?? "Athlete",
       email: b.entry?.email ?? "noreply@sportsfestivalindia.com",
       phone: b.entry?.phone ?? "",
       surl: `${origin}/api/payu/return`,
       furl: `${origin}/api/payu/return`,
+      enforce_paymethod,
+      drop_category: PAYU_DROP_CATEGORY,
+      pg,
+      bankcode,
     });
 
-    // 1. Print (server log, never to the client) the exact hash string before hashing, with the salt replaced by "***"
     console.log("[PayU Initiate] Hash string (masked):", hashStringMasked);
     console.log("[PayU Initiate] Form fields for PayU:", {
       ...fields,

@@ -167,3 +167,35 @@ test("verifyPayuResponse validates reverse hash correctly", () => {
   assert.equal(isInvalid, false);
 });
 
+test("PayU Configuration: enforce_paymethod drops EMI and includes upi, cards, netbanking", () => {
+  process.env.PAYU_MERCHANT_KEY = "gtKFFx";
+  process.env.PAYU_MERCHANT_SALT = "4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW";
+  process.env.PAYU_BASE_URL = "https://test.payu.in/_payment";
+
+  const { fields } = buildPayuPayload({
+    txnid: "SF26-NB01",
+    amount: 1000,
+    productinfo: "Dangal",
+    firstname: "Aman",
+    email: "aman@example.com",
+    phone: "9876543210",
+    surl: "https://example.com/return",
+    furl: "https://example.com/return",
+    pg: "NB",
+    bankcode: "SBIB",
+  });
+
+  // Verify enforce_paymethod excludes EMI
+  assert.equal(fields.enforce_paymethod, "creditcard|debitcard|netbanking|upi");
+  assert.equal(fields.drop_category, "EMI");
+  assert.equal(fields.pg, "NB");
+  assert.equal(fields.bankcode, "SBIB");
+
+  // Verify hash calculation remains strictly the standard 11 fields and does NOT include pg/bankcode/enforce_paymethod
+  const expectedHash = createHash("sha512")
+    .update(`gtKFFx|SF26-NB01|1000.00|Dangal|Aman|aman@example.com|||||||||||4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW`)
+    .digest("hex");
+  assert.equal(fields.hash, expectedHash);
+});
+
+
