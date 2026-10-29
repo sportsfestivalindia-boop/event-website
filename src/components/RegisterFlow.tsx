@@ -58,7 +58,7 @@ export function RegisterFlow({
     city: resume?.city ?? "",
     association: "",
   });
-  const [step, setStep] = useState(resume ? 4 : 1);
+  const [step, setStep] = useState(1);
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -130,88 +130,54 @@ export function RegisterFlow({
     setError("");
     setBusy(true);
     try {
-      const tracking = track("trackingPayload"); // UTM / ad-click attribution, kept for the future server-side Meta feed
-      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; upi?: string | null; testSig?: string }>("/api/order", { ...f, tracking, testToken: testEntryToken, ...(testing && !testEntryToken && { testKey }) });
+      const tracking = track("trackingPayload");
+      const o = await post<{ free?: boolean; regId: string; amount: number; label: string; testSig?: string }>("/api/order", {
+        ...f,
+        tracking,
+        testToken: testEntryToken,
+        ...(testing && !testEntryToken && { testKey }),
+      });
+
       if (o.free) {
         if (!testing) track("freeRegistered", { label: o.label, regId: o.regId });
-        return setDone({ regId: o.regId, label: o.label, paid: 0 });
+        window.location.href = `/thank-you?id=${encodeURIComponent(o.regId)}`;
+        return;
       }
+
       if (!testing) track("registrationStarted", { value: o.amount, sport: champ.sport, label: o.label, eventId: tracking?.event_id });
 
-      // ── PayU: get signed form fields and auto-POST to PayU checkout ──────────
-      try {
-        const payu = await post<{ fields: Record<string, string>; payuUrl: string }>("/api/payu/initiate", {
-          regId: o.regId,
-          amount: o.amount,
-          label: o.label,
-          testToken: testEntryToken,
-          testSig: o.testSig,
-          method: payMethod === "nb" ? "netbanking" : payMethod,
-          bankcode: payMethod === "nb" ? selectedBank : undefined,
-          entry: { name: f.name, email: f.email, phone: f.phone, sport: f.sport, division: f.division, cls: f.cls },
-        });
-        // Build a hidden form and submit it — PayU requires a form POST, not a redirect
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = payu.payuUrl;
-        Object.entries(payu.fields).forEach(([k, v]) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = k;
-          input.value = v;
-          form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
-        return; // browser navigates to PayU — nothing more to do here
-      } catch {
-        // PayU not configured yet — fall back to manual UPI QR
-      }
+      // PayU hosted checkout: initiate and auto-submit
+      const payu = await post<{ fields: Record<string, string>; payuUrl: string }>("/api/payu/initiate", {
+        regId: o.regId,
+        amount: o.amount,
+        label: o.label,
+        testToken: testEntryToken,
+        testSig: o.testSig,
+        method: payMethod === "nb" ? "netbanking" : payMethod,
+        bankcode: payMethod === "nb" ? selectedBank : undefined,
+        entry: { name: f.name, email: f.email, phone: f.phone, sport: f.sport, division: f.division, cls: f.cls },
+      });
 
-      // ── Fallback: manual UPI QR (if PayU keys not set) ───────────────────────
-      const qr = o.upi ? await QRCode.toDataURL(o.upi, { margin: 1, width: 520, errorCorrectionLevel: "M" }) : null;
-      setPending({ regId: o.regId, amount: o.amount, label: o.label, upi: o.upi ?? null, qr });
-      setStep(4);
-      if (!isModal) window.scrollTo({ top: 0 });
-    } catch (e) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = payu.payuUrl;
+      Object.entries(payu.fields).forEach(([k, v]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = k;
+        input.value = v;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+      return;
+    } catch (e: unknown) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
 
-  const waText = (p: Pending, paid?: boolean) =>
-    `${paid ? "PAYMENT SCREENSHOT ATTACHED 👇\n\n" : ""}Registration ${p.regId}\n${p.label} · ${inr(p.amount)}${paid ? " · paid by UPI" : ""}\nName: ${f.name}\nDOB: ${f.dob}\nMobile: +91 ${f.phone}\nEmail: ${f.email}\nCity: ${f.city}${f.association ? `\nAssociation: ${f.association}` : ""}`;
-  const waHref = (p: Pending, paid?: boolean) => `https://wa.me/${EVENT.paymentsWhatsApp.wa}?text=${encodeURIComponent(waText(p, paid))}`;
-
-  function sendScreenshot() {
-    // Fallback: athlete attaches the payment screenshot in WhatsApp; AOGA checks it against Yes Bank and sends the ticket.
-    window.open(waHref(pending!, true), "_blank", "noopener");
-    setDone({ regId: pending!.regId, label: pending!.label, paid: pending!.amount });
-  }
-
-  /** Matches the typed UTR with Yes Bank's own credit alert (logged by Make). Most payments confirm within a minute. */
-  async function verify() {
-    const p = pending!;
-    setError("");
-    setChecking(true);
-    try {
-      const c = await waitForTicket({ regId: p.regId, utr });
-      if (c) {
-        // Purchase fires only once the bank has confirmed the money (not on a click)
-        if (!testing) track("paid", { orderId: p.regId, value: p.amount, sport: champ.sport, label: p.label });
-        return setVerified(c);
-      }
-      setDone({ regId: p.regId, label: p.label, paid: p.amount, utr }); // bank alert still not in: Make finishes it, ticket comes by email
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setChecking(false);
-    }
-  }
-
-  if (verified) return <Verified claim={verified} regId={pending!.regId} label={pending!.label} email={f.email} isModal={isModal} onClose={onClose} />;
-  if (done && done.paid) return <Submitted done={done} resend={() => window.open(waHref(pending!, true), "_blank", "noopener")} isModal={isModal} onClose={onClose} />;
   if (done) return <Pass done={done} name={f.name} city={f.city} when={champ.when} isModal={isModal} onClose={onClose} />;
 
   const input = "h-13 w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 text-base text-white outline-none transition-all focus:border-yellow focus:bg-black focus:ring-2 focus:ring-yellow/20";
@@ -270,13 +236,13 @@ export function RegisterFlow({
 
         {step === 1 && (
           <div className="mt-6">
-            <TutorialVideo tag="Must watch" title="Watch this before you register" note="1-minute video: how to fill the form, pay by UPI and get your ticket" />
+            <TutorialVideo tag="Must watch" title="Watch this before you register" note="1-minute video: how to choose category, fill details and complete PayU checkout" />
           </div>
         )}
 
         {/* Step Indicator Segmented Box Tabs */}
-        <ol className="mt-8 grid grid-cols-4 gap-2 text-xs font-bold">
-          {["Category", "Details", "Review", "Pay"].map((s, i) => {
+        <ol className="mt-8 grid grid-cols-3 gap-2 text-xs font-bold">
+          {["Category", "Details", "Review & Pay"].map((s, i) => {
             const active = step === i + 1;
             const done = step > i + 1;
             return (
@@ -746,142 +712,10 @@ export function RegisterFlow({
         </section>
       )}
 
-      {step === 4 && pending && pending.qr && (
-        <section className="mt-8 space-y-4">
-          <div className="text-center">
-            <p className="text-xs font-semibold text-white/60 uppercase">Registration {pending.regId}</p>
-            <p className="display mt-1 text-5xl text-white">
-              Pay <span className="text-yellow">{inr(pending.amount)}</span>
-            </p>
-            <p className="mt-1 text-sm text-white/60">3 simple steps · takes about 2 minutes · keep this page open</p>
-          </div>
-
-          <TutorialVideo title="New to UPI? Watch how to pay" note="Save the QR, pay in your UPI app, copy the UTR, get your ticket · 1 minute" start={33} />
-
-          <PayStep n={1} title="Open any UPI app">
-            <p>Google Pay, PhonePe, Paytm, BHIM or your bank’s app — any app with UPI works.</p>
-          </PayStep>
-
-          <PayStep n={2} title={`Scan the QR and pay ${inr(pending.amount)}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
-            <img src={pending.qr} alt={`UPI QR code to pay ${inr(pending.amount)} to ${EVENT.upi.payee}`} width={260} height={260} className="mx-auto size-60 rounded-xl bg-white p-2 shadow-lg" />
-            <p>
-              In your UPI app tap <b className="text-white">Scan</b>, scan this QR and pay. Your app will show <b className="text-white">{EVENT.upi.payee}</b> (the festival’s {EVENT.upi.bank} collection account) and <b className="text-white">{inr(pending.amount)}</b> — don’t change the amount.
-            </p>
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3 md:hidden">
-              <p className="font-semibold text-white">Only one phone?</p>
-              <p className="mt-1">
-                Tap the button below to save the QR. Then in your UPI app tap <b className="text-white">Scan</b> → tap the <b className="text-white">photo / gallery icon</b> → choose the QR. (iPhone: press and hold the QR → Save to Photos.)
-              </p>
-              <a href={pending.qr} download={`sports-festival-${pending.regId}-qr.png`} className="btn btn-gold mt-3 w-full">
-                Save QR to gallery
-              </a>
-            </div>
-            <p className="text-xs">
-              Can’t scan? Pay to UPI ID <code className="rounded bg-white/10 border border-white/15 px-2 py-0.5 font-semibold text-white">{EVENT.upi.id}</code>{" "}
-              <button onClick={() => navigator.clipboard?.writeText(EVENT.upi.id).then(() => setCopied(true))} className="font-semibold text-yellow underline underline-offset-2">
-                {copied ? "Copied ✓" : "Copy"}
-              </button>
-            </p>
-          </PayStep>
-
-          <PayStep n={3} title="Enter your UTR number to get your ticket">
-            <p>
-              After paying, your app shows <b className="text-white">“Payment successful”</b>. On that screen there is a <b className="text-white">12-digit number</b> — this is your UTR. Each app names it differently:
-            </p>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-xl bg-white/5 border border-white/10 p-3 text-xs sm:text-sm">
-              <span className="text-white/60">Google Pay</span>
-              <b className="text-white">UPI transaction ID</b>
-              <span className="text-white/60">PhonePe</span>
-              <b className="text-white">UTR</b>
-              <span className="text-white/60">Paytm</span>
-              <b className="text-white">UPI Ref. No.</b>
-              <span className="text-white/60">Other apps</span>
-              <b className="text-white">UTR / Reference No.</b>
-            </div>
-            <p>
-              It looks like this: <b className="tnum text-white">6281 5012 9971</b>. Press and hold the number → <b className="text-white">Copy</b>, come back here, paste it in the box and tap <b className="text-white">Verify</b>.
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                id="utr"
-                aria-label="Your 12-digit UTR number"
-                className={`${input} tnum min-w-0 text-center text-xl tracking-[0.15em] placeholder:text-sm placeholder:tracking-normal`}
-                value={utr}
-                onChange={(e) => setUtr(e.target.value.match(/\d{12}/)?.[0] ?? e.target.value.replace(/\D/g, "").slice(0, 12))}
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder="Paste your UTR number here"
-                disabled={checking}
-              />
-              <button onClick={verify} disabled={utr.length !== 12 || checking} className="btn btn-gold w-full shrink-0 !px-6 disabled:opacity-40 sm:w-auto">
-                Verify
-              </button>
-            </div>
-            {utr.length > 0 && utr.length < 12 && <p className="text-xs text-yellow">{12 - utr.length} more digit{utr.length === 11 ? "" : "s"} — the UTR has 12 digits.</p>}
-            {error && <p className="rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-          </PayStep>
-
-          <div className="rounded-2xl border border-wa/40 bg-wa/10 p-5">
-            <p className="flex items-center gap-2 text-base font-semibold text-white">
-              <Icon name="shield" className="size-5 text-wa" /> Your money is safe
-            </p>
-            <p className="mt-2 text-sm text-white/70">
-              Paid, but your ticket didn’t appear? <b className="text-white">Don’t worry and don’t pay again.</b> Send us a screenshot of your “Payment successful” screen on WhatsApp — our team checks it with the bank and sends your ticket to you <b className="text-white">manually</b>.
-            </p>
-            <button onClick={sendScreenshot} className="btn mt-4 w-full bg-wa text-white font-bold">
-              <WhatsAppGlyph className="size-5" /> Send screenshot on WhatsApp
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-5">
-            <p className="text-base font-bold text-white">Need help? We’re here</p>
-            <ul className="mt-3 space-y-2 text-sm text-white/70">
-              <li>
-                <b className="text-white">Payment failed but money was deducted?</b> It usually comes back to your account within 48 hours. Send us the screenshot and we’ll check.
-              </li>
-              <li>
-                <b className="text-white">Can’t find the 12-digit number?</b> Open your UPI app’s payment history and tap this payment — or just send us the screenshot.
-              </li>
-              <li>
-                <b className="text-white">Closed this page?</b> Verify any time at{" "}
-                <Link href="/verify" className="font-semibold text-yellow underline underline-offset-2">
-                  sportsfestivalindia.com/verify
-                </Link>{" "}
-                with your mobile number + the 12-digit number.
-              </li>
-            </ul>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <a href={EVENT.phoneHref} className="btn btn-line !px-3 text-sm rounded-xl border-white/20 text-white hover:border-yellow hover:text-yellow">
-                <Icon name="phone" className="size-4" /> Call us
-              </a>
-              <a href={waHref(pending)} target="_blank" rel="noopener" className="btn btn-line !px-3 text-sm rounded-xl border-white/20 text-white hover:border-yellow hover:text-yellow">
-                <WhatsAppGlyph className="size-4" /> WhatsApp us
-              </a>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {step === 4 && pending && !pending.qr && (
-        <section className="mt-8 space-y-5">
-          <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-6 text-center">
-            <p className="text-xs text-white/60 uppercase">Registration ID</p>
-            <p className="display mt-1 text-4xl tracking-wider text-yellow">{pending.regId}</p>
-            <p className="mt-3 font-bold text-white">{pending.label}</p>
-            <p className="display mt-1 text-3xl text-white">{inr(pending.amount)}</p>
-          </div>
-          <p className="text-sm text-white/70">Your place is reserved. Send these details to the AOGA team on WhatsApp — they’ll share the UPI QR for {inr(pending.amount)} and confirm your athlete pass once it’s paid.</p>
-          <a href={waHref(pending)} target="_blank" rel="noopener" className="btn w-full bg-wa text-white font-bold">
-            <WhatsAppGlyph className="size-6" /> Send registration on WhatsApp
-          </a>
-        </section>
-      )}
-
-      {error && step !== 4 && <p className="mt-6 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {error && <p className="mt-6 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
       {/* Desktop & In-Modal Action Buttons */}
-      {step < 4 && (
+      
         <div className={`mt-8 ${isModal ? "flex flex-col" : "hidden md:flex md:flex-col"} gap-2 pt-6 border-t border-white/10`}>
           <div className="flex items-center gap-3 w-full">
             {step > 1 && (
@@ -904,9 +738,8 @@ export function RegisterFlow({
             <p className="text-center text-xs text-amber-300/90 font-medium">{missingDetailHint}</p>
           )}
         </div>
-      )}
 
-      {checking && pending && <Verifying regId={pending.regId} amount={pending.amount} utr={utr} />}
+      
 
       </div> {/* Close Main Box Card Container */}
 
@@ -915,9 +748,9 @@ export function RegisterFlow({
 
       {/* Mobile Pinned Bottom Action Bar (only when not in modal) */}
       {!isModal && (
-        <div className={`t-ink fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-black/95 backdrop-blur-xl px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden ${step === 4 ? "hidden" : ""}`}>
+        <div className={`t-ink fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-black/95 backdrop-blur-xl px-5 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden `}>
           <div className="mx-auto flex max-w-xl gap-3">
-            {step > 1 && step < 4 && (
+            {step > 1 && (
               <button type="button" onClick={() => setStep(step - 1)} className="btn btn-line !px-5 rounded-xl border-white/20 text-white">
                 Back
               </button>
@@ -1168,3 +1001,6 @@ function Pass({ done, name, city, when, isModal, onClose }: { done: Done; name: 
     </div>
   );
 }
+
+
+

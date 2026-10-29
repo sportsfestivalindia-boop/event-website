@@ -1,8 +1,9 @@
 import { checkEntry, regId, upiLink, type Entry } from "@/lib/pay";
-import { istNow, toSheet } from "@/lib/sheet";
-import { isAdmin } from "@/lib/ticket";
+import { isAdmin, issueTicket } from "@/lib/ticket";
 import { after } from "next/server";
 import { saveRegistrationToFirestore } from "@/lib/firebase";
+import { EVENT } from "@/data/festival";
+import { checkIpRateLimit } from "@/lib/rate-limit";
 import {
   isTestEntryEnabled,
   isTestEntryTokenValid,
@@ -18,18 +19,29 @@ import {
   isApprovedTestPhone,
 } from "@/lib/test-fee";
 
-/** Step 3: validate the entry, reserve a registration ID, record it in AOGA's sheet and return the UPI/PayU payment order. */
+/** Step 3: validate the entry, reserve a registration ID, record it in Firestore and return order details. */
 export async function POST(req: Request) {
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    "127.0.0.1";
+
+  // IP Rate limiting
+  const ipRate = checkIpRateLimit(clientIp, 30);
+  if (!ipRate.allowed) {
+    return Response.json({ error: "Too many requests. Please wait a few minutes." }, { status: 429 });
+  }
+
+  // Registration deadline enforcement
+  if (new Date() > new Date(EVENT.registrationCloses)) {
+    return Response.json({ error: "Registrations have officially closed for this festival." }, { status: 400 });
+  }
+
   const entry = (await req.json().catch(() => ({}))) as Partial<Entry> & {
     tracking?: Record<string, string>;
     testKey?: string;
     testToken?: string;
   };
-
-  const clientIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip")?.trim() ||
-    "127.0.0.1";
 
   // Check if hidden test category / token was used
   const isTestSport = entry.sport === TEST_SPORT_ID;
@@ -117,38 +129,20 @@ export async function POST(req: Request) {
 
   const t = entry.tracking ?? {};
 
-  // logged after the response: the athlete proceeds, while sheet and Firestore sync in background
+  // Save pending registration in Firestore (Google Sheet row & emails sent only once payment is confirmed)
   const runBackgroundTasks = async () => {
-    toSheet("registration", {
-      regId: id,
-      created: istNow(),
-      name: isTest ? `[TEST] ${entry.name!.trim()}` : entry.name!.trim(),
-      dob: entry.dob || "2000-01-01",
-      phone: entry.phone!,
-      email: entry.email!.trim(),
-      city: (entry.city || "Testing").trim(),
-      association: (entry.association ?? "").trim(),
-      category: isTest ? `[TEST] ${label}` : label,
-      fee,
-      ...(originalFee ? { originalFee } : {}),
-      status: isTest ? "TEST - Awaiting payment" : fee === 0 ? "Verified" : "Awaiting payment",
-      source: isTest
-        ? `LIVE_TEST_FEE (₹${fee})`
-        : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
-    });
-
     await saveRegistrationToFirestore({
       regId: id,
       name: isTest ? `[TEST] ${entry.name!.trim()}` : entry.name!.trim(),
       dob: entry.dob || "2000-01-01",
       phone: entry.phone!,
-      email: entry.email!.trim(),
+      email: entry.email!.trim().toLowerCase(),
       city: (entry.city || "Testing").trim(),
       association: (entry.association ?? "").trim(),
       category: isTest ? `[TEST] ${label}` : label,
       fee,
       ...(originalFee ? { originalFee } : {}),
-      status: isTest ? "Awaiting payment" : fee === 0 ? "Verified" : "Awaiting payment",
+      status: fee === 0 ? "Paid" : "Awaiting payment",
       ...(isTest ? { isTest: true } : {}),
       source: isTest
         ? `LIVE_TEST_FEE (₹${fee})`
@@ -162,7 +156,24 @@ export async function POST(req: Request) {
     runBackgroundTasks().catch((e) => console.error("[Order Background Tasks Error]:", e));
   }
 
-  if (fee === 0) return Response.json({ free: true, regId: id, label });
+  // Free entry (e.g. Star category) - issue ticket and confirm immediately
+  if (fee === 0) {
+    const origin = new URL(req.url).origin;
+    await issueTicket(
+      {
+        name: entry.name!.trim(),
+        phone: entry.phone!,
+        category: label,
+        amount: 0,
+        utr: "FREE" + id.replace(/\D/g, "").padStart(8, "0").slice(0, 8),
+        regId: id,
+        isTest,
+      },
+      origin,
+    );
+    return Response.json({ free: true, regId: id, label });
+  }
+
   return Response.json({
     regId: id,
     amount: fee,

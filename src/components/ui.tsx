@@ -80,7 +80,7 @@ export const Section = React.forwardRef<
 });
 
 /** One line under every CTA: how payment works. */
-export const PAY_LINE = "2-min signup · Pay by UPI QR · Confirmation on WhatsApp";
+export const PAY_LINE = "2-min signup · Instant PayU Checkout · Confirmation on WhatsApp";
 
 /** Policy links athletes expect on every page, checkout included. */
 export const POLICY_LINKS = [

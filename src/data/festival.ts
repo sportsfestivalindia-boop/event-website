@@ -359,7 +359,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "I paid but didn’t get a confirmation.",
-    a: `Do not pay again. WhatsApp us your registration ID (it starts with “SF26-”) and the 12-digit UTR number from your UPI app, or a screenshot of the payment — we confirm within 24 hours. A UPI payment that failed midway is reversed to your account automatically by your bank, usually within ${REFUND.creditDays}.`,
+    a: `Do not pay again. If money was deducted, your registration is safe. Check your registered email or open /verify to confirm with your Registration ID (starts with "SF26-"), or message us on WhatsApp at ${EVENT.paymentsWhatsApp.display}. Any failed payment is reversed to your account automatically by your bank, usually within ${REFUND.creditDays}.`,
   },
 ];
 

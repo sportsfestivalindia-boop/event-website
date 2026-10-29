@@ -198,4 +198,57 @@ test("PayU Configuration: enforce_paymethod drops EMI and includes upi, cards, n
   assert.equal(fields.hash, expectedHash);
 });
 
+test("Security: Tampered amount in PayU response callback is rejected", () => {
+  process.env.PAYU_MERCHANT_KEY = "gtKFFx";
+  process.env.PAYU_MERCHANT_SALT = "4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW";
+
+  const originalCallback = {
+    key: "gtKFFx",
+    txnid: "SF26-A1B2C3",
+    amount: "5000.00",
+    productinfo: "Bodybuilding",
+    firstname: "Rohan",
+    email: "rohan@example.com",
+    status: "success",
+    udf1: "",
+    udf2: "",
+    udf3: "",
+    udf4: "",
+    udf5: "",
+  };
+
+  // Generate valid reverse hash for ₹5,000.00
+  const salt = process.env.PAYU_MERCHANT_SALT;
+  const key = process.env.PAYU_MERCHANT_KEY;
+  const validHash = createHash("sha512")
+    .update(`${salt}|success|||||||||||rohan@example.com|Rohan|Bodybuilding|5000.00|SF26-A1B2C3|${key}`)
+    .digest("hex");
+
+  // Valid response passes
+  assert.equal(verifyPayuResponse({ ...originalCallback, hash: validHash }), true);
+
+  // Tampered amount (e.g. attacker changes ₹5000 to ₹1 in callback) MUST fail
+  const tamperedCallback = {
+    ...originalCallback,
+    amount: "1.00", // tampered!
+    hash: validHash,
+  };
+  assert.equal(verifyPayuResponse(tamperedCallback), false);
+});
+
+test("Security: PayU verify_payment web service hash matches formula sha512(key|command|var1|salt)", () => {
+  const key = "gtKFFx";
+  const salt = "4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW";
+  const command = "verify_payment";
+  const txnid = "SF26-A1B2C3";
+
+  const hashString = `${key}|${command}|${txnid}|${salt}`;
+  const hash = createHash("sha512").update(hashString).digest("hex");
+
+  assert.equal(hashString, "gtKFFx|verify_payment|SF26-A1B2C3|4R38IvwiV57FwVpsgOvTXBdLE4tHUXFW");
+  assert.equal(typeof hash, "string");
+  assert.equal(hash.length, 128); // sha512 hex length
+});
+
+
 

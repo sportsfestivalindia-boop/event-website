@@ -26,8 +26,8 @@ const STEPS = [
   },
   {
     num: "3",
-    title: "PAY BY UPI QR",
-    body: "Scan with GPay, PhonePe, Paytm or any UPI app, then send your UTR number. AOGA confirms your pass on WhatsApp.",
+    title: "PAY VIA PAYU CHECKOUT",
+    body: "Pay securely with UPI, Net Banking, or Cards via PayU. Your registration is confirmed instantly on WhatsApp.",
     icon: Lock,
   },
 ];

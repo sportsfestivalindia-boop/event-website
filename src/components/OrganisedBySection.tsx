@@ -64,8 +64,8 @@ const INFO_ITEMS = [
   {
     icon: QrCode,
     num: "04",
-    t: "Pay by UPI",
-    b: `Scan the UPI QR (paid to ${EVENT.upi.payee}) with GPay, PhonePe, Paytm or any UPI app. Confirmed by the AOGA team on WhatsApp.`,
+    t: "Instant Payment",
+    b: "Pay securely via PayU hosted checkout using UPI, Net Banking, Cards, or Wallets. Instant confirmation on WhatsApp.",
   },
   {
     icon: BadgeCheck,

@@ -1,5 +1,17 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getFirestore, type Firestore, doc, setDoc, updateDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getFirestore,
+  type Firestore,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
@@ -121,3 +133,63 @@ export async function getRegistrationFromFirestore(regId: string): Promise<Regis
     return null;
   }
 }
+
+/** Get all registrations associated with a specific email */
+export async function getRegistrationsByEmail(email: string): Promise<RegistrationRecord[]> {
+  if (!db || !email) return [];
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const q = query(collection(db, "registrations"), where("email", "==", cleanEmail));
+    const snap = await getDocs(q);
+    const list: RegistrationRecord[] = [];
+    snap.forEach((d) => {
+      list.push(d.data() as RegistrationRecord);
+    });
+    return list;
+  } catch (err) {
+    console.error("Firestore getRegistrationsByEmail error:", err);
+    return [];
+  }
+}
+
+/** Claim an existing registration by Client ID + mobile and link to user email */
+export async function claimRegistration(
+  regId: string,
+  phone: string,
+  targetEmail: string
+): Promise<{ success: boolean; error?: string; registration?: RegistrationRecord }> {
+  if (!db) return { success: false, error: "Database not connected" };
+  try {
+    const cleanId = regId.trim().toUpperCase();
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    const cleanEmail = targetEmail.trim().toLowerCase();
+
+    if (!cleanId || !cleanPhone || !cleanEmail) {
+      return { success: false, error: "Please enter your Registration ID, mobile number and email." };
+    }
+
+    const reg = await getRegistrationFromFirestore(cleanId);
+    if (!reg) {
+      return { success: false, error: "Registration ID not found. Please check and try again." };
+    }
+
+    const recordPhone = (reg.phone || "").replace(/\D/g, "").slice(-10);
+    if (recordPhone !== cleanPhone) {
+      return { success: false, error: "Mobile number does not match this registration record." };
+    }
+
+    // Link registration to user's Google email
+    await updateRegistrationInFirestore(cleanId, {
+      email: cleanEmail,
+    });
+
+    return {
+      success: true,
+      registration: { ...reg, email: cleanEmail },
+    };
+  } catch (err) {
+    console.error("Firestore claimRegistration error:", err);
+    return { success: false, error: "Failed to claim registration. Please try again later." };
+  }
+}
+

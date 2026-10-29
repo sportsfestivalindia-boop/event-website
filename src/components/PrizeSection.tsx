@@ -453,7 +453,7 @@ export function PrizeSection() {
             <span aria-hidden="true" className="pz-btn-shine" />
           </Link>
           <p className="text-xs text-white/60 tracking-normal text-center md:text-left">
-            2-min signup · Pay by UPI QR · Confirmation on WhatsApp
+            2-min signup · Instant PayU Checkout · Confirmation on WhatsApp
           </p>
         </div>
       </div>

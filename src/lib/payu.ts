@@ -225,3 +225,97 @@ export function verifyPayuResponse(params: Record<string, string>): boolean {
   const calculated = createHash("sha512").update(str).digest("hex");
   return calculated.toLowerCase() === hash.toLowerCase();
 }
+
+export type PayUVerifyResult = {
+  ok: boolean;
+  verified: boolean;
+  status?: string;
+  amount?: number;
+  mihpayid?: string;
+  bankRefNum?: string;
+  mode?: string;
+  raw?: unknown;
+  error?: string;
+};
+
+/**
+ * Server-to-server verification via PayU verify_payment web service.
+ * API Endpoint: https://info.payu.in/merchant/postservice.php?form=2 (or test.payu.in)
+ * Hash: sha512(key|command|var1|salt)
+ */
+export async function verifyPaymentWithPayuApi(txnid: string): Promise<PayUVerifyResult> {
+  const key = PAYU_KEY();
+  const salt = PAYU_SALT();
+  const payuUrl = PAYU_URL();
+
+  if (!key || !salt) {
+    return { ok: false, verified: false, error: "PayU credentials not configured" };
+  }
+
+  const endpoint = payuUrl.includes("test.payu.in")
+    ? "https://test.payu.in/merchant/postservice.php?form=2"
+    : "https://info.payu.in/merchant/postservice.php?form=2";
+
+  const command = "verify_payment";
+  const hashString = `${key}|${command}|${txnid}|${salt}`;
+  const hash = createHash("sha512").update(hashString).digest("hex");
+
+  const body = new URLSearchParams({
+    key,
+    command,
+    var1: txnid,
+    hash,
+  });
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      return { ok: false, verified: false, error: `PayU API HTTP ${res.status}` };
+    }
+
+    const json = (await res.json()) as {
+      status?: number;
+      msg?: string;
+      transaction_details?: Record<string, Record<string, unknown>>;
+    };
+
+    if (json && json.status === 1 && json.transaction_details) {
+      const details = json.transaction_details[txnid];
+      if (details) {
+        const isSuccess =
+          String(details.status).toLowerCase() === "success" ||
+          String(details.unmappedstatus).toLowerCase() === "captured";
+        const amt = parseFloat(String(details.amt || details.transaction_amount || "0"));
+        return {
+          ok: true,
+          verified: isSuccess,
+          status: String(details.status || ""),
+          amount: amt,
+          mihpayid: String(details.mihpayid || ""),
+          bankRefNum: String(details.bank_ref_num || ""),
+          mode: String(details.mode || ""),
+          raw: details,
+        };
+      }
+    }
+
+    return {
+      ok: true,
+      verified: false,
+      status: "not_found",
+      error: json?.msg || "Transaction not found in PayU",
+      raw: json,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`verifyPaymentWithPayuApi error for ${txnid}:`, message);
+    return { ok: false, verified: false, error: message };
+  }
+}
+

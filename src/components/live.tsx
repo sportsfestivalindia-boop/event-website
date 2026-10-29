@@ -182,7 +182,6 @@ export function Chrome() {
               ["Organisers", "#trust"],
               ["FAQ", "#faq"],
               ["Book a stall", "/partner#stalls"],
-              ["Verify payment", "/verify"],
             ].map(([l, h]) => (
               <a key={h} href={h} className="transition-colors hover:text-gold">
                 {l}
@@ -275,7 +274,7 @@ export function Chrome() {
               { label: "Venue & Directions", href: "#venue", icon: "📍", sub: "Baramunda, Bhubaneswar" },
               { label: "FAQ", href: "#faq", icon: "❓", sub: "Rules & Policies" },
               { label: "Book a Stall", href: "/partner#stalls", icon: "🎪", sub: "Brand Expo" },
-              { label: "Verify Payment", href: "/verify", icon: "💳", sub: "Instant Pass" },
+              { label: "My Profile & Passes", href: "/profile", icon: "👤", sub: "Login with Google" },
             ].map((item) => (
               <a
                 key={item.href}

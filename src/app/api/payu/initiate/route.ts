@@ -1,9 +1,12 @@
 // POST /api/payu/initiate
-// Called by the browser after /api/order succeeds.
+// Called by the browser after /api/order succeeds or when re-initiating from /payment-failed or /profile.
 // Returns the PayU form fields (including hash) so the frontend can auto-POST to PayU.
 
 import { buildPayuPayload, payuReady } from "@/lib/payu";
 import { checkEntry, type Entry } from "@/lib/pay";
+import { getRegistrationFromFirestore } from "@/lib/firebase";
+import { EVENT } from "@/data/festival";
+import { checkIpRateLimit } from "@/lib/rate-limit";
 import {
   isValidPayUBankCode,
   PAYU_ALLOWED_PAYMENT_METHODS,
@@ -31,6 +34,17 @@ export async function POST(req: Request) {
     );
   }
 
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    "127.0.0.1";
+
+  // Rate limiting check
+  const ipRate = checkIpRateLimit(clientIp, 30);
+  if (!ipRate.allowed) {
+    return Response.json({ error: "Too many payment requests. Please wait a few minutes." }, { status: 429 });
+  }
+
   const b = (await req.json().catch(() => ({}))) as {
     regId?: string;
     amount?: number;
@@ -47,10 +61,11 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid registration ID." }, { status: 400 });
   }
 
-  const clientIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip")?.trim() ||
-    "127.0.0.1";
+  // Check if already paid in Firestore
+  const existing = await getRegistrationFromFirestore(regId);
+  if (existing && (existing.status === "Paid" || existing.status === "Verified")) {
+    return Response.json({ error: "This registration has already been paid and confirmed." }, { status: 400 });
+  }
 
   // Check if test payment requested
   const isTestRequested =
@@ -58,17 +73,26 @@ export async function POST(req: Request) {
     b.label?.includes("TEST ENTRY") ||
     Number(b.amount) === TEST_FEE ||
     b.testToken !== undefined ||
-    b.testSig !== undefined;
+    b.testSig !== undefined ||
+    existing?.isTest === true;
+
+  // Deadline enforcement
+  if (new Date() > new Date(EVENT.registrationCloses) && !isTestRequested) {
+    return Response.json({ error: "Registrations have officially closed for this festival." }, { status: 400 });
+  }
 
   let amount: number;
   let productinfo: string;
+  let firstname = b.entry?.name ?? existing?.name ?? "Athlete";
+  let email = b.entry?.email ?? existing?.email ?? "noreply@sportsfestivalindia.com";
+  let phone = b.entry?.phone ?? existing?.phone ?? "";
 
   if (isTestRequested) {
     // 3. Reject test category unless flag is on AND valid token / signature is presented
     const tokenValid = isTestEntryTokenValid(b.testToken);
     const sigValid = verifyTestRegistration(regId, b.testSig);
 
-    if (!isTestEntryEnabled() || (!tokenValid && !sigValid)) {
+    if (!isTestEntryEnabled() || (!tokenValid && !sigValid && !existing?.isTest)) {
       console.warn(`[TEST ENTRY REJECTED] Unauthorized test payment attempt for regId=${regId} from IP=${clientIp}`);
       return Response.json(
         { error: "Test entry mode is disabled or unauthorized." },
@@ -88,11 +112,18 @@ export async function POST(req: Request) {
     console.log(`[TEST ENTRY] PayU initiate authorized: regId=${regId}, ip=${clientIp}, fee=₹${TEST_FEE}`);
     amount = TEST_FEE; // strictly 1
     productinfo = TEST_CATEGORY_LABEL;
+  } else if (!b.entry || !b.entry.sport || !b.entry.division) {
+    // Re-initiating payment for existing registration (from /payment-failed or /profile)
+    if (!existing) {
+      return Response.json({ error: "Registration not found." }, { status: 400 });
+    }
+    amount = existing.fee;
+    productinfo = existing.category;
+    firstname = existing.name;
+    email = existing.email;
+    phone = existing.phone;
   } else {
     // Standard registration amount verification (never trust browser-supplied amount)
-    if (!b.entry || !b.entry.sport || !b.entry.division) {
-      return Response.json({ error: "Invalid registration entry." }, { status: 400 });
-    }
     const verified = checkEntry(b.entry);
     if (!verified.ok) {
       return Response.json({ error: verified.error }, { status: 400 });
@@ -115,6 +146,9 @@ export async function POST(req: Request) {
       amount = verified.fee;
     }
     productinfo = verified.label;
+    firstname = b.entry.name || firstname;
+    email = b.entry.email || email;
+    phone = b.entry.phone || phone;
   }
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -155,9 +189,9 @@ export async function POST(req: Request) {
       txnid: regId,
       amount,
       productinfo,
-      firstname: b.entry?.name ?? "Athlete",
-      email: b.entry?.email ?? "noreply@sportsfestivalindia.com",
-      phone: b.entry?.phone ?? "",
+      firstname,
+      email,
+      phone,
       surl: `${origin}/api/payu/return`,
       furl: `${origin}/api/payu/return`,
       enforce_paymethod,
