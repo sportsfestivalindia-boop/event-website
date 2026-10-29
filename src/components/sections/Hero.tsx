@@ -78,8 +78,8 @@ export function Hero() {
       data-play={isRevealed}
       className="t-ink relative isolate overflow-hidden min-h-[100svh] sm:h-[100dvh] sm:min-h-[100dvh] sm:max-h-[100dvh] flex flex-col justify-between pt-16 md:pt-20 pb-4 md:pb-6 page-gutter w-full bg-[radial-gradient(ellipse_at_top,_rgba(255,106,0,0.18)_0%,_rgba(0,0,0,0.95)_60%,_#000000_100%)]"
     >
-      {/* Hero background video - 16:9 on mobile showing both title and athlete, full-bleed on desktop */}
-      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden flex flex-col items-center justify-start">
+      {/* Hero background video - 16:9 on mobile showing both title and athlete with clear space below navbar, full-bleed on desktop */}
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden flex flex-col items-center justify-start pt-20 sm:pt-0">
         <div className="relative w-full aspect-video sm:aspect-auto sm:h-full sm:w-full">
           <HeroVideo active={introDismissed && play} />
           {/* Subtle gradient blending video bottom into background */}
