@@ -167,7 +167,7 @@ export function Chrome() {
 
   return (
     <>
-      <header className={`t-ink fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-300 ${past || mobileMenuOpen ? "border-b border-line !bg-black/90 backdrop-blur-xl" : "border-b border-transparent !bg-transparent"}`}>
+      <header className={`t-ink fixed inset-x-0 top-0 z-[70] transition-[background-color,border-color] duration-300 ${past || mobileMenuOpen ? "border-b border-line !bg-black/95 backdrop-blur-xl" : "border-b border-transparent !bg-transparent"}`}>
         <div className="content-contain page-gutter flex h-16 w-full items-center justify-between gap-4 md:h-20">
           <Link href="#top" onClick={() => setMobileMenuOpen(false)} aria-label="Sports Festival — back to top" className="shrink-0">
             <Wordmark />
@@ -192,7 +192,15 @@ export function Chrome() {
 
           <div className="flex items-center gap-2.5 sm:gap-3">
             {/* WhatsApp Direct Link */}
-            <a href={EVENT.whatsappHref} target="_blank" rel="noopener" aria-label="WhatsApp us" className="grid size-10 place-items-center rounded-full border border-line text-wa hover:border-wa transition-colors">
+            <a
+              href={EVENT.whatsappHref}
+              target="_blank"
+              rel="noopener"
+              aria-label="WhatsApp us"
+              className={`grid size-10 place-items-center rounded-full border border-line text-wa hover:border-wa transition-colors ${
+                mobileMenuOpen ? "hidden sm:grid" : "grid"
+              }`}
+            >
               <WhatsAppGlyph className="size-5" />
             </a>
 
@@ -201,16 +209,20 @@ export function Chrome() {
               Register now
             </Link>
 
-            {/* Mobile Hamburger Menu Toggle Button */}
+            {/* Mobile Hamburger / Close Menu Toggle Button */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-expanded={mobileMenuOpen}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-black/60 backdrop-blur-md text-white hover:text-yellow hover:border-yellow/50 transition-all active:scale-95 lg:hidden cursor-pointer"
+              className={`flex size-10 items-center justify-center rounded-full border transition-all active:scale-95 lg:hidden cursor-pointer ${
+                mobileMenuOpen
+                  ? "border-gold/80 bg-gold text-ink hover:bg-gold/90 shadow-[0_0_12px_rgba(255,222,0,0.35)]"
+                  : "border-white/20 bg-black/60 backdrop-blur-md text-white hover:text-yellow hover:border-yellow/50"
+              }`}
             >
               {mobileMenuOpen ? (
-                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -235,35 +247,54 @@ export function Chrome() {
         aria-modal="true"
         aria-label="Mobile Navigation"
       >
-        {/* Navigation Links List */}
-        <nav className="flex flex-col gap-1 text-base font-bold pt-4">
-          {[
-            { label: "Categories & Sports", href: "#arena", icon: "🏆", sub: "6 Championships" },
-            { label: "Prize Money", href: "#prizes", icon: "💰", sub: "₹1.5 Crore Pool" },
-            { label: "Event Schedule", href: "#schedule", icon: "📅", sub: "4–6 Dec 2026" },
-            { label: "Organisers (AOGA)", href: "#trust", icon: "🛡️", sub: "Official Federation" },
-            { label: "Venue & Directions", href: "#venue", icon: "📍", sub: "Baramunda, Bhubaneswar" },
-            { label: "FAQ", href: "#faq", icon: "❓", sub: "Rules & Policies" },
-            { label: "Book a Stall", href: "/partner#stalls", icon: "🎪", sub: "Brand Expo" },
-            { label: "Verify Payment", href: "/verify", icon: "💳", sub: "Instant Pass" },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
+        <div>
+          {/* Mobile Drawer Sub-bar with Close Button */}
+          <div className="flex items-center justify-between pb-3 pt-1 border-b border-white/10">
+            <span className="text-xs font-bold uppercase tracking-widest text-gold/80">Menu</span>
+            <button
+              type="button"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between py-3 border-b border-white/10 text-white/90 hover:text-yellow transition-colors group"
+              aria-label="Close menu"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90 hover:text-gold hover:border-gold/50 active:scale-95 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{item.icon}</span>
-                <div className="text-left">
-                  <span className="block text-white group-hover:text-yellow transition-colors">{item.label}</span>
-                  <span className="block text-[11px] font-normal text-white/50">{item.sub}</span>
+              <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              <span>Close</span>
+            </button>
+          </div>
+
+          {/* Navigation Links List */}
+          <nav className="flex flex-col gap-1 text-base font-bold pt-2">
+            {[
+              { label: "Categories & Sports", href: "#arena", icon: "🏆", sub: "6 Championships" },
+              { label: "Prize Money", href: "#prizes", icon: "💰", sub: "₹1.5 Crore Pool" },
+              { label: "Event Schedule", href: "#schedule", icon: "📅", sub: "4–6 Dec 2026" },
+              { label: "Organisers (AOGA)", href: "#trust", icon: "🛡️", sub: "Official Federation" },
+              { label: "Venue & Directions", href: "#venue", icon: "📍", sub: "Baramunda, Bhubaneswar" },
+              { label: "FAQ", href: "#faq", icon: "❓", sub: "Rules & Policies" },
+              { label: "Book a Stall", href: "/partner#stalls", icon: "🎪", sub: "Brand Expo" },
+              { label: "Verify Payment", href: "/verify", icon: "💳", sub: "Instant Pass" },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3 border-b border-white/10 text-white/90 hover:text-yellow transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{item.icon}</span>
+                  <div className="text-left">
+                    <span className="block text-white group-hover:text-yellow transition-colors">{item.label}</span>
+                    <span className="block text-[11px] font-normal text-white/50">{item.sub}</span>
+                  </div>
                 </div>
-              </div>
-              <span className="text-white/40 text-sm group-hover:translate-x-1 group-hover:text-yellow transition-all">›</span>
-            </a>
-          ))}
-        </nav>
+                <span className="text-white/40 text-sm group-hover:translate-x-1 group-hover:text-yellow transition-all">›</span>
+              </a>
+            ))}
+          </nav>
+        </div>
 
         {/* Mobile Menu Action CTAs */}
         <div className="pt-6 mt-4 flex flex-col gap-3 border-t border-white/15">
