@@ -61,6 +61,7 @@ export interface RegistrationRecord {
   association?: string;
   category: string;
   fee: number;
+  originalFee?: number;
   status: "Awaiting payment" | "Paid" | "Verified" | "Failed";
   source?: string;
   utr?: string;

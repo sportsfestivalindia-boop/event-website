@@ -18,6 +18,10 @@ import {
   TEST_CATEGORY_LABEL,
   TEST_FEE,
 } from "@/lib/test-entry";
+import {
+  computePayableFee,
+  checkDailyTestLimit,
+} from "@/lib/test-fee";
 
 export async function POST(req: Request) {
   if (!payuReady()) {
@@ -93,8 +97,23 @@ export async function POST(req: Request) {
     if (!verified.ok) {
       return Response.json({ error: verified.error }, { status: 400 });
     }
-    // Amount is locked strictly to verified server-side category fee
-    amount = verified.fee;
+
+    // Check phone-based test fee override (for client verification)
+    const phoneTest = computePayableFee(verified.fee, b.entry.phone);
+    if (phoneTest.isTest) {
+      const daily = checkDailyTestLimit(b.entry.phone!);
+      if (!daily.allowed) {
+        return Response.json(
+          { error: "Daily test payment limit exceeded (max 5 per day)." },
+          { status: 429 },
+        );
+      }
+      amount = phoneTest.fee;
+      console.log(`[PayU Initiate] Test fee override applied for phone ${b.entry.phone}: locked to ₹${amount.toFixed(2)} (original ₹${phoneTest.originalFee})`);
+    } else {
+      // Amount is locked strictly to verified server-side category fee
+      amount = verified.fee;
+    }
     productinfo = verified.label;
   }
 

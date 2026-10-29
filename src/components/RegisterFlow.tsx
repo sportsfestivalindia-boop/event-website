@@ -72,6 +72,24 @@ export function RegisterFlow({
   const [selectedBank, setSelectedBank] = useState<string>("SBIB");
   const [bankQuery, setBankQuery] = useState<string>("");
   const [bankDropdownOpen, setBankDropdownOpen] = useState<boolean>(false);
+  const [testFeeInfo, setTestFeeInfo] = useState<{ isTest: boolean; fee: number; originalFee?: number } | null>(null);
+
+  useEffect(() => {
+    if (f.phone.length === 10) {
+      fetch(`/api/fee?phone=${encodeURIComponent(f.phone)}&sport=${encodeURIComponent(f.sport)}&division=${encodeURIComponent(f.division)}&cls=${encodeURIComponent(f.cls)}`)
+        .then((res) => res.json())
+        .then((d) => {
+          if (d && d.isTest) {
+            setTestFeeInfo(d);
+          } else {
+            setTestFeeInfo(null);
+          }
+        })
+        .catch(() => setTestFeeInfo(null));
+    } else {
+      setTestFeeInfo(null);
+    }
+  }, [f.phone, f.sport, f.division, f.cls]);
   const allPayuBanks = useMemo(() => getSortedPayUBanks(), []);
   const filteredBanks = useMemo(() => {
     if (!bankQuery.trim()) return allPayuBanks;
@@ -487,6 +505,19 @@ export function RegisterFlow({
 
       {step === 3 && (
         <section className="mt-8 space-y-5">
+          {testFeeInfo?.isTest && (
+            <div className="rounded-2xl border border-yellow/60 bg-yellow/15 p-4 text-center shadow-lg">
+              <span className="inline-block px-2.5 py-1 rounded bg-yellow text-black font-black text-xs uppercase tracking-wider mb-1.5">
+                🧪 TEST PAYMENT ACTIVE
+              </span>
+              <p className="text-base font-extrabold text-yellow">
+                TEST PAYMENT: {inr(testFeeInfo.fee)} instead of {inr(testFeeInfo.originalFee ?? fee)}
+              </p>
+              <p className="text-xs text-white/70 mt-1">
+                This phone number is approved for live ₹1 verification testing.
+              </p>
+            </div>
+          )}
           <div className="rounded-2xl border border-white/15 bg-white/[0.03] overflow-hidden divide-y divide-white/10 shadow-lg">
             <div className="bg-gradient-to-r from-orange to-yellow px-5 py-3 text-black font-extrabold text-xs uppercase tracking-wider flex justify-between items-center">
               <span>Registration Summary</span>
@@ -508,7 +539,14 @@ export function RegisterFlow({
             ))}
             <div className="flex items-center justify-between p-5 bg-gradient-to-r from-orange/15 to-yellow/15 border-t border-yellow/30">
               <span className="font-extrabold text-white text-base">Total Fee Payable</span>
-              <span className="display text-4xl text-yellow">{fee ? inr(fee) : "FREE"}</span>
+              <div className="text-right">
+                {testFeeInfo?.isTest && (
+                  <span className="block text-xs line-through text-white/50">{inr(testFeeInfo.originalFee ?? fee)}</span>
+                )}
+                <span className="display text-4xl text-yellow">
+                  {testFeeInfo?.isTest ? inr(testFeeInfo.fee) : (fee ? inr(fee) : "FREE")}
+                </span>
+              </div>
             </div>
           </div>
           {fee > 0 && (
@@ -858,7 +896,7 @@ export function RegisterFlow({
             )}
             {step === 3 && (
               <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold !min-h-13 flex-1 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg disabled:opacity-40">
-                {busy ? "Redirecting to payment…" : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} Securely` : "Confirm Free Registration"}
+                {busy ? "Redirecting to payment…" : testFeeInfo?.isTest ? `Pay ${inr(testFeeInfo.fee)} (Test) Securely` : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} Securely` : "Confirm Free Registration"}
               </button>
             )}
           </div>
@@ -891,7 +929,7 @@ export function RegisterFlow({
             )}
             {step === 3 && (
               <button type="button" onClick={submit} disabled={!agree || busy} className="btn btn-gold flex-1 rounded-xl text-black font-extrabold disabled:opacity-40">
-                {busy ? "Redirecting to payment…" : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} securely` : "Confirm free registration"}
+                {busy ? "Redirecting to payment…" : testFeeInfo?.isTest ? `Pay ${inr(testFeeInfo.fee)} (Test) securely` : fee ? `Pay ${testEntryToken || testing ? "₹1 (Test)" : inr(fee)} securely` : "Confirm free registration"}
               </button>
             )}
           </div>

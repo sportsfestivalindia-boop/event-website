@@ -12,6 +12,11 @@ import {
   TEST_CATEGORY_LABEL,
   TEST_FEE,
 } from "@/lib/test-entry";
+import {
+  computePayableFee,
+  checkDailyTestLimit,
+  isApprovedTestPhone,
+} from "@/lib/test-fee";
 
 /** Step 3: validate the entry, reserve a registration ID, record it in AOGA's sheet and return the UPI/PayU payment order. */
 export async function POST(req: Request) {
@@ -26,7 +31,7 @@ export async function POST(req: Request) {
     req.headers.get("x-real-ip")?.trim() ||
     "127.0.0.1";
 
-  // Check if test entry is requested
+  // Check if hidden test category / token was used
   const isTestSport = entry.sport === TEST_SPORT_ID;
   const hasTestToken = typeof entry.testToken === "string" && entry.testToken.trim().length > 0;
   const isTestAttempt = isTestSport || hasTestToken;
@@ -34,6 +39,7 @@ export async function POST(req: Request) {
   let fee: number;
   let label: string;
   let isTest = false;
+  let originalFee: number | undefined;
   let testSig: string | undefined;
 
   if (isTestAttempt) {
@@ -74,20 +80,39 @@ export async function POST(req: Request) {
     const check = checkEntry(entry);
     if (!check.ok) return Response.json({ error: check.error }, { status: 400 });
 
-    // Legacy staff test mode (/register?test=1 + staff password)
-    const legacyStaffTest = entry.testKey !== undefined;
-    if (legacyStaffTest && !isAdmin(entry.testKey)) {
-      return Response.json({ error: "Wrong staff password." }, { status: 401 });
+    label = check.label;
+
+    // Check phone-based test fee override (for client verification via normal flow)
+    const phoneTest = computePayableFee(check.fee, entry.phone);
+    if (phoneTest.isTest) {
+      const daily = checkDailyTestLimit(entry.phone!);
+      if (!daily.allowed) {
+        console.warn(`[TEST FEE LIMIT] Daily limit reached for phone: ${entry.phone}`);
+        return Response.json(
+          { error: "Daily test payment limit exceeded (max 5 per day). Regular fee applies." },
+          { status: 429 },
+        );
+      }
+      fee = phoneTest.fee;
+      originalFee = phoneTest.originalFee;
+      isTest = true;
+      console.log(`[TEST FEE OVERRIDE] Approved phone ${entry.phone}: fee ₹${fee} (original ₹${originalFee}), count: ${daily.count}/${daily.limit}`);
+    } else {
+      // Legacy staff test mode (/register?test=1 + staff password)
+      const legacyStaffTest = entry.testKey !== undefined;
+      if (legacyStaffTest && !isAdmin(entry.testKey)) {
+        return Response.json({ error: "Wrong staff password." }, { status: 401 });
+      }
+      fee = legacyStaffTest && check.fee > 0 ? 1 : check.fee;
+      label = legacyStaffTest ? `${check.label} · TEST ₹1` : check.label;
+      isTest = legacyStaffTest;
     }
-    fee = legacyStaffTest && check.fee > 0 ? 1 : check.fee;
-    label = legacyStaffTest ? `${check.label} · TEST ₹1` : check.label;
-    isTest = legacyStaffTest;
   }
 
   const id = regId();
   if (isTest) {
     testSig = signTestRegistration(id);
-    console.log(`[TEST ENTRY] Order created: regId=${id}, ip=${clientIp}, fee=₹${fee}, time=${new Date().toISOString()}`);
+    console.log(`[TEST ORDER] Created: regId=${id}, ip=${clientIp}, fee=₹${fee}, time=${new Date().toISOString()}`);
   }
 
   const t = entry.tracking ?? {};
@@ -105,9 +130,10 @@ export async function POST(req: Request) {
       association: (entry.association ?? "").trim(),
       category: isTest ? `[TEST] ${label}` : label,
       fee,
+      ...(originalFee ? { originalFee } : {}),
       status: isTest ? "TEST - Awaiting payment" : fee === 0 ? "Verified" : "Awaiting payment",
       source: isTest
-        ? "LIVE_TEST_VERIFICATION"
+        ? `LIVE_TEST_FEE (₹${fee})`
         : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
     });
 
@@ -121,10 +147,11 @@ export async function POST(req: Request) {
       association: (entry.association ?? "").trim(),
       category: isTest ? `[TEST] ${label}` : label,
       fee,
+      ...(originalFee ? { originalFee } : {}),
       status: isTest ? "Awaiting payment" : fee === 0 ? "Verified" : "Awaiting payment",
       ...(isTest ? { isTest: true } : {}),
       source: isTest
-        ? "LIVE_TEST_VERIFICATION"
+        ? `LIVE_TEST_FEE (₹${fee})`
         : [t.utm_source, t.utm_campaign, t.gym && `gym:${t.gym}`].filter(Boolean).join(" · "),
     });
   };
@@ -136,5 +163,13 @@ export async function POST(req: Request) {
   }
 
   if (fee === 0) return Response.json({ free: true, regId: id, label });
-  return Response.json({ regId: id, amount: fee, label, upi: upiLink(fee, id), testSig });
+  return Response.json({
+    regId: id,
+    amount: fee,
+    originalFee,
+    isTest,
+    label,
+    upi: upiLink(fee, id),
+    testSig,
+  });
 }
