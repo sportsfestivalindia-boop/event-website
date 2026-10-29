@@ -1,6 +1,6 @@
 // Server only. PayU payment gateway integration.
-// Hash formula (PayU docs): SHA512(key|txnid|amount|productinfo|firstname|email|||||||||||salt)
-// Response verification:    SHA512(salt|status|||||||||||email|firstname|productinfo|amount|txnid|key)
+// Hash formula (PayU docs): sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)
+// Response verification:    sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
 
 import { createHash } from "node:crypto";
 
@@ -10,55 +10,200 @@ export const PAYU_URL  = () => process.env.PAYU_BASE_URL?.trim()       ?? "https
 
 export const payuReady = () => PAYU_KEY().length > 0 && PAYU_SALT().length > 0;
 
+/** Trim and sanitize productinfo, firstname and email (no | character, no newlines, no emoji) */
+export function sanitizePayuString(val: string, maxLen = 100): string {
+  if (!val) return "";
+  return val
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[·–—]/g, "-")
+    .replace(/[^\x20-\x7E]/g, "") // strip emoji and non-ASCII characters
+    .replace(/[|\r\n\t]/g, " ")   // strictly remove pipe and line-breaks
+    .replace(/\s+/g, " ")         // collapse extra spaces
+    .trim()
+    .slice(0, maxLen);
+}
+
+export type PayUOrderInput = {
+  txnid: string;
+  amount: number | string;
+  productinfo: string;
+  firstname: string;
+  email: string;
+  phone: string;
+  surl: string;
+  furl: string;
+  udf1?: string;
+  udf2?: string;
+  udf3?: string;
+  udf4?: string;
+  udf5?: string;
+};
+
+export type PayUFields = {
+  key: string;
+  txnid: string;
+  amount: string;
+  productinfo: string;
+  firstname: string;
+  email: string;
+  phone: string;
+  surl: string;
+  furl: string;
+  udf1: string;
+  udf2: string;
+  udf3: string;
+  udf4: string;
+  udf5: string;
+  hash: string;
+};
+
+export type SharedPayUFields = Omit<PayUFields, "hash">;
+
+/**
+ * Builds the exact pipe-separated hash string according to PayU's documented formula:
+ * sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)
+ * exactly 6 pipes after udf5 (i.e. 5 empty strings between udf5 and salt).
+ */
+export function buildPayuHashString(fields: SharedPayUFields, salt: string): string {
+  const parts = [
+    fields.key,
+    fields.txnid,
+    fields.amount,
+    fields.productinfo,
+    fields.firstname,
+    fields.email,
+    fields.udf1,
+    fields.udf2,
+    fields.udf3,
+    fields.udf4,
+    fields.udf5,
+    "", "", "", "", "", // 5 empty placeholders -> exactly 6 pipes (||||||) before salt
+    salt,
+  ];
+  return parts.join("|");
+}
+
+export function generatePayuHash(fields: SharedPayUFields, salt: string): string {
+  const hashString = buildPayuHashString(fields, salt);
+  return createHash("sha512").update(hashString).digest("hex");
+}
+
+/**
+ * Builds ONE shared payload object for both the hash calculation and the form fields.
+ */
+export function buildPayuPayload(input: PayUOrderInput): { fields: PayUFields; hashStringMasked: string; payuUrl: string } {
+  const key = PAYU_KEY();
+  const salt = PAYU_SALT();
+  const payuUrl = PAYU_URL();
+
+  if (!key || !salt) {
+    throw new Error("PayU credentials missing. PAYU_MERCHANT_KEY and PAYU_MERCHANT_SALT must be configured.");
+  }
+
+  // Validate key mode vs PAYU_BASE_URL
+  const isSecureUrl = payuUrl.includes("secure.payu.in");
+  if (isSecureUrl && (key === "gtKFFx" || key.toLowerCase().includes("test"))) {
+    throw new Error("PayU configuration mismatch: Test merchant key cannot be used with production secure.payu.in endpoint.");
+  }
+
+  // Format amount once as a string with 2 decimals
+  const formattedAmount = Number(input.amount).toFixed(2);
+
+  // Trim and sanitize firstname, email and productinfo
+  const rawFirst = input.firstname.split(" ")[0] || "Athlete";
+  const sanitizedFirstname = sanitizePayuString(rawFirst, 50).replace(/[^a-zA-Z0-9]/g, "") || "Athlete";
+  const sanitizedEmail = sanitizePayuString(input.email, 100).toLowerCase().replace(/[^a-z0-9@._-]/g, "") || "noreply@sportsfestivalindia.com";
+  const sanitizedProductInfo = sanitizePayuString(input.productinfo, 100) || "Sports Festival 2026";
+  const sanitizedPhone = (input.phone || "").replace(/\D/g, "").slice(-10);
+
+  // ONE shared object for both hashing and form fields
+  const sharedFields: SharedPayUFields = {
+    key,
+    txnid: input.txnid.trim(),
+    amount: formattedAmount,
+    productinfo: sanitizedProductInfo,
+    firstname: sanitizedFirstname,
+    email: sanitizedEmail,
+    phone: sanitizedPhone,
+    surl: input.surl,
+    furl: input.furl,
+    udf1: sanitizePayuString(input.udf1 ?? "", 50),
+    udf2: sanitizePayuString(input.udf2 ?? "", 50),
+    udf3: sanitizePayuString(input.udf3 ?? "", 50),
+    udf4: sanitizePayuString(input.udf4 ?? "", 50),
+    udf5: sanitizePayuString(input.udf5 ?? "", 50),
+  };
+
+  const hash = generatePayuHash(sharedFields, salt);
+  const hashStringMasked = buildPayuHashString(sharedFields, "***");
+
+  return {
+    fields: {
+      ...sharedFields,
+      hash,
+    },
+    hashStringMasked,
+    payuUrl,
+  };
+}
+
+/** Legacy helper maintaining backward compatibility */
 export type PayUOrder = {
-  txnid:       string;   // our registration ID (SF26-XXXXXX)
-  amount:      number;   // in rupees
-  productinfo: string;   // category label
+  txnid:       string;
+  amount:      number;
+  productinfo: string;
   firstname:   string;
   email:       string;
   phone:       string;
-  surl:        string;   // success callback URL
-  furl:        string;   // failure callback URL
+  surl:        string;
+  furl:        string;
 };
 
-/** SHA-512 hex digest */
-const sha512 = (s: string) => createHash("sha512").update(s).digest("hex");
-
-/** Compute the request hash PayU requires before redirecting the athlete. */
 export function payuHash(o: PayUOrder): string {
-  // 10 pipe-separated fields, then 5 empty (udf1–udf5), then salt
-  const str = [
-    PAYU_KEY(), o.txnid, o.amount.toFixed(2), o.productinfo,
-    o.firstname, o.email, "", "", "", "", "", "", "", "", "",
-    PAYU_SALT(),
-  ].join("|");
-  return sha512(str);
+  const { fields } = buildPayuPayload(o);
+  return fields.hash;
 }
 
-/** Verify PayU's response hash to ensure the callback was not tampered. */
-export function verifyPayuResponse(params: Record<string, string>): boolean {
-  const { status, firstname, amount, txnid, productinfo, email, hash } = params;
-  if (!hash) return false;
-  // Reverse hash: salt|status|udf5..udf1 (reversed)|email|firstname|productinfo|amount|txnid|key
-  const str = [
-    PAYU_SALT(), status, "", "", "", "", "",
-    email, firstname, productinfo, amount, txnid, PAYU_KEY(),
-  ].join("|");
-  return sha512(str) === hash.toLowerCase();
-}
-
-/** Build the hidden-form fields that the browser POSTs to PayU. */
 export function payuFields(o: PayUOrder, origin: string): Record<string, string> {
-  return {
-    key:         PAYU_KEY(),
-    txnid:       o.txnid,
-    amount:      o.amount.toFixed(2),
-    productinfo: o.productinfo,
-    firstname:   o.firstname,
-    email:       o.email,
-    phone:       o.phone,
-    surl:        o.surl || `${origin}/api/payu/return`,
-    furl:        o.furl || `${origin}/api/payu/return`,
-    hash:        payuHash(o),
-  };
+  const { fields } = buildPayuPayload({
+    ...o,
+    surl: o.surl || `${origin}/api/payu/return`,
+    furl: o.furl || `${origin}/api/payu/return`,
+  });
+  return fields as unknown as Record<string, string>;
+}
+
+/**
+ * Verify PayU's response hash to ensure the callback was not tampered.
+ * Formula: sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
+ */
+export function verifyPayuResponse(params: Record<string, string>): boolean {
+  const {
+    status, firstname, amount, txnid, productinfo, email, hash,
+    udf1 = "", udf2 = "", udf3 = "", udf4 = "", udf5 = "",
+  } = params;
+  if (!hash) return false;
+
+  const salt = PAYU_SALT();
+  const key = PAYU_KEY();
+
+  // Reverse hash sequence:
+  // salt|status|udf10|udf9|udf8|udf7|udf6|udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
+  const parts = [
+    salt,
+    status ?? "",
+    "", "", "", "", "", // udf10, udf9, udf8, udf7, udf6
+    udf5, udf4, udf3, udf2, udf1,
+    email ?? "",
+    firstname ?? "",
+    productinfo ?? "",
+    amount ?? "",
+    txnid ?? "",
+    key,
+  ];
+
+  const str = parts.join("|");
+  const calculated = createHash("sha512").update(str).digest("hex");
+  return calculated.toLowerCase() === hash.toLowerCase();
 }
