@@ -25,14 +25,13 @@ async function loadTicketAssets(): Promise<TicketAssets> {
   if (cachedAssets) return cachedAssets;
   if (!assetsPromise) {
     assetsPromise = (async () => {
-      const file = (f: string) => readFile(join(process.cwd(), f));
       const [anton, poppins, poppinsRupee, poppinsBold, poppinsBoldRupee, mark] = await Promise.all([
-        file("assets/anton-latin-400-normal.woff"),
-        file("assets/poppins-latin-400-normal.woff"),
-        file("assets/poppins-devanagari-400-normal.woff"), // the subset that carries ₹
-        file("assets/poppins-latin-700-normal.woff"),
-        file("assets/poppins-devanagari-700-normal.woff"),
-        file("public/img/mark.png"),
+        readFile(join(process.cwd(), "assets", "anton-latin-400-normal.woff")),
+        readFile(join(process.cwd(), "assets", "poppins-latin-400-normal.woff")),
+        readFile(join(process.cwd(), "assets", "poppins-devanagari-400-normal.woff")), // the subset that carries ₹
+        readFile(join(process.cwd(), "assets", "poppins-latin-700-normal.woff")),
+        readFile(join(process.cwd(), "assets", "poppins-devanagari-700-normal.woff")),
+        readFile(join(process.cwd(), "public", "img", "mark.png")),
       ]);
       cachedAssets = {
         anton,
