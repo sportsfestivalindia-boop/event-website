@@ -9,7 +9,6 @@ import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
-import { TutorialVideo } from "./TutorialVideo";
 import { track } from "@/lib/track";
 import { type Claim, waitForTicket } from "@/lib/claim";
 type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
@@ -231,12 +230,6 @@ export function RegisterFlow({
             <p className="mt-1 text-xs text-white/70">
               You are testing the live ₹1 payment &amp; confirmation pipeline. A real ₹1 test charge will be processed by PayU.
             </p>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="mt-6">
-            <TutorialVideo tag="Must watch" title="Watch this before you register" note="1-minute video: how to choose category, fill details and complete PayU checkout" />
           </div>
         )}
 
