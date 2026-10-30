@@ -77,16 +77,18 @@ export async function POST(req: Request) {
   const fee = verifiedAmount ?? Math.round(parseFloat(amount ?? "0"));
   const isTest = Boolean(existing?.isTest || (productinfo && productinfo.includes("TEST ENTRY")) || fee === 1);
 
-  // 5. Issue ticket, notify sheet & WhatsApp
+  // 5. Issue ticket, notify sheet, email & WhatsApp
   const origin = new URL(req.url).origin;
   const result = await issueTicket(
     {
       name:     existing?.name || firstname || "Athlete",
       phone:    String(existing?.phone || phone || "").replace(/\D/g, "").slice(-10),
+      email:    existing?.email,
       category: existing?.category || productinfo || "Sports Festival 2026",
       amount:   fee,
       utr,
       regId:    cleanTxnid,
+      paymentMode: params.mode || "PayU Hosted Checkout",
       isTest,
     },
     origin,

@@ -163,10 +163,12 @@ export async function POST(req: Request) {
       {
         name: entry.name!.trim(),
         phone: entry.phone!,
+        email: entry.email!.trim().toLowerCase(),
         category: label,
         amount: 0,
         utr: "FREE" + id.replace(/\D/g, "").padStart(8, "0").slice(0, 8),
         regId: id,
+        paymentMode: "Free Entry",
         isTest,
       },
       origin,

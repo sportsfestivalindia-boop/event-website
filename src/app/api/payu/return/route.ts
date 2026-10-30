@@ -87,16 +87,18 @@ export async function POST(req: Request) {
       return NextResponse.redirect(new URL(`/thank-you?id=${encodeURIComponent(txnid)}`, origin), 303);
     }
 
-    // 5. Issue ticket, notify sheet & WhatsApp
+    // 5. Issue ticket, notify sheet, email & WhatsApp
     try {
       const result = await issueTicket(
         {
           name: existing?.name || firstname,
           phone: String(existing?.phone || phone).replace(/\D/g, "").slice(-10),
+          email: existing?.email,
           category: existing?.category || productinfo,
           amount: fee,
           utr,
           regId: txnid,
+          paymentMode: params.mode || "PayU Hosted Checkout",
           isTest,
         },
         origin,

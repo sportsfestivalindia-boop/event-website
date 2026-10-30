@@ -63,6 +63,15 @@ export const initAnalytics = async () => {
   return null;
 };
 
+export interface NotificationInfo {
+  emailSentAt?: string;
+  whatsappSentAt?: string;
+  emailError?: string;
+  whatsappError?: string;
+  lastAttemptAt?: string;
+  resendCount?: number;
+}
+
 export interface RegistrationRecord {
   regId: string;
   name: string;
@@ -80,8 +89,33 @@ export interface RegistrationRecord {
   ticketNo?: string;
   ticketUrl?: string;
   isTest?: boolean;
+  notifications?: NotificationInfo;
   createdAt?: unknown;
   updatedAt?: unknown;
+}
+
+export interface NotificationFailureRecord {
+  regId: string;
+  type: "email" | "whatsapp";
+  recipient: string;
+  error: string;
+  timestamp: string;
+}
+
+/** Record failed notification in notificationFailures collection */
+export async function recordNotificationFailure(record: NotificationFailureRecord) {
+  if (!db) return false;
+  try {
+    const ref = doc(collection(db, "notificationFailures"));
+    await setDoc(ref, {
+      ...record,
+      createdAt: serverTimestamp(),
+    });
+    return true;
+  } catch (err) {
+    console.error("Firestore recordNotificationFailure error:", err);
+    return false;
+  }
 }
 
 /** Save a registration to Firestore in real-time */

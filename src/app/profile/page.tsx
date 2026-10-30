@@ -29,6 +29,61 @@ export default function ProfilePage() {
   // Re-pay state
   const [payingRegId, setPayingRegId] = useState<string | null>(null);
 
+  // Profile download & resend state
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [resendNotifs, setResendNotifs] = useState<{ [regId: string]: { ok: boolean; msg: string } }>({});
+
+  async function handleProfileDownload(regId: string, type: "ticket" | "receipt") {
+    if (!user?.email) return;
+    setDownloadingId(`${regId}:${type}`);
+    try {
+      const res = await fetch("/api/profile/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regId, email: user.email, type }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        alert(data.error || "Failed to generate download link.");
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = data.url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      alert("Failed to download file. Please check connection.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
+  async function handleProfileResend(regId: string) {
+    setResendingId(regId);
+    setResendNotifs((prev) => ({ ...prev, [regId]: { ok: true, msg: "Sending..." } }));
+    try {
+      const res = await fetch("/api/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResendNotifs((prev) => ({ ...prev, [regId]: { ok: false, msg: data.error || "Failed to resend" } }));
+      } else {
+        setResendNotifs((prev) => ({ ...prev, [regId]: { ok: true, msg: "Sent to your email & WhatsApp!" } }));
+        if (user?.email) await loadRegistrations(user.email);
+      }
+    } catch (e) {
+      setResendNotifs((prev) => ({ ...prev, [regId]: { ok: false, msg: "Network error" } }));
+    } finally {
+      setResendingId(null);
+    }
+  }
+
   useEffect(() => {
     if (!auth) {
       setAuthLoading(false);
@@ -275,34 +330,55 @@ export default function ProfilePage() {
                           </p>
                         </div>
 
-                        <div>
+                        <div className="flex flex-col sm:items-end gap-2">
                           {isPaid ? (
-                            reg.ticketUrl ? (
-                              <a
-                                href={reg.ticketUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn btn-gold !min-h-10 text-xs font-extrabold text-black px-4 rounded-xl flex items-center justify-center gap-1.5"
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleProfileDownload(reg.regId, "ticket")}
+                                disabled={downloadingId === `${reg.regId}:ticket`}
+                                className="btn btn-gold !min-h-9 text-xs font-extrabold text-black px-3 rounded-lg flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                               >
-                                View Ticket →
-                              </a>
-                            ) : (
-                              <Link
-                                href={`/ticket/${reg.regId}`}
-                                className="btn btn-gold !min-h-10 text-xs font-extrabold text-black px-4 rounded-xl flex items-center justify-center gap-1.5"
+                                {downloadingId === `${reg.regId}:ticket` ? "Generating..." : "🎟️ Ticket (PDF)"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleProfileDownload(reg.regId, "receipt")}
+                                disabled={downloadingId === `${reg.regId}:receipt`}
+                                className="btn btn-line !min-h-9 text-xs font-semibold text-white/90 border-white/20 hover:border-gold hover:text-gold px-3 rounded-lg flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                               >
-                                View Ticket →
-                              </Link>
-                            )
+                                {downloadingId === `${reg.regId}:receipt` ? "Generating..." : "📄 Receipt (PDF)"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleProfileResend(reg.regId)}
+                                disabled={resendingId === reg.regId}
+                                className="text-[11px] text-white/50 hover:text-gold underline underline-offset-2 px-1 cursor-pointer disabled:opacity-50"
+                              >
+                                {resendingId === reg.regId ? "Sending..." : "Resend Pass"}
+                              </button>
+                            </div>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handlePayPending(reg.regId)}
                               disabled={payingRegId === reg.regId}
-                              className="btn btn-gold !min-h-10 text-xs font-extrabold text-black px-4 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50"
+                              className="btn btn-gold !min-h-10 text-xs font-extrabold text-black px-4 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                             >
                               {payingRegId === reg.regId ? "Opening PayU..." : "Pay Now →"}
                             </button>
+                          )}
+
+                          {resendNotifs[reg.regId] && (
+                            <span
+                              className={`text-[11px] font-medium ${
+                                resendNotifs[reg.regId].ok ? "text-emerald-400" : "text-red-400"
+                              }`}
+                            >
+                              {resendNotifs[reg.regId].msg}
+                            </span>
                           )}
                         </div>
                       </div>

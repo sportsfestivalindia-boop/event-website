@@ -5,11 +5,27 @@ import { toSheet } from "@/lib/sheet";
 import { inr } from "@/lib/format";
 import { EVENT } from "@/data/festival";
 import { Wordmark } from "@/components/icons";
+import { generateDownloadToken } from "@/lib/download-token";
+import { ThankYouActions } from "./ThankYouActions";
+import { Mail, MessageSquare, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Registration Confirmed — Sports Festival 2026",
   robots: { index: false, follow: false },
 };
+
+function maskEmail(email: string) {
+  if (!email || !email.includes("@")) return "your registered email";
+  const [user, domain] = email.split("@");
+  if (user.length <= 2) return `${user[0]}***@${domain}`;
+  return `${user.slice(0, 2)}***${user.slice(-1)}@${domain}`;
+}
+
+function maskPhone(phone: string) {
+  const digits = (phone || "").replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return "your WhatsApp number";
+  return `+91 XXXXX XX${digits.slice(-3)}`;
+}
 
 export default async function ThankYouPage({
   searchParams,
@@ -38,6 +54,15 @@ export default async function ThankYouPage({
     }
   }
 
+  // Generate cryptographic signed download tokens valid for 30 days
+  const ticketToken = regId ? generateDownloadToken(regId, "ticket") : "";
+  const receiptToken = regId ? generateDownloadToken(regId, "receipt") : "";
+  const imageToken = regId ? generateDownloadToken(regId, "ticket-image") : "";
+
+  const ticketDownloadUrl = ticketToken ? `/api/download/${ticketToken}` : "#";
+  const receiptDownloadUrl = receiptToken ? `/api/download/${receiptToken}` : "#";
+  const imageDownloadUrl = imageToken ? `/api/download/${imageToken}?type=ticket-image` : "#";
+
   return (
     <main className="t-ink min-h-[100svh] px-4 py-12 flex flex-col items-center justify-center">
       <div className="w-full max-w-xl mx-auto">
@@ -54,7 +79,8 @@ export default async function ThankYouPage({
           </div>
 
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-            Payment Verified & Confirmed
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Payment Confirmed & Verified
           </span>
 
           <h1 className="display text-3xl sm:text-4xl font-extrabold text-white mt-1">
@@ -68,7 +94,7 @@ export default async function ThankYouPage({
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 text-left space-y-3.5">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <span className="text-xs uppercase tracking-wider text-white/50 font-bold">
-                Registration ID
+                Registration / Client ID
               </span>
               <span className="font-mono text-sm sm:text-base font-extrabold text-gold">
                 {regId || "SF26-PENDING"}
@@ -102,7 +128,7 @@ export default async function ThankYouPage({
               <span className="text-sm sm:text-base font-bold text-emerald-400">
                 {record?.isTest || record?.fee === 1
                   ? "₹1 (Test Fee)"
-                  : record?.fee
+                  : record?.fee !== undefined
                   ? inr(record.fee)
                   : "Paid"}
               </span>
@@ -111,7 +137,7 @@ export default async function ThankYouPage({
             {record?.utr && (
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wider text-white/50 font-bold">
-                  PayU / Bank Ref
+                  PayU / Bank Ref (UTR)
                 </span>
                 <span className="font-mono text-xs sm:text-sm text-white/70">
                   {record.utr}
@@ -120,32 +146,44 @@ export default async function ThankYouPage({
             )}
           </div>
 
-          {/* Ticket / Actions */}
-          <div className="mt-6 space-y-3">
-            {record?.ticketUrl ? (
-              <a
-                href={record.ticketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-gold w-full !min-h-13 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg flex items-center justify-center gap-2"
-              >
-                <span>View & Download Official Ticket</span>
-                <span aria-hidden="true">→</span>
-              </a>
-            ) : (
-              <Link
-                href={`/ticket/${regId}`}
-                className="btn btn-gold w-full !min-h-13 rounded-xl text-black font-extrabold text-base tracking-wide shadow-lg flex items-center justify-center gap-2"
-              >
-                <span>View Official Ticket</span>
-                <span aria-hidden="true">→</span>
-              </Link>
-            )}
+          {/* Delivery Status Callouts */}
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-white/80 flex items-start gap-2">
+              <Mail className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold text-white">Sent to Email</div>
+                <div className="text-[11px] text-white/60 truncate">{maskEmail(record?.email || "")}</div>
+              </div>
+            </div>
 
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-white/80 flex items-start gap-2">
+              <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold text-white">Sent to WhatsApp</div>
+                <div className="text-[11px] text-white/60">{maskPhone(record?.phone || "")}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Download & Share Actions */}
+          <div className="mt-6">
+            <ThankYouActions
+              regId={regId}
+              name={record?.name || "Athlete"}
+              ticketDownloadUrl={ticketDownloadUrl}
+              receiptDownloadUrl={receiptDownloadUrl}
+              imageDownloadUrl={imageDownloadUrl}
+              phone={record?.phone || ""}
+            />
+          </div>
+
+          {/* Athlete Profile / Google Login */}
+          <div className="mt-5 pt-4 border-t border-white/10">
             <Link
               href="/profile"
               className="btn btn-line w-full !min-h-12 rounded-xl border-white/20 text-white font-semibold text-sm hover:border-gold hover:text-gold flex items-center justify-center gap-2"
             >
+              <ShieldCheck className="w-4 h-4 text-gold" />
               <span>Login with Google to view your profile and events</span>
             </Link>
           </div>
@@ -153,7 +191,7 @@ export default async function ThankYouPage({
           {/* Delivery Note */}
           <div className="mt-6 pt-5 border-t border-white/10 text-xs text-white/60 space-y-1">
             <p>
-              Your digital ticket has been sent to your registered WhatsApp and email.
+              Your digital ticket & receipt have been generated and securely dispatched.
             </p>
             <p>
               Need help? Reach out on WhatsApp:{" "}
@@ -181,4 +219,3 @@ export default async function ThankYouPage({
     </main>
   );
 }
-

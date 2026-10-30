@@ -450,9 +450,13 @@ export function RegisterFlow({
           <label className="block">
             <span className="mb-2 block text-xs font-bold tracking-wider text-white/80 uppercase">Email</span>
             <input className={input} value={f.email} onChange={set("email")} type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" />
-            {f.email.length > 3 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && (
+            {f.email.length > 3 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) ? (
               <span className="mt-1.5 block text-xs text-amber-400 font-medium">
                 Enter a valid email address (e.g. you@example.com)
+              </span>
+            ) : (
+              <span className="mt-1.5 block text-[11px] text-white/50">
+                ✓ Your official Entry Pass and Tax Receipt PDF will be delivered directly to this email and WhatsApp upon payment.
               </span>
             )}
           </label>
