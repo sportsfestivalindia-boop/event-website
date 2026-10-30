@@ -155,7 +155,7 @@ export function RegisterFlow({
         testSig: o.testSig,
         method: payMethod === "nb" ? "netbanking" : payMethod,
         bankcode: payMethod === "nb" ? selectedBank : undefined,
-        entry: { name: f.name, email: f.email, phone: f.phone, sport: f.sport, division: f.division, cls: f.cls },
+        entry: { ...f },
       });
 
       const form = document.createElement("form");
