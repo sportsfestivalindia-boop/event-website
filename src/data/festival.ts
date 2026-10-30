@@ -30,6 +30,8 @@ export const EVENT = {
   dateLabel: "4–6 Dec 2026",
   venue: "Baramunda Ground Field",
   city: "Bhubaneswar, Odisha",
+  datesFull: "4, 5 and 6 December 2026 (Friday – Sunday)",
+  venueFull: "Baramunda Ground Field, Bhubaneswar, Odisha",
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=Baramunda+Ground+Bhubaneswar",
   registrationCloses: "2026-11-20T23:59:59+05:30",
   fee: 5000,
@@ -371,3 +373,10 @@ export const registerHref = (champ?: string, division?: string, cls?: string) =>
   const s = q.toString();
   return "/register" + (s ? `?${s}` : "");
 };
+
+
+export function whenForCategory(category?: string): string {
+  if (!category) return EVENT.dateLabel;
+  const champ = CHAMPIONSHIPS.find((c) => category.toLowerCase().includes(c.sport.toLowerCase()) || category.startsWith(c.sport));
+  return champ?.when || "Fri 4 Dec – Sun 6 Dec 2026";
+}

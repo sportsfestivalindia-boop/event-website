@@ -29,6 +29,20 @@ export default function ProfilePage() {
   // Re-pay state
   const [payingRegId, setPayingRegId] = useState<string | null>(null);
 
+  if (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN !== "true") {
+    return (
+      <main className="t-ink min-h-[100svh] px-4 py-12 flex flex-col items-center justify-center text-center">
+        <div className="max-w-md w-full p-8 rounded-2xl border border-white/10 bg-black/40">
+          <h2 className="display text-xl font-bold text-white mb-2">Athlete Portal</h2>
+          <p className="text-xs text-white/60 mb-6">Online athlete profiles will be available soon. Please download your official pass and receipt from your confirmation email or thank-you page.</p>
+          <Link href="/" className="btn btn-gold text-black text-xs font-bold py-2.5 px-4 rounded-xl inline-block">
+            ← Return to Home
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   // Profile download & resend state
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);

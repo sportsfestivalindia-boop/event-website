@@ -118,11 +118,11 @@ export default async function VerifyTicketPage({
               <div className="space-y-1.5 text-xs text-neutral-300 pt-1">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-[#d4af37] shrink-0" />
-                  <span>26, 27, 28 December 2026</span>
+                  <span>{EVENT.datesFull}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#d4af37] shrink-0" />
-                  <span>{EVENT.venue}, {EVENT.city}, Odisha</span>
+                  <span>{EVENT.venueFull}</span>
                 </div>
               </div>
             </div>

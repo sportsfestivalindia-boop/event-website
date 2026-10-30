@@ -2,9 +2,8 @@
 // Responsive HTML + plain text fallback. Includes retry logic with exponential backoff.
 
 import { Resend } from "resend";
-import { generateReceiptPdf, generateTicketPdf, PDFData } from "@/lib/pdf";
-import { EVENT, CHAMPIONSHIPS } from "@/data/festival";
-import { inr } from "@/lib/format";
+import { generateReceiptPdf, generateTicketPdf, PDFData, formatCurrency, formatIstDate } from "@/lib/pdf";
+import { EVENT, whenForCategory } from "@/data/festival";
 import { generateDownloadToken } from "@/lib/download-token";
 import { recordNotificationFailure } from "@/lib/firebase";
 
@@ -29,11 +28,10 @@ export interface EmailParams {
 
 export async function sendConfirmationEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
   const resend = resendClient();
-  let rawFrom = process.env.EMAIL_FROM?.trim() || "India's Biggest Sports Festival <onboarding@resend.dev>";
+  let rawFrom = process.env.EMAIL_FROM?.trim() || "India's Biggest Sports Festival <tickets@sportsfestivalindia.com>";
   
-  // Resend disallows sending from @gmail.com domains. Fallback to onboarding@resend.dev if a gmail address is passed in EMAIL_FROM.
   if (/@gmail\.com/i.test(rawFrom)) {
-    console.warn("[Email Config]: Resend does not allow sending directly from @gmail.com. Using onboarding@resend.dev with reply-to set to", rawFrom);
+    console.warn("[Email Config]: Resend does not allow sending directly from @gmail.com. Using onboarding@resend.dev");
     rawFrom = "India's Biggest Sports Festival <onboarding@resend.dev>";
   }
   const fromEmail = rawFrom;
@@ -48,17 +46,19 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
     return { success: false, error: "Invalid recipient email" };
   }
 
+  const siteBase = process.env.SITE_URL?.trim() || params.origin || "https://sportsfestivalindia.com";
+
   // Generate signed download URLs
   const ticketToken = generateDownloadToken(params.regId, "ticket");
   const receiptToken = generateDownloadToken(params.regId, "receipt");
-  const ticketDownloadUrl = `${params.origin}/api/download/${ticketToken}`;
-  const receiptDownloadUrl = `${params.origin}/api/download/${receiptToken}`;
-  const profileUrl = `${params.origin}/profile`;
-  const venueMapsUrl = "https://maps.google.com/?q=Jawaharlal+Nehru+Indoor+Stadium+Cuttack+Odisha";
+  const ticketDownloadUrl = `${siteBase}/api/download/${ticketToken}`;
+  const receiptDownloadUrl = `${siteBase}/api/download/${receiptToken}`;
+  const profileUrl = `${siteBase}/profile`;
+  const venueMapsUrl = EVENT.mapsUrl;
 
-  // Category schedule
-  const champ = CHAMPIONSHIPS.find((c) => params.category.startsWith(c.sport));
-  const eventDays = champ?.when || "26, 27, 28 December 2026";
+  // Category schedule & dates from single source of truth
+  const compSchedule = whenForCategory(params.category);
+  const enableGoogleLogin = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN === "true";
 
   const pdfData: PDFData = {
     regId: params.regId,
@@ -70,7 +70,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
     amount: params.amount,
     utr: params.utr,
     paymentMode: params.paymentMode,
-    verifyUrl: `${params.origin}/verify-ticket/${ticketToken}`,
+    verifyUrl: `${siteBase}/verify-ticket/${ticketToken}`,
     isTest: params.isTest,
   };
 
@@ -115,7 +115,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
             <td style="padding: 32px 28px 20px 28px; text-align: center;">
               <p style="margin: 0 0 8px 0; color: #d4af37; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">All Odisha Gym Association Presents</p>
               <h1 style="margin: 0 0 10px 0; font-size: 24px; font-weight: 800; color: #ffffff; line-height: 1.3;">INDIA'S BIGGEST SPORTS FESTIVAL 2026</h1>
-              <p style="margin: 0; color: #a0aec0; font-size: 14px;">National Multi-Sport Championship & Expo</p>
+              <p style="margin: 0; color: #a0aec0; font-size: 14px;">National Multi-Sport Championship & Expo (4–6 Dec 2026)</p>
             </td>
           </tr>
 
@@ -143,7 +143,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
                     <div style="color: #d4af37; font-size: 18px; font-weight: 800; font-family: monospace; margin-top: 2px;">${params.regId}</div>
                   </td>
                   <td style="padding-bottom: 12px; border-bottom: 1px solid #2d3342; text-align: right;">
-                    <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600;">Ticket / Pass No</span>
+                    <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600;">Pass Number</span>
                     <div style="color: #ffffff; font-size: 15px; font-weight: 700; font-family: monospace; margin-top: 2px;">${params.ticketNo}</div>
                   </td>
                 </tr>
@@ -151,16 +151,17 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
                   <td colspan="2" style="padding: 12px 0; border-bottom: 1px solid #2d3342;">
                     <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600;">Category / Discipline</span>
                     <div style="color: #ffffff; font-size: 15px; font-weight: 600; margin-top: 2px;">${params.category}</div>
+                    <div style="color: #d4af37; font-size: 13px; font-weight: 600; margin-top: 4px;">🗓️ Competition Day: ${compSchedule}</div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding-top: 12px;">
                     <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600;">Amount Paid</span>
-                    <div style="color: #4ade80; font-size: 16px; font-weight: 700; margin-top: 2px;">${inr(params.amount)}</div>
+                    <div style="color: #4ade80; font-size: 16px; font-weight: 700; margin-top: 2px;">${formatCurrency(params.amount, params.isTest)}</div>
                   </td>
                   <td style="padding-top: 12px; text-align: right;">
                     <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600;">PayU UTR / Bank Ref</span>
-                    <div style="color: #e2e8f0; font-size: 13px; font-family: monospace; margin-top: 2px;">${params.utr}</div>
+                    <div style="color: #e2e8f0; font-size: 13px; font-family: monospace; margin-top: 2px;">${params.utr || "CONFIRMED"}</div>
                   </td>
                 </tr>
               </table>
@@ -196,9 +197,10 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
                 <tr>
                   <td>
                     <h3 style="margin: 0 0 6px 0; color: #ffffff; font-size: 15px; font-weight: 700;">Event Dates & Venue</h3>
-                    <p style="margin: 0 0 6px 0; color: #d4af37; font-size: 14px; font-weight: 600;">🗓️ Competition Day: ${eventDays}</p>
+                    <p style="margin: 0 0 4px 0; color: #d4af37; font-size: 14px; font-weight: 600;">🗓️ Festival Dates: ${EVENT.datesFull}</p>
+                    <p style="margin: 0 0 6px 0; color: #ffffff; font-size: 13px; font-weight: 600;">⏱️ Your Schedule: ${compSchedule}</p>
                     <p style="margin: 0 0 8px 0; color: #cbd5e1; font-size: 13px; line-height: 1.4;">
-                      📍 <strong>${EVENT.venue}</strong>, ${EVENT.city}, Odisha
+                      📍 <strong>${EVENT.venueFull}</strong>
                     </p>
                     <a href="${venueMapsUrl}" target="_blank" style="color: #60a5fa; font-size: 12px; text-decoration: underline;">
                       Open Venue in Google Maps →
@@ -217,11 +219,12 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
                 <li>Official Entry Pass (PDF on phone or printed copy)</li>
                 <li>Original Government Photo ID (Aadhaar / Voter ID / Passport / Driving Licence)</li>
                 <li>Age Proof certificate (for Junior or Masters divisions)</li>
-                <li>Federation or Gym Card (if registered under an affiliated body)</li>
+                <li>Report at accreditation desk 90 minutes prior to your division call</li>
               </ul>
             </td>
           </tr>
 
+          ${enableGoogleLogin ? `
           <!-- Profile Link -->
           <tr>
             <td style="padding: 0 28px 28px 28px;" align="center">
@@ -230,6 +233,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
               </a>
             </td>
           </tr>
+          ` : ""}
 
           <!-- Footer -->
           <tr>
@@ -238,7 +242,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
                 Organised by <strong>All Odisha Gym Association (AOGA)</strong>
               </p>
               <p style="margin: 0 0 10px 0; color: #64748b; font-size: 11px;">
-                Need help? WhatsApp: +91 80189 58655 / 97788 03677 · Email: aogaofficial@gmail.com
+                Need help? WhatsApp / Phone: ${EVENT.phone} · Email: ${EVENT.email}
               </p>
               <p style="margin: 0; color: #475569; font-size: 10px;">
                 This is an official transaction confirmation email sent to ${cleanEmail}.
@@ -256,7 +260,7 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
 
   const textBody = `
 INDIA'S BIGGEST SPORTS FESTIVAL 2026
-National Multi-Sport Championship & Expo
+National Multi-Sport Championship & Expo (4–6 Dec 2026)
 Organised by All Odisha Gym Association (AOGA)
 
 ==================================================
@@ -264,17 +268,19 @@ REGISTRATION CONFIRMED
 ==================================================
 Athlete Name: ${params.name}
 Registration ID: ${params.regId}
-Ticket / Pass No: ${params.ticketNo}
+Pass No: ${params.ticketNo}
 Category: ${params.category}
-Amount Paid: ${inr(params.amount)}
-Payment Reference: ${params.utr}
-Competition Dates: ${eventDays}
-Venue: ${EVENT.venue}, ${EVENT.city}, Odisha
+Amount Paid: ${formatCurrency(params.amount, params.isTest)}
+Payment Reference: ${params.utr || "CONFIRMED"}
+Festival Dates: ${EVENT.datesFull}
+Your Competition Day: ${compSchedule}
+Venue: ${EVENT.venueFull}
+Weigh-in & Reporting: 90 mins prior to division call at Baramunda Ground Field
 
 DOWNLOAD YOUR PASS & RECEIPT:
 - Ticket PDF: ${ticketDownloadUrl}
 - Receipt PDF: ${receiptDownloadUrl}
-- Athlete Profile: ${profileUrl}
+${enableGoogleLogin ? `- Athlete Profile: ${profileUrl}` : ""}
 
 WHAT TO BRING ON EVENT DAY:
 1. Official Entry Pass (show on phone or printed copy)
@@ -282,8 +288,8 @@ WHAT TO BRING ON EVENT DAY:
 3. Age proof (for Junior or Masters categories)
 4. Gym or federation card (if applicable)
 
-Organiser Helpline: +91 80189 58655 / 97788 03677
-Email: aogaofficial@gmail.com
+Organiser Helpline: ${EVENT.phone}
+Email: ${EVENT.email}
 Venue Maps: ${venueMapsUrl}
   `.trim();
 
@@ -313,7 +319,6 @@ Venue Maps: ${venueMapsUrl}
   while (attempt < 3) {
     attempt++;
     try {
-      // 1. Send confirmation to Athlete
       const result = await resend.emails.send({
         from: fromEmail,
         to: [cleanEmail],
@@ -330,13 +335,13 @@ Venue Maps: ${venueMapsUrl}
 
       console.log(`[Email Success] Sent confirmation email to ${cleanEmail} for ${params.regId} on attempt ${attempt}`);
 
-      // 2. Send internal copy to ALERT_EMAILS
+      // Internal copy to ALERT_EMAILS
       if (alertEmails.length > 0) {
         resend.emails.send({
           from: fromEmail,
           to: alertEmails,
           replyTo: cleanEmail,
-          subject: `NEW REGISTRATION: ${params.name} - ${params.category} (${inr(params.amount)}) [${params.regId}]`,
+          subject: `NEW REGISTRATION: ${params.name} - ${params.category} (${formatCurrency(params.amount, params.isTest)}) [${params.regId}]`,
           html: htmlBody,
           text: textBody,
           attachments: attachments.length > 0 ? attachments : undefined,
@@ -348,12 +353,11 @@ Venue Maps: ${venueMapsUrl}
       lastErr = err instanceof Error ? err.message : String(err);
       console.warn(`[Email Attempt ${attempt} Failed] ${cleanEmail}:`, lastErr);
       if (attempt < 3) {
-        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1))); // 1s, 2s backoff
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
       }
     }
   }
 
-  // If all 3 attempts fail, record failure in Firestore and notify alert emails
   await recordNotificationFailure({
     regId: params.regId,
     type: "email",
@@ -362,15 +366,5 @@ Venue Maps: ${venueMapsUrl}
     timestamp: new Date().toISOString(),
   });
 
-  if (alertEmails.length > 0) {
-    resend.emails.send({
-      from: fromEmail,
-      to: alertEmails,
-      subject: `[ALERT] Failed to deliver ticket email to ${cleanEmail} (${params.regId})`,
-      text: `Failed to deliver registration confirmation email to ${cleanEmail} (${params.name}) for ${params.regId} after 3 attempts.\n\nError: ${lastErr}\n\nPlease reach out manually or check Resend dashboard.`,
-    }).catch(() => {});
-  }
-
   return { success: false, error: lastErr };
 }
-

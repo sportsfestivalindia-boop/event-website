@@ -274,7 +274,9 @@ export function Chrome() {
               { label: "Venue & Directions", href: "#venue", icon: "📍", sub: "Baramunda, Bhubaneswar" },
               { label: "FAQ", href: "#faq", icon: "❓", sub: "Rules & Policies" },
               { label: "Book a Stall", href: "/partner#stalls", icon: "🎪", sub: "Brand Expo" },
-              { label: "My Profile & Passes", href: "/profile", icon: "👤", sub: "Login with Google" },
+              ...(process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN === "true"
+                ? [{ label: "My Profile & Passes", href: "/profile", icon: "👤", sub: "Login with Google" }]
+                : []),
             ].map((item) => (
               <a
                 key={item.href}

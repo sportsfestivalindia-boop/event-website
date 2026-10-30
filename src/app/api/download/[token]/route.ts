@@ -1,13 +1,12 @@
 // GET /api/download/[token]?type=receipt|ticket|ticket-image
-// Serves secure, signed, expiring (30-day) downloadable PDFs and images.
+// Serves secure, signed, expiring (30-day) downloadable PDFs and high-res 1080px ticket PNGs.
 // Rate limited, tamper-proof, Content-Disposition: attachment with official naming.
 
 import { NextRequest } from "next/server";
 import { verifyDownloadToken } from "@/lib/download-token";
 import { getRegistrationFromFirestore } from "@/lib/firebase";
-import { generateReceiptPdf, generateTicketPdf, PDFData } from "@/lib/pdf";
+import { generateReceiptPdf, generateTicketPdf, generateTicketPng, PDFData } from "@/lib/pdf";
 import { checkIpRateLimit } from "@/lib/rate-limit";
-import QRCode from "qrcode";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +30,7 @@ export async function GET(
 
   const verified = verifyDownloadToken(token);
   if (!verified) {
-    return new Response("This download link is invalid or has expired (valid for 30 days). Please request a new link from your athlete profile.", {
+    return new Response("This download link is invalid or has expired (valid for 30 days).", {
       status: 403,
       headers: { "Content-Type": "text/plain" },
     });
@@ -52,7 +51,8 @@ export async function GET(
     return new Response("Payment is not confirmed for this registration.", { status: 403 });
   }
 
-  const origin = req.nextUrl.origin;
+  // Always use official production domain for verification URL
+  const siteBase = process.env.SITE_URL?.trim() || "https://sportsfestivalindia.com";
   const pdfData: PDFData = {
     regId: reg.regId,
     ticketNo: reg.ticketNo || `SFT-${reg.regId.slice(-6)}`,
@@ -62,7 +62,7 @@ export async function GET(
     category: reg.category,
     amount: reg.fee,
     utr: reg.utr || "CONFIRMED",
-    verifyUrl: `${origin}/verify-ticket/${token}`,
+    verifyUrl: `${siteBase}/verify-ticket/${token}`,
     isTest: reg.isTest,
   };
 
@@ -81,17 +81,10 @@ export async function GET(
     }
 
     if (targetType === "ticket-image") {
-      // High-res QR pass badge for WhatsApp / phone gallery
-      const qrPng = await QRCode.toBuffer(pdfData.verifyUrl, {
-        width: 600,
-        margin: 2,
-        color: {
-          dark: "#0b0c10",
-          light: "#ffffff",
-        },
-      });
+      // Full 1080px wide official entry pass PNG
+      const pngBuffer = await generateTicketPng(pdfData);
       const filename = `AOGA2026-Ticket-${reg.regId}.png`;
-      return new Response(new Uint8Array(qrPng), {
+      return new Response(new Uint8Array(pngBuffer), {
         status: 200,
         headers: {
           "Content-Type": "image/png",
