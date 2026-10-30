@@ -33,10 +33,10 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: "India’s Biggest Sports Festival 2026", title, description, url: "/", locale: "en_IN", images: [cover] },
   twitter: { card: "summary_large_image", title, description, images: [cover] },
   verification: {
-    google: "e44773b32774749a",
-  },
-  other: {
-    "google-site-verification": "googlee44773b32774749a.html",
+    google: [
+      "DuYmhaA--L-6koZEI0wX0IP4m4zvVDy_zCTY5QlPPXM",
+      "e44773b32774749a",
+    ],
   },
 };
 
