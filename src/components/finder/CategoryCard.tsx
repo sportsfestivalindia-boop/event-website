@@ -46,11 +46,11 @@ export function CategoryCard({
         />
 
         {/* Card Header */}
-        <div className="relative flex items-center justify-between border-b border-white/15 bg-white/[0.04] px-6 py-4">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-white/80">
+        <div className="relative flex flex-col items-start gap-1 border-b border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-6 sm:py-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-white/60 sm:text-xs sm:font-bold sm:tracking-[0.25em] sm:text-white/80">
             Your Category
           </span>
-          <span className="text-xs font-bold uppercase tracking-widest text-[#FFE600]">
+          <span className="text-xs font-bold uppercase tracking-wide text-[#FFE600] sm:tracking-widest">
             {champ.name}
           </span>
         </div>
