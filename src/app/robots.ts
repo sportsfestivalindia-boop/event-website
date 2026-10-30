@@ -15,7 +15,7 @@ export default function robots(): MetadataRoute.Robots {
         "/ticket/",
       ],
     },
-    sitemap: "https://sportsfestivalindia.com/sitemap.xml",
+    sitemap: "https://www.sportsfestivalindia.com/sitemap.xml",
   };
 }
 

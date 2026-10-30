@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://sportsfestivalindia.com";
+  const baseUrl = "https://www.sportsfestivalindia.com";
   const now = new Date();
 
   const staticSlugs = [

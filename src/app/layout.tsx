@@ -26,7 +26,7 @@ const description =
 const cover = { url: "/img/og-cover.jpg", width: 1200, height: 630, alt: "India’s Biggest Sports Festival 2026 — ₹1.5 Crore prize money, 4–6 December, Bhubaneswar" };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sportsfestivalindia.com"),
+  metadataBase: new URL("https://www.sportsfestivalindia.com"),
   title,
   description,
   icons: { icon: "/img/icon-512.png", apple: "/img/icon-512.png" },
