@@ -24,6 +24,7 @@ import {
 import {
   computePayableFee,
   checkDailyTestLimit,
+  isApprovedTestPhone,
 } from "@/lib/test-fee";
 
 export async function POST(req: Request) {
@@ -67,19 +68,11 @@ export async function POST(req: Request) {
     return Response.json({ error: "This registration has already been paid and confirmed." }, { status: 400 });
   }
 
-  // Check if test payment requested
-  const isTestRequested =
+  // Check if hidden test category / token was used
+  const isHiddenTestCategory =
     b.entry?.sport === TEST_SPORT_ID ||
     b.label?.includes("TEST ENTRY") ||
-    Number(b.amount) === TEST_FEE ||
-    b.testToken !== undefined ||
-    b.testSig !== undefined ||
-    existing?.isTest === true;
-
-  // Deadline enforcement
-  if (new Date() > new Date(EVENT.registrationCloses) && !isTestRequested) {
-    return Response.json({ error: "Registrations have officially closed for this festival." }, { status: 400 });
-  }
+    b.testToken !== undefined;
 
   let amount: number;
   let productinfo: string;
@@ -87,8 +80,16 @@ export async function POST(req: Request) {
   let email = b.entry?.email ?? existing?.email ?? "noreply@sportsfestivalindia.com";
   let phone = b.entry?.phone ?? existing?.phone ?? "";
 
-  if (isTestRequested) {
-    // 3. Reject test category unless flag is on AND valid token / signature is presented
+  // Check phone-based test fee override (for client verification via normal flow)
+  const isApprovedPhone = isApprovedTestPhone(phone);
+
+  // Deadline enforcement
+  if (new Date() > new Date(EVENT.registrationCloses) && !isHiddenTestCategory && !isApprovedPhone) {
+    return Response.json({ error: "Registrations have officially closed for this festival." }, { status: 400 });
+  }
+
+  if (isHiddenTestCategory) {
+    // Strict validation for hidden test category (?test=TOKEN)
     const tokenValid = isTestEntryTokenValid(b.testToken);
     const sigValid = verifyTestRegistration(regId, b.testSig);
 
