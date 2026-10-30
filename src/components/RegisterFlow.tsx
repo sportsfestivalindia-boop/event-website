@@ -35,7 +35,7 @@ export function RegisterFlow({
   onClose,
   testEntryToken,
 }: {
-  initial: { sport?: string; division?: string; cls?: string; test?: boolean };
+  initial: { sport?: string; division?: string; cls?: string; test?: boolean; name?: string; dob?: string; phone?: string; email?: string; city?: string; association?: string };
   resume?: Resume;
   isModal?: boolean;
   onClose?: () => void;
@@ -51,12 +51,12 @@ export function RegisterFlow({
     sport: champ0.id,
     division: div0.id,
     cls: div0.classes.includes(initial.cls ?? "") ? initial.cls! : div0.classes[0],
-    name: resume?.name ?? "",
-    dob: resume?.dob ?? "",
-    phone: resume?.phone ?? "",
-    email: resume?.email ?? "",
-    city: resume?.city ?? "",
-    association: "",
+    name: resume?.name ?? initial.name ?? "",
+    dob: resume?.dob ?? initial.dob ?? "",
+    phone: resume?.phone ?? initial.phone ?? "",
+    email: resume?.email ?? initial.email ?? "",
+    city: resume?.city ?? initial.city ?? "",
+    association: initial.association ?? "",
   });
   const [step, setStep] = useState(1);
   const [agree, setAgree] = useState(false);
@@ -417,8 +417,8 @@ export function RegisterFlow({
                 } catch {}
               }}
               type="date"
-              min="1930-01-01"
-              max="2012-12-31"
+              min="1920-01-01"
+              max={new Date().toISOString().split("T")[0]}
               autoComplete="bday"
             />
             <span className="mt-1.5 block text-xs text-white/60">Tap the box to pick your date of birth</span>
@@ -712,7 +712,23 @@ export function RegisterFlow({
         </section>
       )}
 
-      {error && <p className="mt-6 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {error && (
+        <div className="mt-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>{error}</span>
+          {(error.toLowerCase().includes("date of birth") || error.toLowerCase().includes("name") || error.toLowerCase().includes("mobile") || error.toLowerCase().includes("email") || error.toLowerCase().includes("city")) && (
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setStep(2);
+              }}
+              className="text-xs font-bold text-yellow underline underline-offset-2 hover:text-white shrink-0"
+            >
+              ← Edit details in Step 2
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Desktop & In-Modal Action Buttons */}
       

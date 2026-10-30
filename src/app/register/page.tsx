@@ -18,6 +18,12 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
           division: isTestAuthorized ? TEST_DIVISION_ID : one(q.division),
           cls: isTestAuthorized ? TEST_CLASS_ID : one(q.class),
           test: isTestAuthorized,
+          name: one(q.name),
+          dob: one(q.dob),
+          phone: one(q.phone),
+          email: one(q.email),
+          city: one(q.city),
+          association: one(q.association),
         }}
         testEntryToken={isTestAuthorized ? testParam : undefined}
       />

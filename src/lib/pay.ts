@@ -16,17 +16,39 @@ export type Entry = {
 };
 
 /** Validates the entry against the facts file; returns the category label + fee in rupees, or an error. */
+/** Normalizes dates like DD/MM/YYYY, DD-MM-YYYY, or YYYY-MM-DD into canonical YYYY-MM-DD */
+export function normalizeDob(raw?: string): string {
+  if (!raw) return "";
+  const s = raw.trim();
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(s)) {
+    const [y, m, d] = s.split(/[-/]/);
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(s)) {
+    const [d, m, y] = s.split(/[-/]/);
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return s;
+}
+
+/** Validates the entry against the facts file; returns the category label + fee in rupees, or an error. */
 export function checkEntry(e: Partial<Entry>): { ok: true; fee: number; label: string } | { ok: false; error: string } {
   const champ = CHAMPIONSHIPS.find((c) => c.id === e.sport);
   const div = champ?.divisions.find((d) => d.id === e.division);
   if (!champ || !div || !e.cls || !div.classes.includes(e.cls)) return { ok: false, error: "Please choose a valid category." };
   if (!e.name || e.name.trim().length < 2 || e.name.length > 80) return { ok: false, error: "Please enter your full name." };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(e.dob ?? "") || new Date(e.dob!) > new Date("2012-12-31") || new Date(e.dob!) < new Date("1930-01-01"))
-    return { ok: false, error: "Please enter a valid date of birth." };
+
+  const dob = normalizeDob(e.dob);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return { ok: false, error: "Please enter your date of birth." };
+  const dobDate = new Date(dob);
+  if (isNaN(dobDate.getTime())) return { ok: false, error: "Please enter a valid date of birth." };
+  if (dobDate > new Date()) return { ok: false, error: "Date of birth cannot be in the future." };
+  if (dobDate < new Date("1920-01-01")) return { ok: false, error: "Please enter a valid date of birth." };
+
   if (!/^[6-9]\d{9}$/.test(e.phone ?? "")) return { ok: false, error: "Please enter a valid 10-digit mobile number." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email ?? "")) return { ok: false, error: "Please enter a valid email address." };
   if (!e.city || e.city.trim().length < 2) return { ok: false, error: "Please enter your city." };
-  if (div.id === "masters" && new Date(e.dob!) > new Date("1981-12-04")) return { ok: false, error: "Masters is for athletes aged 45 and above." };
+  if (div.id === "masters" && dobDate > new Date("1981-12-04")) return { ok: false, error: "Masters is for athletes aged 45 and above." };
   const label = `${champ.sport} · ${div.name}${div.classes.length > 1 ? ` · ${e.cls}` : ""}`;
   return { ok: true, fee: div.fee ?? EVENT.fee, label };
 }
