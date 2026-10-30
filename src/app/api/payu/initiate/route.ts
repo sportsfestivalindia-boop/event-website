@@ -133,13 +133,6 @@ export async function POST(req: Request) {
     // Check phone-based test fee override (for client verification)
     const phoneTest = computePayableFee(verified.fee, b.entry.phone);
     if (phoneTest.isTest) {
-      const daily = checkDailyTestLimit(b.entry.phone!);
-      if (!daily.allowed) {
-        return Response.json(
-          { error: "Daily test payment limit exceeded (max 5 per day)." },
-          { status: 429 },
-        );
-      }
       amount = phoneTest.fee;
       console.log(`[PayU Initiate] Test fee override applied for phone ${b.entry.phone}: locked to ₹${amount.toFixed(2)} (original ₹${phoneTest.originalFee})`);
     } else {

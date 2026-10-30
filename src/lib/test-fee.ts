@@ -38,7 +38,7 @@ export function isApprovedTestPhone(phone: unknown): boolean {
 /** Returns the daily test payment limit per phone (default: 5). */
 export function getDailyTestLimit(): number {
   const envLimit = Number(process.env.TEST_FEE_DAILY_LIMIT);
-  return Number.isFinite(envLimit) && envLimit > 0 ? envLimit : 5;
+  return Number.isFinite(envLimit) && envLimit > 0 ? envLimit : 50;
 }
 
 // ── In-Memory Daily Tracker (Resets automatically every midnight UTC/IST) ─────────

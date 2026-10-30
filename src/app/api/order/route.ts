@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       if (!daily.allowed) {
         console.warn(`[TEST FEE LIMIT] Daily limit reached for phone: ${entry.phone}`);
         return Response.json(
-          { error: "Daily test payment limit exceeded (max 5 per day). Regular fee applies." },
+          { error: `Daily test payment limit exceeded (max ${daily.limit} per day). Regular fee applies.` },
           { status: 429 },
         );
       }
