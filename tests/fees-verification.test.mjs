@@ -44,3 +44,4 @@ assert.strictEqual(feeCheck.fee, 5000, "Bodybuilding fee must be full 5000");
 console.log("✓ Test fee override disabled: OK");
 console.log("✓ Bodybuilding fee remains 5000: OK");
 console.log("All fee verification tests PASSED!");
+

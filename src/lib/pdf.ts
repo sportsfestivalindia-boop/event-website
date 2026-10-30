@@ -29,14 +29,32 @@ export interface PDFData {
 let fontRegularBytes: Buffer | null = null;
 let fontBoldBytes: Buffer | null = null;
 
-try {
-  const fontDir = path.join(process.cwd(), "src", "assets", "fonts");
-  const regPath = path.join(fontDir, "NotoSans-Regular.ttf");
-  const boldPath = path.join(fontDir, "NotoSans-Bold.ttf");
-  if (fs.existsSync(regPath)) fontRegularBytes = fs.readFileSync(regPath);
-  if (fs.existsSync(boldPath)) fontBoldBytes = fs.readFileSync(boldPath);
-} catch (e) {
-  console.warn("[PDF Fonts Warning]: Could not load TTF fonts from disk, falling back to StandardFonts:", e);
+function getFontBytes(): { regular: Buffer | null; bold: Buffer | null } {
+  if (fontRegularBytes && fontBoldBytes) return { regular: fontRegularBytes, bold: fontBoldBytes };
+
+  const candidateDirs = [
+    path.join(process.cwd(), "src", "assets", "fonts"),
+    path.join(process.cwd(), "assets", "fonts"),
+    path.join(process.cwd(), ".next", "server", "assets", "fonts"),
+    path.resolve(__dirname, "../../src/assets/fonts"),
+    path.resolve(__dirname, "../assets/fonts"),
+  ];
+
+  for (const dir of candidateDirs) {
+    try {
+      const regPath = path.join(dir, "NotoSans-Regular.ttf");
+      const boldPath = path.join(dir, "NotoSans-Bold.ttf");
+      if (fs.existsSync(regPath) && fs.existsSync(boldPath)) {
+        fontRegularBytes = fs.readFileSync(regPath);
+        fontBoldBytes = fs.readFileSync(boldPath);
+        return { regular: fontRegularBytes, bold: fontBoldBytes };
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return { regular: null, bold: null };
 }
 
 /** Formats INR currency cleanly (e.g. ₹5,000 or ₹1.00 (Test)) */
@@ -61,12 +79,13 @@ export function formatIstDate(dateStr?: string): string {
 
 /** Embeds fonts with Unicode support via fontkit if available */
 async function loadFonts(pdfDoc: PDFDocument) {
-  if (fontRegularBytes && fontBoldBytes) {
+  const { regular: regBytes, bold: boldBytes } = getFontBytes();
+  if (regBytes && boldBytes) {
     try {
       pdfDoc.registerFontkit(fontkit);
       const [regular, bold, mono] = await Promise.all([
-        pdfDoc.embedFont(fontRegularBytes),
-        pdfDoc.embedFont(fontBoldBytes),
+        pdfDoc.embedFont(regBytes),
+        pdfDoc.embedFont(boldBytes),
         pdfDoc.embedFont(StandardFonts.CourierBold),
       ]);
       return { regular, bold, mono, isUnicode: true };
@@ -625,16 +644,16 @@ export async function generateReceiptPdf(data: PDFData): Promise<Uint8Array> {
   page.drawText(sanitize("PAYMENT TRANSACTION DETAILS", isUnicode), { x: margin + 16, y, size: 8.5, font: bold, color: lightGray });
 
   y -= 18;
-  page.drawText(sanitize("Payment Gateway:"), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
-  page.drawText(sanitize("PayU Hosted Checkout (256-bit SSL Encrypted)"), { x: margin + 130, y, size: 9, font: bold, color: black });
+  page.drawText(sanitize("Payment Gateway:", isUnicode), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
+  page.drawText(sanitize("PayU Hosted Checkout (256-bit SSL Encrypted)", isUnicode), { x: margin + 130, y, size: 9, font: bold, color: black });
 
   y -= 16;
-  page.drawText(sanitize("Bank Reference (UTR):"), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
-  page.drawText(sanitize(data.utr || "CONFIRMED"), { x: margin + 130, y, size: 9, font: mono, color: black });
+  page.drawText(sanitize("Bank Reference (UTR):", isUnicode), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
+  page.drawText(sanitize(data.utr || "CONFIRMED", isUnicode), { x: margin + 130, y, size: 9, font: mono, color: black });
 
   y -= 16;
-  page.drawText(sanitize("Payment Channel:"), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
-  page.drawText(sanitize(data.paymentMode || "UPI / Net Banking / Cards"), { x: margin + 130, y, size: 9, font: regular, color: black });
+  page.drawText(sanitize("Payment Channel:", isUnicode), { x: margin + 16, y, size: 9, font: regular, color: darkGray });
+  page.drawText(sanitize(data.paymentMode || "UPI / Net Banking / Cards", isUnicode), { x: margin + 130, y, size: 9, font: regular, color: black });
 
   // Refund Policy & Instructions Notice
   y -= 45;

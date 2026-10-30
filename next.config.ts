@@ -3,8 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // lets phones on the same Wi-Fi load dev assets (review on a real device)
   allowedDevOrigins: ["192.168.0.64"],
-  // fonts + logo the ticket PNG reads from disk at runtime
-  outputFileTracingIncludes: { "/ticket/**": ["./assets/**/*", "./public/img/mark.png"] },
+  // fonts + logo the ticket PNG/PDF reads from disk at runtime in serverless functions
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./src/assets/fonts/**/*"],
+    "/ticket/**": ["./src/assets/fonts/**/*", "./public/img/mark.png"],
+  },
   images: {
     qualities: [75, 90, 100],
     remotePatterns: [
