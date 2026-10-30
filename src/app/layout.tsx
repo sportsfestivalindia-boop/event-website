@@ -32,6 +32,12 @@ export const metadata: Metadata = {
   icons: { icon: "/img/icon-512.png", apple: "/img/icon-512.png" },
   openGraph: { type: "website", siteName: "India’s Biggest Sports Festival 2026", title, description, url: "/", locale: "en_IN", images: [cover] },
   twitter: { card: "summary_large_image", title, description, images: [cover] },
+  verification: {
+    google: "e44773b32774749a",
+  },
+  other: {
+    "google-site-verification": "googlee44773b32774749a.html",
+  },
 };
 
 export const viewport: Viewport = { themeColor: "#000000" };
