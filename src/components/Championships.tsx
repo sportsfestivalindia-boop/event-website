@@ -63,7 +63,7 @@ export function Championships() {
         </div>
 
         {/* 6 pop-up cards */}
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {SPORTS.map((s, i) => (
             <li
               key={s.no}
@@ -75,7 +75,7 @@ export function Championships() {
             >
               <a
                 href="#arena"
-                className="cp-card group relative flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-2xl border border-white/15 bg-black p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#FFE600] hover:shadow-[0_24px_60px_-24px_rgba(255,230,0,0.55)]"
+                className="cp-card group relative flex aspect-square sm:aspect-auto h-full sm:min-h-[260px] flex-col justify-between overflow-hidden rounded-2xl border border-white/15 bg-black p-3.5 min-[380px]:p-4 sm:p-7 transition-all duration-300 hover:-translate-y-2 hover:border-[#FFE600] hover:shadow-[0_24px_60px_-24px_rgba(255,230,0,0.55)]"
               >
                 {/* Yellow fill neeche se upar (hover par) */}
                 <span
@@ -86,26 +86,26 @@ export function Championships() {
                 {/* Bada outline number */}
                 <span
                   aria-hidden
-                  className="cp-num pointer-events-none absolute -right-3 -top-6 select-none text-[9rem] font-black leading-none"
+                  className="cp-num pointer-events-none absolute -right-1 -top-2 sm:-right-3 sm:-top-6 select-none text-[4.5rem] min-[380px]:text-[5rem] sm:text-[9rem] font-black leading-none"
                 >
                   {s.no}
                 </span>
 
                 {/* Upar: sport icon (orange background, hover pe yellow icon in black box) */}
-                <div className="relative z-10 flex size-12 items-center justify-center rounded-xl bg-[#FF6A00] text-black transition-colors duration-300 group-hover:bg-black group-hover:text-[#FFE600]">
-                  <s.icon className="size-6" strokeWidth={2.2} />
+                <div className="relative z-10 flex size-8 min-[380px]:size-9 sm:size-12 items-center justify-center rounded-lg sm:rounded-xl bg-[#FF6A00] text-black transition-colors duration-300 group-hover:bg-black group-hover:text-[#FFE600]">
+                  <s.icon className="size-4 min-[380px]:size-4.5 sm:size-6" strokeWidth={2.2} />
                 </div>
 
                 {/* Neeche: sport ka naam */}
                 <div className="relative z-10">
-                  <h3 className="display text-4xl font-black uppercase leading-none text-white transition-colors duration-300 group-hover:text-black sm:text-5xl">
+                  <h3 className="display text-xl min-[380px]:text-2xl font-black uppercase leading-none text-white transition-colors duration-300 group-hover:text-black sm:text-5xl">
                     {s.name}
                   </h3>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm uppercase tracking-widest text-white/60 transition-colors duration-300 group-hover:text-black/70 font-semibold">
+                  <div className="mt-1.5 sm:mt-3 flex items-center justify-between gap-1">
+                    <span className="text-[10px] min-[380px]:text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest text-white/60 transition-colors duration-300 group-hover:text-black/70 font-semibold truncate">
                       {s.sub}
                     </span>
-                    <ArrowUpRight className="size-6 text-[#FF6A00] transition-all duration-300 group-hover:rotate-45 group-hover:text-black" />
+                    <ArrowUpRight className="size-3.5 min-[380px]:size-4 sm:size-6 text-[#FF6A00] transition-all duration-300 group-hover:rotate-45 group-hover:text-black shrink-0" />
                   </div>
                 </div>
               </a>

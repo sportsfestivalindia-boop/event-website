@@ -170,17 +170,17 @@ export function StatsSection() {
         {/* B) STATS STRIP (4 items in one row, scoreboard style, NO boxes) */}
         <div className="relative">
           {/* Thin horizontal line above whole strip (draws scaleX 0 to 1) */}
-          <div className="stat-draw-x h-[1px] w-full bg-white/15" />
+          <div className="stat-draw-x hidden sm:block h-[1px] w-full bg-white/15" />
 
-          {/* 4 columns desktop, 2x2 tablet, 1 column mobile */}
-          <div className="stats-strip-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 4 columns desktop, 2x2 tablet, 2x2 square cards mobile */}
+          <div className="stats-strip-grid grid grid-cols-2 gap-3 sm:gap-0 sm:grid-cols-2 lg:grid-cols-4">
             {stripStats.map((item, index) => (
               <div
                 key={item.id}
                 tabIndex={0}
                 role="region"
                 aria-label={`${item.raw} ${item.label}`}
-                className="stat-strip-item stat-slide-up group relative flex flex-col justify-between p-6 sm:p-8 cursor-default"
+                className="stat-strip-item stat-slide-up group relative flex aspect-square sm:aspect-auto flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 min-[380px]:p-4 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-8 cursor-default"
                 style={{ ["--delay" as string]: item.delay }}
               >
                 {/* Soft yellow glow behind it (appears on hover) */}
@@ -213,32 +213,24 @@ export function StatsSection() {
                   />
                 )}
 
-                {/* Mobile (1 col) horizontal divider between items */}
-                {index < 3 && (
-                  <div
-                    aria-hidden
-                    className="stat-draw-x max-sm:block absolute bottom-0 left-0 right-0 h-[1px] bg-white/15 pointer-events-none"
-                  />
-                )}
-
                 <div>
                   {/* Small yellow icon on top (scales up on hover) */}
-                  <div className="stat-item-icon mb-4 inline-flex text-[#FFE600] transition-transform duration-300 origin-left">
-                    <item.icon className="size-6 sm:size-7" strokeWidth={2.2} />
+                  <div className="stat-item-icon mb-2 sm:mb-4 inline-flex text-[#FFE600] transition-transform duration-300 origin-left">
+                    <item.icon className="size-5 sm:size-7" strokeWidth={2.2} />
                   </div>
 
                   {/* Big number in white (clamp(2.5rem, 5vw, 5rem), turns yellow on hover) */}
-                  <div className="stat-item-num display text-white transition-colors duration-300 font-black text-[clamp(2.5rem,5vw,5rem)] leading-none">
+                  <div className="stat-item-num display text-white transition-colors duration-300 font-black text-2xl min-[380px]:text-3xl sm:text-[clamp(2.5rem,5vw,5rem)] leading-none">
                     <span className="sr-only">{item.raw}</span>
                     <span aria-hidden="true">{item.display}</span>
                   </div>
 
                   {/* Yellow underline draws below it on hover */}
-                  <div className="stat-item-underline mt-3.5 h-[2px] w-12 bg-[#FFE600] transition-transform duration-300 scale-x-0 origin-left" />
+                  <div className="stat-item-underline mt-2 sm:mt-3.5 h-[2px] w-8 sm:w-12 bg-[#FFE600] transition-transform duration-300 scale-x-0 origin-left" />
                 </div>
 
                 {/* Label below in white 60% opacity */}
-                <p className="mt-5 text-sm sm:text-base font-medium text-white/60 leading-snug">
+                <p className="mt-2 sm:mt-5 text-[11px] min-[380px]:text-xs sm:text-base font-medium text-white/60 leading-tight sm:leading-snug">
                   {item.label}
                 </p>
               </div>
