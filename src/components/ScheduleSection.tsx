@@ -355,7 +355,7 @@ export function ScheduleSection() {
                           </div>
                         </div>
 
-                        <h3 className="display text-[clamp(1.7rem,2.8vw,2.8rem)] font-black text-white uppercase tracking-tight leading-none">
+                        <h3 className="display text-[clamp(1.7rem,2.8vw,2.8rem)] font-normal text-white uppercase tracking-wide leading-none">
                           {ticket.title}
                         </h3>
                       </div>

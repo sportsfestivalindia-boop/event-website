@@ -131,12 +131,17 @@ body {
 }
 
 @layer components {
-  h1, h2, h3, h4, h5, h6, .display {
+  h1, h2, h3, h4, h5, h6, .display, .font-display {
     font-family: var(--font-display);
     font-weight: 400;
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0;
     text-transform: uppercase;
-    line-height: 0.95;
-    letter-spacing: 0.02em;
+    line-height: 1;
+    letter-spacing: 0.025em;
   }
   .tracked {
     font-weight: 600;
@@ -4018,3 +4023,50 @@ section#faq[data-armed="true"][data-play="true"] .fq-phone-icon {
   }
 }
 
+
+
+/* ==========================================================================
+   Display Typography Kerning & Anti-Collision Guards
+   Fixes character clumping (e.g. "FI" in "THE GRAND FINALE") caused by
+   browser faux-bold dilation or negative tracking on condensed typefaces.
+   ========================================================================== */
+
+.display,
+.font-display,
+h1.display,
+h2.display,
+h3.display,
+h4.display,
+h5.display,
+h6.display {
+  font-family: var(--font-display);
+  font-weight: 400 !important;
+  font-synthesis: none !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-ligatures: none !important;
+  font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 !important;
+}
+
+.display.font-black,
+.display.font-extrabold,
+.display.font-bold,
+.font-display.font-black,
+.font-display.font-extrabold,
+.font-display.font-bold {
+  font-weight: 400 !important;
+  font-synthesis: none !important;
+}
+
+.display.tracking-tight,
+.display.tracking-tighter,
+.font-display.tracking-tight,
+.font-display.tracking-tighter,
+h1.display.tracking-tight,
+h1.display.tracking-tighter,
+h2.display.tracking-tight,
+h2.display.tracking-tighter,
+h3.display.tracking-tight,
+h3.display.tracking-tighter {
+  letter-spacing: 0.025em !important;
+}
