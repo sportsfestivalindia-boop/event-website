@@ -29,9 +29,16 @@ export interface EmailParams {
 
 export async function sendConfirmationEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
   const resend = resendClient();
-  const fromEmail = process.env.EMAIL_FROM?.trim() || "India's Biggest Sports Festival <tickets@sportsfestivalindia.com>";
-  const replyTo = "aogaofficial@gmail.com";
-  const alertEmails = (process.env.ALERT_EMAILS || "aogaofficial@gmail.com")
+  let rawFrom = process.env.EMAIL_FROM?.trim() || "India's Biggest Sports Festival <onboarding@resend.dev>";
+  
+  // Resend disallows sending from @gmail.com domains. Fallback to onboarding@resend.dev if a gmail address is passed in EMAIL_FROM.
+  if (/@gmail\.com/i.test(rawFrom)) {
+    console.warn("[Email Config]: Resend does not allow sending directly from @gmail.com. Using onboarding@resend.dev with reply-to set to", rawFrom);
+    rawFrom = "India's Biggest Sports Festival <onboarding@resend.dev>";
+  }
+  const fromEmail = rawFrom;
+  const replyTo = "indiasbiggestsportfastival@gmail.com";
+  const alertEmails = (process.env.ALERT_EMAILS || "indiasbiggestsportfastival@gmail.com,aogaofficial@gmail.com")
     .split(",")
     .map((e) => e.trim())
     .filter(Boolean);
