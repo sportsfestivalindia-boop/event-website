@@ -453,17 +453,29 @@ export function OrganisedBySection() {
                     0{idx + 1}
                   </span>
 
-                  {/* Top: 56px gradient circle with black User icon */}
+                  {/* Top: Officer Portrait / Avatar */}
                   <div className="relative z-10 flex items-center justify-between">
-                    <div
-                      className="size-14 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #FFC400 0%, #FF8A00 45%, #FF5A00 100%)",
-                      }}
-                    >
-                      <User className="size-6 text-black" strokeWidth={2.4} />
-                    </div>
+                    {o.image ? (
+                      <div className="relative size-16 md:size-20 rounded-full overflow-hidden border-2 border-[#FF8A00] shadow-md ring-4 ring-black/5 shrink-0 bg-zinc-100">
+                        <Image
+                          src={o.image}
+                          alt={o.name}
+                          fill
+                          sizes="(max-width: 768px) 64px, 80px"
+                          className="object-cover object-top"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="size-14 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #FFC400 0%, #FF8A00 45%, #FF5A00 100%)",
+                        }}
+                      >
+                        <User className="size-6 text-black" strokeWidth={2.4} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom: Name and Role converging */}

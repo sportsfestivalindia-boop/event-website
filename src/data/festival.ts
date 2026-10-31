@@ -269,10 +269,26 @@ export const DAYS = [
 ];
 
 export const ORGANISERS = [
-  { name: "Rosaleen Nayak", role: "Chairman" },
-  { name: "Santosh Mohanty", role: "President" },
-  { name: "Anil Gochhikar", role: "Senior Vice-President" },
-  { name: "Dwiti Krishna Behera", role: "Secretary" },
+  {
+    name: "Rosaleen Nayak",
+    role: "Chairman",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793424239/Rosaleen_Nayak.jpg",
+  },
+  {
+    name: "Santosh Mohanty",
+    role: "President",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/SANTOSH_MOHANTY.png",
+  },
+  {
+    name: "Anil Gochhikar",
+    role: "Senior Vice-President",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/Anil_gochhikar.jpg",
+  },
+  {
+    name: "Dwiti Krishna Behera",
+    role: "Secretary",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/Dwiti_Krushna_Behera.jpg",
+  },
 ];
 
 export const COMMITTEE = [
