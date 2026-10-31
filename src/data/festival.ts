@@ -68,7 +68,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     sport: "Bodybuilding & Physique",
     name: "Anil Gochhikar Classic",
     level: "International",
-    tagline: "The flagship. Seven divisions, one Champion of Champions.",
+    tagline: "The flagship. Eight divisions, one Champion of Champions.",
     when: "Prelims Sat 5 Dec · Finals Sun 6 Dec, from 5 PM",
     divisions: [
       {
@@ -94,7 +94,7 @@ export const CHAMPIONSHIPS: Championship[] = [
       {
         id: "classic-physique",
         name: "Classic Physique",
-        classes: ["Up to 70 kg", "Above 70 kg"],
+        classes: ["Below 70 kg", "Above 70 kg"],
         prizes: BB_MEN,
         extras: [
           { label: "Champion of Champions", prize: 150000 },
@@ -103,21 +103,29 @@ export const CHAMPIONSHIPS: Championship[] = [
       },
       { id: "womens-bb", name: "Women’s Bodybuilding", classes: ["Open"], prizes: OPEN_1L },
       { id: "bikini", name: "Bikini Model", classes: ["Open"], prizes: OPEN_1L },
-      { id: "masters", name: "Masters", classes: ["Open"], prizes: OPEN_1L, note: "For athletes aged 45 years & above" },
+      { id: "masters", name: "Masters", classes: ["Open"], prizes: BB_MEN, note: "For athletes aged 45 years & above" },
       {
         id: "star",
         name: "Star Category",
         classes: ["Open"],
         prizes: OPEN_1L,
         fee: 0,
-        note: "For physically disabled / para athletes · free registration",
+        note: "For physically disabled / para athletes · Free Registration",
+      },
+      {
+        id: "womens-fitness",
+        name: "Women’s Fitness Model",
+        classes: ["Open"],
+        prizes: OPEN_1L,
+        fee: 0,
+        note: "Free Registration",
       },
     ],
   },
   {
     id: "powerlifting",
     sport: "Powerlifting",
-    name: "All India Open Powerlifting Championship",
+    name: "Ranu National Powerlifting Championship - 2026",
     level: "National",
     tagline: "Strong Man and Strong Woman titles.",
     when: "Fri 4 Dec, from 11 AM",
@@ -147,11 +155,18 @@ export const CHAMPIONSHIPS: Championship[] = [
     when: "Fri 4 Dec, from 11 AM",
     divisions: [
       {
-        id: "aw-open",
-        name: "Open",
-        classes: ["55 kg", "60 kg", "65 kg", "70 kg", "75 kg", "80 kg", "85 kg", "90 kg", "90 kg+"],
+        id: "aw-men",
+        name: "Men",
+        classes: ["55 kg", "60 kg", "65 kg", "70 kg", "75 kg", "80 kg", "85 kg", "90 kg", "100 kg", "100 kg+"],
         prizes: [30000, 20000, 10000],
-        extras: [{ label: "Champion of Champions", prize: 100000 }],
+        extras: [{ label: "Men's Championship", prize: 100000 }],
+      },
+      {
+        id: "aw-women",
+        name: "Women",
+        classes: ["50 kg", "60 kg", "70 kg", "80 kg", "90 kg", "90 kg+"],
+        prizes: [30000, 20000, 10000],
+        extras: [{ label: "Women's Championship", prize: 100000 }],
       },
     ],
   },
@@ -162,23 +177,22 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "Heritage",
     tagline: "After 25 years, the Dangal returns — for men and women.",
     when: "Fri 4 Dec, from 11 AM",
-    // AOGA sheet "Competition Categories & Participation Quota" (Oct 2026)
     divisions: [
       {
         id: "kesari",
         name: "Utkal Kesari (Men)",
-        classes: ["80–120 kg"],
-        prizes: ["Royal Enfield Bullet + Gada", 100000, 50000],
+        classes: ["Open"],
+        prizes: ["Royal Enfield motorcycle + GADA", 100000, 50000],
         fee: DANGAL_FEE,
-        note: "Winner takes home a Royal Enfield Bullet and the Gada (mace)",
+        note: "Winner takes home a Royal Enfield Bullet motorcycle and the GADA (mace)",
       },
       {
         id: "kesari-women",
         name: "Utkal Kesari (Women)",
-        classes: ["70–90 kg"],
-        prizes: [100000, 50000, 30000],
+        classes: ["Open"],
+        prizes: ["GADA + ₹1,00,000", 50000, 30000],
         fee: DANGAL_FEE,
-        note: "Winner also receives the Gada (mace)",
+        note: "Winner takes home the GADA (mace) and ₹1,00,000 cash prize",
       },
       { id: "bouts-men", name: "Men’s Weight Bouts", classes: ["55–60 kg", "60–65 kg", "65–70 kg", "70–75 kg"], prizes: [30000, 20000, 10000], fee: DANGAL_FEE },
       { id: "bouts-women", name: "Women’s Weight Bouts", classes: ["48–55 kg", "55–60 kg", "60–65 kg"], prizes: [30000, 20000, 10000], fee: DANGAL_FEE },
@@ -192,8 +206,17 @@ export const CHAMPIONSHIPS: Championship[] = [
     tagline: "Gloves on in Bhubaneswar.",
     when: "Fri 4 Dec, from 11 AM",
     divisions: [
-      { id: "boxing-men", name: "Men", classes: ["Open"], prizes: [], fee: BOXING_FEE },
-      { id: "boxing-women", name: "Women", classes: ["Open"], prizes: [], fee: BOXING_FEE },
+      {
+        id: "boxing-open",
+        name: "Open Category",
+        classes: ["47–50 kg", "50–55 kg", "55–60 kg", "60–65 kg", "65–70 kg", "70–75 kg", "75–80 kg", "80–85 kg", "85–90 kg", "90 kg+"],
+        prizes: [20000, 10000, 5000, 5000],
+        extras: [
+          { label: "Best Boxer", prize: "Bike" },
+          { label: "Best Loser", prize: "Bike" },
+        ],
+        fee: BOXING_FEE,
+      },
     ],
   },
   {
@@ -203,7 +226,12 @@ export const CHAMPIONSHIPS: Championship[] = [
     level: "National",
     tagline: "Run with the spirit of champions.",
     when: "Fri 4 Dec, 5:30 AM start",
-    divisions: [{ id: "run", name: "Open", classes: ["Open"], prizes: [], fee: MARATHON_FEE }],
+    divisions: [
+      { id: "21km", name: "21 KM (Half Marathon)", classes: ["Open"], prizes: [100000, 50000], fee: MARATHON_FEE },
+      { id: "10km", name: "10 KM", classes: ["Open"], prizes: [50000, 25000], fee: MARATHON_FEE },
+      { id: "5km", name: "5 KM", classes: ["Open"], prizes: [30000, 15000], fee: MARATHON_FEE },
+      { id: "2km", name: "2 KM", classes: ["Open"], prizes: [20000, 10000], fee: MARATHON_FEE },
+    ],
   },
 ];
 

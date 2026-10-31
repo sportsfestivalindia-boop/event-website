@@ -5,11 +5,11 @@ const base = { sport: "bodybuilding", division: "mens-bb", cls: "75 kg", name: "
 
 const ok = checkEntry(base);
 assert.ok(ok.ok && ok.fee === 5000, "physique category costs ₹5,000");
-const run = checkEntry({ ...base, sport: "marathon", division: "run", cls: "Open" });
+const run = checkEntry({ ...base, sport: "marathon", division: "21km", cls: "Open" });
 assert.ok(run.ok && run.fee === 600, "marathon costs ₹600");
 const dangal = checkEntry({ ...base, sport: "dangal", division: "bouts-women", cls: "48–55 kg" });
 assert.ok(dangal.ok && dangal.fee === 1000, "Dangal costs ₹1,000");
-const box = checkEntry({ ...base, sport: "boxing", division: "boxing-men", cls: "Open" });
+const box = checkEntry({ ...base, sport: "boxing", division: "boxing-open", cls: "60–65 kg" });
 assert.ok(box.ok && box.fee === 1000, "Boxing costs ₹1,000");
 const classic = checkEntry({ ...base, division: "classic-physique", cls: "Above 70 kg" });
 assert.ok(classic.ok && classic.fee === 5000, "Classic Physique 70 kg classes open at ₹5,000");

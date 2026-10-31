@@ -109,14 +109,18 @@ export function CategoryCard({
                             ? "bg-[#FFE600] text-black shadow-[0_0_10px_rgba(255,230,0,0.5)]"
                             : i === 1
                             ? "bg-white/20 text-white font-bold"
-                            : i === 2
+                            : i === 2 || (division.id === "boxing-open" && i === 3)
                             ? "bg-[#FF6A00] text-white shadow-[0_0_10px_rgba(255,106,0,0.5)]"
                             : "bg-white/10 text-white/70"
                         }`}
                       >
-                        {i + 1}
+                        {division.id === "boxing-open" && i === 3 ? 3 : i + 1}
                       </span>
-                      <span>{ordinal(i)} place</span>
+                      <span>
+                        {division.id === "boxing-open" && (i === 2 || i === 3)
+                          ? "3rd place"
+                          : `${ordinal(i)} place`}
+                      </span>
                     </div>
 
                     {/* Right Column: Amount Right-Aligned */}

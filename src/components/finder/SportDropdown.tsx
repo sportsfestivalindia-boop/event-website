@@ -21,6 +21,7 @@ const SPORT_ICONS: Record<string, LucideIcon> = {
   bodybuilding: BicepsFlexed,
   powerlifting: Dumbbell,
   "arm-wrestling": Handshake,
+  armwrestling: Handshake,
   dangal: Swords,
   boxing: HandFist,
   marathon: Footprints,
