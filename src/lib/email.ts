@@ -35,8 +35,8 @@ export async function sendConfirmationEmail(params: EmailParams): Promise<{ succ
     rawFrom = "India's Biggest Sports Festival <onboarding@resend.dev>";
   }
   const fromEmail = rawFrom;
-  const replyTo = "indiasbiggestsportfastival@gmail.com";
-  const alertEmails = (process.env.ALERT_EMAILS || "indiasbiggestsportfastival@gmail.com,aogaofficial@gmail.com")
+  const replyTo = "sportsfestivalindia@gmail.com";
+  const alertEmails = (process.env.ALERT_EMAILS || "sportsfestivalindia@gmail.com")
     .split(",")
     .map((e) => e.trim())
     .filter(Boolean);

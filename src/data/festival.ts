@@ -41,7 +41,7 @@ export const EVENT = {
   // all contact (calls, WhatsApp, payment screenshots) on one number — client, 2026-10-07
   paymentsWhatsApp: { display: "+91 80189 58655", wa: "918018958655" },
   whatsappHref: "https://wa.me/918018958655?text=" + encodeURIComponent("Hi, I have a question about registering for India’s Biggest Sports Festival 2026."),
-  email: "aogaofficial@gmail.com",
+  email: "sportsfestivalindia@gmail.com",
   circularRef: "AOGA/AGC/2026/001",
   // Collection account from the Yes Bank merchant QR the client supplied (2026-10-07). payee + mc must match that QR exactly —
   // the name is what athletes see in their UPI app. Empty id = QR off; athletes send their entry to AOGA on WhatsApp instead.
