@@ -1,7 +1,7 @@
 // Server only. Writes records to AOGA's Google Sheet through its Apps Script web app (sheet/Code.gs).
 // Off until SHEET_WEBHOOK_URL is set in Vercel. Never throws: the athlete's flow must not break if the sheet is slow —
 // the WhatsApp message to AOGA is the backup record.
-export type SheetAction = "registration" | "claim" | "lookup" | "ticket" | "stall" | "enquiry";
+export type SheetAction = "registration" | "claim" | "lookup" | "ticket" | "stall" | "enquiry" | "bank";
 
 // About 1 in 6 times Google's reply link fails ("unable to open the file") and stays broken, so a lost reply means
 // asking again. Only for actions that are safe to repeat; appends (registration, stall, enquiry) are sent once.
