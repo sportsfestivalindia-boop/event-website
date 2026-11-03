@@ -54,7 +54,16 @@ export async function POST(req: Request) {
     const from = String(data.from ?? data.sender ?? "SMS Forwarder").trim();
 
     // Health / connectivity test from SMS Forwarder app
-    if (!text || text.toLowerCase() === "test" || text.includes("%text%")) {
+    const lower = text.toLowerCase();
+    const isTestMessage =
+      !text ||
+      lower === "test" ||
+      lower.includes("test") ||
+      lower.includes("sms forwarder") ||
+      lower.includes("sample") ||
+      text.includes("%text%");
+
+    if (isTestMessage && !/^\d{12}$/.test(text)) {
       return Response.json({
         ok: true,
         message: "SMS Forwarder Webhook is connected and working perfectly!",
