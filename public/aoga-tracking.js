@@ -6,7 +6,7 @@
   'use strict';
   if (window.AOGA) return; // loaded once
   var CFG = window.AOGA_CONFIG || {};
-  var PIXEL_ID = CFG.pixelId || '1117465297387226';
+  var PIXEL_ID = CFG.pixelId || '29399256906353987';
   var ATTR_KEY = 'aoga_attr_v1';
   var ATTR_DAYS = 30;
 
