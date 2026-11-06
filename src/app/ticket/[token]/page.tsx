@@ -30,7 +30,7 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
         a: dbRec.fee || 5000,
         u: dbRec.utr || "",
         r: dbRec.regId || lookupId,
-        i: dbRec.createdAt || new Date().toISOString(),
+        i: typeof dbRec.createdAt === "string" ? dbRec.createdAt : new Date().toISOString(),
         isTest: dbRec.isTest,
       };
     } else {
