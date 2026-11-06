@@ -17,6 +17,7 @@ const KEY = "sf26_staff_key";
 
 export function TicketDesk() {
   const [key, setKey] = useState("");
+  const [payMode, setPayMode] = useState<"upi" | "cash">("upi");
   const [f, setF] = useState({ name: "", phone: "", regId: "", utr: "", category: CATEGORIES[0].label, amount: String(CATEGORIES[0].fee) });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -32,7 +33,8 @@ export function TicketDesk() {
 
   const cat = useMemo(() => CATEGORIES.find((c) => c.label === f.category), [f.category]);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
-  const ok = key.length >= 12 && f.name.trim().length > 1 && /^[6-9]\d{9}$/.test(f.phone) && /^\d{12}$/.test(f.utr) && !!cat;
+  const utrOk = payMode === "cash" || /^\d{12}$/.test(f.utr);
+  const ok = key.length >= 12 && f.name.trim().length > 1 && /^[6-9]\d{9}$/.test(f.phone) && utrOk && !!cat;
 
   async function issue() {
     setError("");
@@ -41,7 +43,7 @@ export function TicketDesk() {
       const res = await fetch("/api/ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, name: f.name, phone: f.phone, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
+        body: JSON.stringify({ key, payMode, name: f.name, phone: f.phone, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Could not issue the ticket.");
@@ -94,13 +96,41 @@ export function TicketDesk() {
         <span className="mb-2 block text-sm font-semibold">Staff password</span>
         <input className={input} type="password" value={key} onChange={(e) => setKey(e.target.value)} autoComplete="current-password" />
       </label>
-      <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm">
-        Before issuing: open the <b>Yes Bank merchant app</b> and confirm this UTR received exactly the right amount. One UTR = one ticket.
+
+      {/* Payment mode toggle */}
+      <div className="flex gap-2 rounded-lg border border-line p-1">
+        <button
+          type="button"
+          onClick={() => setPayMode("upi")}
+          className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${payMode === "upi" ? "bg-gold text-black" : "text-muted hover:text-white"}`}
+        >
+          UPI / Bank transfer
+        </button>
+        <button
+          type="button"
+          onClick={() => setPayMode("cash")}
+          className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${payMode === "cash" ? "bg-gold text-black" : "text-muted hover:text-white"}`}
+        >
+          💵 Cash (Spot)
+        </button>
       </div>
-      <label className="block">
-        <span className="mb-2 block text-sm font-semibold">UTR / UPI reference (from the screenshot)</span>
-        <input className={`${input} tnum tracking-widest`} value={f.utr} onChange={(e) => setF({ ...f, utr: e.target.value.replace(/\D/g, "").slice(0, 12) })} inputMode="numeric" placeholder="12 digits" />
-      </label>
+
+      {payMode === "upi" ? (
+        <>
+          <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm">
+            Before issuing: open the <b>Yes Bank merchant app</b> and confirm this UTR received exactly the right amount. One UTR = one ticket.
+          </div>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">UTR / UPI reference (from the screenshot)</span>
+            <input className={`${input} tnum tracking-widest`} value={f.utr} onChange={(e) => setF({ ...f, utr: e.target.value.replace(/\D/g, "").slice(0, 12) })} inputMode="numeric" placeholder="12 digits" />
+          </label>
+        </>
+      ) : (
+        <div className="rounded-lg border border-green-400/40 bg-green-400/10 p-3 text-sm">
+          <b>Spot / Cash registration</b> — collect the full cash amount first, then issue the ticket. A unique reference number will be generated automatically.
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-sm font-semibold">Athlete name</span>
