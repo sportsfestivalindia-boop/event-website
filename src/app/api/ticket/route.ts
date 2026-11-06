@@ -13,6 +13,7 @@ export async function POST(req: Request) {
 
   const s = (k: string, max = 120) => String(b[k] ?? "").trim().slice(0, max);
   const isCash = s("payMode") === "cash";
+  const force = Boolean(b.force);
   const amount = Number(b.amount);
 
   // For cash/spot: generate a unique 12-digit reference starting with "9" so it never clashes with a real UPI UTR
@@ -34,7 +35,8 @@ export async function POST(req: Request) {
     utr,
     regId: s("regId", 20).toUpperCase(),
     paymentMode: isCash ? "Cash (Spot Registration)" : "UPI",
+    force,
   }, req.url);
-  if ("duplicate" in r) return Response.json({ error: `This reference already has a ticket (${r.duplicate}). Do not issue another.` }, { status: 409 });
+  if (!force && "duplicate" in r) return Response.json({ error: `This reference already has a ticket (${r.duplicate}). Do not issue another.` }, { status: 409 });
   return Response.json(r);
 }

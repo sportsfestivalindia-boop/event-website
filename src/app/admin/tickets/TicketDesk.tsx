@@ -36,14 +36,14 @@ export function TicketDesk() {
   const utrOk = payMode === "cash" || /^\d{12}$/.test(f.utr);
   const ok = key.length >= 12 && f.name.trim().length > 1 && /^[6-9]\d{9}$/.test(f.phone) && utrOk && !!cat;
 
-  async function issue() {
+  async function issue(force = false) {
     setError("");
     setBusy(true);
     try {
       const res = await fetch("/api/ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, payMode, name: f.name, phone: f.phone, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
+        body: JSON.stringify({ key, payMode, force, name: f.name, phone: f.phone, regId: f.regId, utr: f.utr, category: f.category, when: cat?.when ?? "", amount: Number(f.amount) }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Could not issue the ticket.");
@@ -164,8 +164,22 @@ export function TicketDesk() {
         </label>
       </div>
       {cat && Number(f.amount) !== cat.fee && <p className="text-sm text-red-300">Amount differs from the {inr(cat.fee)} fee — double-check before issuing.</p>}
-      {error && <p className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-      <button onClick={issue} disabled={!ok || busy} className="btn btn-gold w-full disabled:opacity-40">
+      {error && (
+        <div className="space-y-3 rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-300">
+          <p>{error}</p>
+          {(error.includes("already has a ticket") || error.includes("duplicate")) && (
+            <button
+              type="button"
+              onClick={() => issue(true)}
+              disabled={busy}
+              className="btn bg-gold text-black font-bold w-full py-2.5 text-sm hover:brightness-110 shadow-lg cursor-pointer"
+            >
+              {busy ? "Re-issuing…" : "🔄 Re-issue / Overwrite Ticket Anyway"}
+            </button>
+          )}
+        </div>
+      )}
+      <button onClick={() => issue(false)} disabled={!ok || busy} className="btn btn-gold w-full disabled:opacity-40">
         {busy ? "Issuing…" : "Issue ticket"}
       </button>
     </div>

@@ -3,14 +3,53 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
-import { unseal } from "@/lib/ticket";
+import { unseal, whenFor, ticketNo, Ticket } from "@/lib/ticket";
+import { getRegistrationFromFirestore } from "@/lib/firebase";
+import { toSheet } from "@/lib/sheet";
 import { Icon, Wordmark } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Your ticket · Sports Festival 2026", robots: { index: false, follow: false } };
 
 export default async function TicketPage({ params }: PageProps<"/ticket/[token]">) {
   const { token } = await params;
-  const t = unseal(token);
+  let t: Ticket | null = unseal(token);
+
+  if (!t) {
+    const raw = decodeURIComponent(token).trim();
+    const regMatch = raw.match(/SF26-[0-9A-Z]{6}/i);
+    const lookupId = regMatch ? regMatch[0].toUpperCase() : raw.toUpperCase();
+
+    // 1. Try Firestore
+    const dbRec = await getRegistrationFromFirestore(lookupId).catch(() => null);
+    if (dbRec && (dbRec.status === "Paid" || dbRec.status === "Verified")) {
+      t = {
+        t: dbRec.ticketNo || ticketNo(dbRec.utr || lookupId),
+        n: dbRec.name,
+        c: dbRec.category,
+        w: whenFor(dbRec.category),
+        a: dbRec.fee || 5000,
+        u: dbRec.utr || "",
+        r: dbRec.regId || lookupId,
+        i: dbRec.createdAt || new Date().toISOString(),
+        isTest: dbRec.isTest,
+      };
+    } else {
+      // 2. Try Google Sheet lookup
+      const sheetRec = (await toSheet("lookup", { regId: lookupId }).catch(() => null)) as Record<string, unknown> | null;
+      if (sheetRec?.ok && (sheetRec.status === "Verified" || sheetRec.status === "Paid")) {
+        t = {
+          t: (sheetRec.ticketNo as string) || ticketNo((sheetRec.utr as string) || lookupId),
+          n: String(sheetRec.name || "Athlete"),
+          c: String(sheetRec.category || ""),
+          w: whenFor(String(sheetRec.category || "")),
+          a: Number(sheetRec.fee) || 5000,
+          u: String(sheetRec.utr || ""),
+          r: String(sheetRec.regId || lookupId),
+          i: new Date().toISOString(),
+        };
+      }
+    }
+  }
 
   if (!t)
     return (

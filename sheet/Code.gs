@@ -183,8 +183,9 @@ function doPost(e) {
       // staff issued a ticket on the website → refuse a UTR already ticketed for someone else (reused screenshot),
       // else mark the athlete's row Verified and email them; no matching row (no Reg ID) → log the ticket as a new row
       const u = findReg(ss, R["UTR"], d.utr);
-      if (u.r && cell(u, "Status") === "Verified" && (d.regId ? cell(u, "Reg ID") !== d.regId : cell(u, "Name") !== d.name))
-        return json({ ok: false, duplicate: `${cell(u, "Reg ID") || "no Reg ID"} · ${cell(u, "Name")}` });
+      const isSameAthlete = u.r && ((d.regId && String(cell(u, "Reg ID")).toUpperCase() === String(d.regId).toUpperCase()) || (String(cell(u, "Name")).trim().toUpperCase() === String(d.name).trim().toUpperCase()));
+      if (u.r && cell(u, "Status") === "Verified" && !isSameAthlete && !d.force)
+        return json({ ok: false, duplicate: String(cell(u, "Reg ID") || "no Reg ID") + " - " + String(cell(u, "Name")) });
       const at = d.regId ? findReg(ss, R["Reg ID"], d.regId) : u;
       const sh = at.sh;
       let r = at.r;

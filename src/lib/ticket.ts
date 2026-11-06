@@ -81,6 +81,7 @@ export interface IssueTicketParams {
   isTest?: boolean;
   paymentMode?: string;
   forceNotifications?: boolean;
+  force?: boolean;
 }
 
 /**
@@ -120,9 +121,10 @@ export async function issueTicket(
     category: isTest ? `[TEST] ${p.category}` : p.category,
     fee: p.amount,
     status: isTest ? "TEST_VERIFIED" : "Verified",
+    force: p.force ? "true" : "",
   });
 
-  if (sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
+  if (!p.force && sheet?.duplicate) return { duplicate: String(sheet.duplicate) };
 
   const runTicketTasks = async () => {
     let athleteEmail = p.email;
