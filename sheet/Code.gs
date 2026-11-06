@@ -145,8 +145,8 @@ function doPost(e) {
       const waiting = at.r && cell(at, "Status") !== "Verified";
       return json({ ok: true, utr, match: waiting ? cell(at, "Reg ID") : "" });
     } else if (d.action === "lookup") {
-      // read-only: the athlete's personal payment link (/pay?id=…) reopens their payment page
-      const at = findReg(ss, R["Reg ID"], d.regId);
+      // read-only: search by Reg ID or phone (staff resend)
+      const at = d.regId ? findReg(ss, R["Reg ID"], d.regId) : findReg(ss, R["Mobile"], d.phone);
       if (!at.r) return json({ ok: false });
       const c = (h) => cell(at, h);
       return json({
