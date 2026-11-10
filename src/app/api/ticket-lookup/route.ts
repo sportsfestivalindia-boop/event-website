@@ -1,4 +1,5 @@
 import { isAdmin, ticketReady } from "@/lib/ticket";
+import { getRegistrationFromFirestore, getAllRegistrationsFromFirestore } from "@/lib/firebase";
 import { toSheet } from "@/lib/sheet";
 
 /** Staff only: look up a registration by Reg ID or phone to retrieve the ticket URL for resending. */
@@ -12,7 +13,36 @@ export async function POST(req: Request) {
 
   if (!regId && !phone) return Response.json({ error: "Enter a Registration ID (SF26-XXXXXX) or phone number." }, { status: 400 });
 
-  const r = await toSheet("lookup", regId ? { regId } : { phone }) as Record<string, unknown> | null;
+  // 1. Try Firestore first
+  if (regId) {
+    const dbRec = await getRegistrationFromFirestore(regId).catch(() => null);
+    if (dbRec && (dbRec.status === "Paid" || dbRec.status === "Verified")) {
+      return Response.json({
+        regId: dbRec.regId,
+        name: dbRec.name,
+        phone: dbRec.phone,
+        category: dbRec.category,
+        ticketUrl: dbRec.ticketUrl || `https://sportsfestivalindia.com/ticket/${dbRec.regId}`,
+        status: dbRec.status,
+      });
+    }
+  } else if (phone) {
+    const all = await getAllRegistrationsFromFirestore().catch(() => []);
+    const match = all.find((r) => r.phone?.endsWith(phone) && (r.status === "Paid" || r.status === "Verified"));
+    if (match) {
+      return Response.json({
+        regId: match.regId,
+        name: match.name,
+        phone: match.phone,
+        category: match.category,
+        ticketUrl: match.ticketUrl || `https://sportsfestivalindia.com/ticket/${match.regId}`,
+        status: match.status,
+      });
+    }
+  }
+
+  // 2. Fallback to Google Sheet
+  const r = (await toSheet("lookup", regId ? { regId } : { phone })) as Record<string, unknown> | null;
   if (!r?.ok || !r.ticketUrl) return Response.json({ error: "No verified ticket found for this athlete." }, { status: 404 });
 
   return Response.json({

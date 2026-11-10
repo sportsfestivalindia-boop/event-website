@@ -168,6 +168,31 @@ export async function getRegistrationFromFirestore(regId: string): Promise<Regis
   }
 }
 
+/** Get all registrations from Firestore */
+export async function getAllRegistrationsFromFirestore(): Promise<RegistrationRecord[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(collection(db, "registrations"));
+    const list: RegistrationRecord[] = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      list.push({
+        ...data,
+        createdAt: data.createdAt && typeof data.createdAt === "object" && "toDate" in data.createdAt
+          ? (data.createdAt as { toDate: () => Date }).toDate().toISOString()
+          : (typeof data.createdAt === "string" ? data.createdAt : undefined),
+        updatedAt: data.updatedAt && typeof data.updatedAt === "object" && "toDate" in data.updatedAt
+          ? (data.updatedAt as { toDate: () => Date }).toDate().toISOString()
+          : (typeof data.updatedAt === "string" ? data.updatedAt : undefined),
+      } as RegistrationRecord);
+    });
+    return list;
+  } catch (err) {
+    console.error("Firestore getAllRegistrations error:", err);
+    return [];
+  }
+}
+
 /** Get all registrations associated with a specific email */
 export async function getRegistrationsByEmail(email: string): Promise<RegistrationRecord[]> {
   if (!db || !email) return [];
