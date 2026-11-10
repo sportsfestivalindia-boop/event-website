@@ -205,6 +205,9 @@ export async function issueTicket(
     // 3. Update Firestore registration
     if (p.regId) {
       await updateRegistrationInFirestore(p.regId, {
+        name: p.name,
+        category: p.category,
+        fee: p.amount,
         status: "Paid",
         utr: p.utr,
         ticketNo: t,
