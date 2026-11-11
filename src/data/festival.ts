@@ -52,7 +52,10 @@ export const EVENT = {
   regdNo: "" as string,
   gstin: "" as string,
   address: "Baramunda Ground, Bhubaneswar, Odisha, India",
-  socials: [{ label: "Instagram · @aoga_official", href: "https://instagram.com/aoga_official" }],
+  socials: [
+    { label: "Instagram · @sportsfestival_india", href: "https://www.instagram.com/sportsfestival_india?psln=MWQ5ZHpwaHJ4M2NyYQ==", platform: "instagram" },
+    { label: "Facebook · Sports Festival India", href: "https://www.facebook.com/profile.php?id=61595769302692", platform: "facebook" },
+  ],
   tagline: "Strength · Discipline · Tradition · Culture · Odisha",
 } as const;
 

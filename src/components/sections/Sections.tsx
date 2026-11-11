@@ -8,7 +8,7 @@ import { STALLS } from "@/data/partners";
 import { inr, prizeLabel } from "@/lib/format";
 import { useReplayOnScroll } from "@/hooks/useReplayOnScroll";
 import { Finder } from "../Finder";
-import { Icon, WhatsAppGlyph, Wordmark } from "../icons";
+import { FacebookGlyph, Icon, InstagramGlyph, WhatsAppGlyph, Wordmark } from "../icons";
 import { CountdownBoxes } from "../live";
 import { Cta, Gold, POLICY_LINKS, Section, SectionHead, WhatsAppLink } from "../ui";
 
@@ -138,7 +138,14 @@ export function Footer() {
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" className="block hover:text-gold">WhatsApp</a>
           <a href={`mailto:${EVENT.email}`} className="block hover:text-gold">{EVENT.email}</a>
           {EVENT.socials.map((s) => (
-            <a key={s.href} href={s.href} target="_blank" rel="noopener" className="block hover:text-gold">{s.label}</a>
+            <a key={s.href} href={s.href} target="_blank" rel="noopener" className="flex items-center gap-2 hover:text-gold">
+              {s.platform === "instagram" ? (
+                <InstagramGlyph className="size-4 shrink-0 text-gold" />
+              ) : (
+                <FacebookGlyph className="size-4 shrink-0 text-gold" />
+              )}
+              <span>{s.label}</span>
+            </a>
           ))}
         </div>
         <ul className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:col-span-4">

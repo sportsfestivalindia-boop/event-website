@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { EVENT, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
-import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
+import { FacebookGlyph, Icon, InstagramGlyph, WhatsAppGlyph, Wordmark } from "./icons";
 
 /** One observer for every [data-reveal] / [data-rule] element on the page. */
 export function Reveal() {
@@ -317,6 +317,29 @@ export function Chrome() {
             <WhatsAppGlyph className="size-4" />
             <span>Need Help? WhatsApp {EVENT.phone}</span>
           </a>
+
+          {/* Social Links in Mobile Menu */}
+          <div className="flex items-center justify-center gap-6 pt-2">
+            <a
+              href="https://www.instagram.com/sportsfestival_india?psln=MWQ5ZHpwaHJ4M2NyYQ=="
+              target="_blank"
+              rel="noopener"
+              className="flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-gold transition-colors"
+            >
+              <InstagramGlyph className="size-4 text-gold" />
+              <span>Instagram</span>
+            </a>
+            <span className="text-white/20">·</span>
+            <a
+              href="https://www.facebook.com/profile.php?id=61595769302692"
+              target="_blank"
+              rel="noopener"
+              className="flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-gold transition-colors"
+            >
+              <FacebookGlyph className="size-4 text-gold" />
+              <span>Facebook</span>
+            </a>
+          </div>
         </div>
       </div>
 
