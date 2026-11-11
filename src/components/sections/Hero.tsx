@@ -180,7 +180,7 @@ export function Hero() {
                 <span className="absolute inline-flex size-full rounded-full bg-yellow opacity-75 animate-ping" />
                 <span className="relative inline-flex size-2 rounded-full bg-yellow" />
               </span>
-              <span>Registrations close in</span>
+              <span>Last date 28 Nov · Closes in</span>
               <Countdown className="font-bold text-yellow tracking-wide" />
             </li>
           </ul>

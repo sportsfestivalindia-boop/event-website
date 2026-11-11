@@ -377,14 +377,19 @@ export function RegisterSection() {
           <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
               {/* Header label with gradient dash */}
-              <div className="flex items-center gap-3 mb-4">
-                <span
-                  aria-hidden="true"
-                  className="h-[2px] w-5 rounded-full pk-gradient-bg"
-                />
-                <p className="text-white/85 text-xs font-bold uppercase tracking-[0.25em]">
-                  REGISTRATIONS CLOSE IN
-                </p>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="h-[2px] w-5 rounded-full pk-gradient-bg"
+                  />
+                  <p className="text-white/85 text-xs font-bold uppercase tracking-[0.25em]">
+                    REGISTRATIONS CLOSE IN
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-[#FF9A00] tracking-wider uppercase bg-[#FF9A00]/15 px-3 py-1 rounded-full border border-[#FF9A00]/40 shadow-sm">
+                  Last date — 28th November
+                </span>
               </div>
 
               {/* Visually hidden static text for screen readers (no spamming every second) */}
