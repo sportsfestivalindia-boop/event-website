@@ -19,6 +19,7 @@ interface AthleteRecord {
   regId: string;
   name: string;
   phone: string;
+  callingPhone?: string;
   email?: string;
   category: string;
   city?: string;
@@ -38,10 +39,12 @@ export function AllTicketsDirectory() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "PAID" | "PENDING">("ALL");
 
-  // Editing state for sudden category or name change
+  // Editing state for sudden category or name / phone change
   const [editingAthlete, setEditingAthlete] = useState<AthleteRecord | null>(null);
   const [editCategory, setEditCategory] = useState("");
   const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCallingPhone, setEditCallingPhone] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState("");
   const [editSuccess, setEditSuccess] = useState("");
@@ -79,7 +82,7 @@ export function AllTicketsDirectory() {
     }
   }
 
-  // Quick edit category / name
+  // Quick edit category / name / phone numbers
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editingAthlete) return;
@@ -97,6 +100,8 @@ export function AllTicketsDirectory() {
           regId: editingAthlete.regId,
           category: editCategory,
           name: editName,
+          phone: editPhone,
+          callingPhone: editCallingPhone,
         }),
       });
       const d = await res.json();
@@ -107,7 +112,7 @@ export function AllTicketsDirectory() {
       setAthletes((prev) =>
         prev.map((a) =>
           a.regId === editingAthlete.regId
-            ? { ...a, name: editName, category: editCategory, ticketNo: d.ticketNo, ticketUrl: d.ticketUrl, status: "Paid" }
+            ? { ...a, name: editName, phone: editPhone, callingPhone: editCallingPhone, category: editCategory, ticketNo: d.ticketNo, ticketUrl: d.ticketUrl, status: "Paid" }
             : a,
         ),
       );
@@ -117,6 +122,21 @@ export function AllTicketsDirectory() {
     } finally {
       setSavingEdit(false);
     }
+  }
+
+  // Cancel duplicate registration
+  async function handleCancelDuplicate(regId: string) {
+    if (!confirm(`Cancel duplicate registration ${regId}?`)) return;
+    try {
+      const res = await fetch("/api/admin/registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, action: "cancel", regId }),
+      });
+      if (res.ok) {
+        setAthletes((prev) => prev.filter((a) => a.regId !== regId));
+      }
+    } catch {}
   }
 
   // Filtering & search
@@ -142,11 +162,12 @@ export function AllTicketsDirectory() {
   // Export to CSV for non-coders
   function exportCSV() {
     if (!athletes.length) return;
-    const headers = ["Reg ID", "Name", "Mobile", "Email", "Category", "Fee", "Status", "Ticket No", "Ticket Link"];
+    const headers = ["Reg ID", "Name", "WhatsApp", "Calling No", "Email", "Category", "Fee", "Status", "Ticket No", "Ticket Link"];
     const rows = filtered.map((a) => [
       a.regId,
       `"${a.name || ""}"`,
       a.phone || "",
+      a.callingPhone || "",
       a.email || "",
       `"${a.category || ""}"`,
       a.fee || "",
@@ -280,7 +301,12 @@ export function AllTicketsDirectory() {
                       <td className="px-4 py-3">
                         <p className="font-semibold text-white">{a.name}</p>
                         <p className="text-xs text-gold">{a.regId}</p>
-                        <p className="text-xs text-muted">{a.phone}</p>
+                        <p className="text-xs text-wa inline-flex items-center gap-1 font-mono">
+                          <WhatsAppGlyph className="size-3" /> {a.phone}
+                        </p>
+                        {a.callingPhone && a.callingPhone !== a.phone && (
+                          <p className="text-[11px] text-muted">📞 Call: {a.callingPhone}</p>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-xs font-medium text-white">{a.category}</p>
@@ -320,16 +346,27 @@ export function AllTicketsDirectory() {
                               </a>
                             </>
                           )}
+                          {!isPaid && (
+                            <button
+                              onClick={() => handleCancelDuplicate(a.regId)}
+                              className="btn btn-line text-xs py-1 px-2 text-red-400 hover:text-red-300"
+                              title="Cancel Duplicate / Unpaid"
+                            >
+                              ✕
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setEditingAthlete(a);
                               setEditName(a.name);
+                              setEditPhone(a.phone || "");
+                              setEditCallingPhone(a.callingPhone || "");
                               setEditCategory(a.category);
                               setEditError("");
                               setEditSuccess("");
                             }}
                             className="btn bg-gold text-black text-xs py-1 px-2 font-semibold hover:brightness-110"
-                            title="Sudden change / Edit Category"
+                            title="Edit details / change number or category"
                           >
                             ✏️ Edit
                           </button>
@@ -379,6 +416,33 @@ export function AllTicketsDirectory() {
                   required
                 />
               </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-xs font-semibold mb-1 text-wa flex items-center gap-1">
+                    <WhatsAppGlyph className="size-3.5" /> WhatsApp Number
+                  </span>
+                  <input
+                    className={input}
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="10-digit WhatsApp number"
+                    required
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="block text-xs font-semibold mb-1 text-muted">
+                    Calling Number (Optional)
+                  </span>
+                  <input
+                    className={input}
+                    value={editCallingPhone}
+                    onChange={(e) => setEditCallingPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="10-digit calling number"
+                  />
+                </label>
+              </div>
 
               <label className="block">
                 <span className="block text-xs font-semibold mb-1">Select New Category / Weight Class</span>

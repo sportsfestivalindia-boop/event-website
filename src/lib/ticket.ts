@@ -90,6 +90,7 @@ export const whenFor = (category: string) => CHAMPIONSHIPS.find((c) => category.
 export interface IssueTicketParams {
   name: string;
   phone: string;
+  callingPhone?: string;
   email?: string;
   category: string;
   amount: number;
@@ -137,6 +138,7 @@ export async function issueTicket(
     verifiedAt: istNow(),
     name: isTest ? `[TEST] ${p.name.replace(/^\[TEST\]\s*/i, "")}` : p.name,
     phone: p.phone,
+    callingPhone: p.callingPhone || "",
     category: isTest ? `[TEST] ${p.category}` : p.category,
     fee: p.amount,
     status: isTest ? "TEST_VERIFIED" : "Verified",

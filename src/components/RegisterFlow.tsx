@@ -11,10 +11,10 @@ import { Icon, WhatsAppGlyph, Wordmark } from "./icons";
 import { PolicyLinks } from "./ui";
 import { track } from "@/lib/track";
 import { type Claim, waitForTicket } from "@/lib/claim";
-type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; email: string; city: string; association: string };
+type Form = { sport: string; division: string; cls: string; name: string; dob: string; phone: string; callingPhone?: string; email: string; city: string; association: string };
 export type Pending = { regId: string; amount: number; label: string; upi: string | null; qr: string | null };
 /** Reopening a saved registration from its personal link (/pay?id=…): straight to the payment step. */
-export type Resume = { pending: Pending; sport?: string; name: string; dob: string; phone: string; email: string; city: string };
+export type Resume = { pending: Pending; sport?: string; name: string; dob: string; phone: string; callingPhone?: string; email: string; city: string };
 type Done = { regId: string; label: string; paid: number; utr?: string };
 
 const baseOpen = CHAMPIONSHIPS.filter((c) => c.divisions.length > 0);
@@ -34,7 +34,7 @@ export function RegisterFlow({
   onClose,
   testEntryToken,
 }: {
-  initial: { sport?: string; division?: string; cls?: string; test?: boolean; name?: string; dob?: string; phone?: string; email?: string; city?: string; association?: string };
+  initial: { sport?: string; division?: string; cls?: string; test?: boolean; name?: string; dob?: string; phone?: string; callingPhone?: string; email?: string; city?: string; association?: string };
   resume?: Resume;
   isModal?: boolean;
   onClose?: () => void;
@@ -53,6 +53,7 @@ export function RegisterFlow({
     name: resume?.name ?? initial.name ?? "",
     dob: resume?.dob ?? initial.dob ?? "",
     phone: resume?.phone ?? initial.phone ?? "",
+    callingPhone: resume?.callingPhone ?? initial.callingPhone ?? "",
     email: resume?.email ?? initial.email ?? "",
     city: resume?.city ?? initial.city ?? "",
     association: initial.association ?? "",
@@ -108,17 +109,28 @@ export function RegisterFlow({
     if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
     setF({ ...f, phone: digits.slice(0, 10) });
   };
-  const detailsOk = f.name.trim().length > 1 && !!f.dob && /^[6-9]\d{9}$/.test(f.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && f.city.trim().length > 1;
+  const handleCallingPhone = (val: string) => {
+    let digits = val.replace(/\D/g, "");
+    if (digits.length >= 12 && digits.startsWith("91")) digits = digits.slice(2);
+    if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
+    setF({ ...f, callingPhone: digits.slice(0, 10) });
+  };
+  const callingPhoneOk = !f.callingPhone || f.callingPhone.length === 0 || /^[6-9]\d{9}$/.test(f.callingPhone);
+  const detailsOk = f.name.trim().length > 1 && !!f.dob && /^[6-9]\d{9}$/.test(f.phone) && callingPhoneOk && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email) && f.city.trim().length > 1;
   const missingDetailHint = !f.name.trim() || f.name.trim().length <= 1
     ? "Please enter your full name as on ID"
     : !f.dob
     ? "Please select your date of birth"
     : !f.phone
-    ? "Please enter your 10-digit WhatsApp mobile number"
+    ? "Please enter your 10-digit WhatsApp number"
     : f.phone.length < 10
-    ? `Mobile number needs ${10 - f.phone.length} more digit${10 - f.phone.length > 1 ? "s" : ""}`
+    ? `WhatsApp number needs ${10 - f.phone.length} more digit${10 - f.phone.length > 1 ? "s" : ""}`
     : !/^[6-9]\d{9}$/.test(f.phone)
-    ? "Mobile number must start with 6, 7, 8, or 9 (do not include leading 0)"
+    ? "WhatsApp number must start with 6, 7, 8, or 9 (do not include leading 0)"
+    : f.callingPhone && f.callingPhone.length > 0 && f.callingPhone.length < 10
+    ? `Calling number needs ${10 - f.callingPhone.length} more digits`
+    : f.callingPhone && f.callingPhone.length === 10 && !/^[6-9]\d{9}$/.test(f.callingPhone)
+    ? "Calling number must start with 6, 7, 8, or 9"
     : !f.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)
     ? "Please enter a valid email address"
     : !f.city.trim() || f.city.trim().length <= 1
@@ -416,8 +428,16 @@ export function RegisterFlow({
             />
             <span className="mt-1.5 block text-xs text-white/60">Tap the box to pick your date of birth</span>
           </label>
+          {/* 1. WhatsApp Number (Primary & Required) */}
           <label className="block">
-            <span className="mb-2 block text-xs font-bold tracking-wider text-white/80 uppercase">Mobile number (WhatsApp)</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="block text-xs font-bold tracking-wider text-white/80 uppercase">
+                WhatsApp Number <span className="text-yellow font-extrabold">*</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-wa">
+                <WhatsAppGlyph className="size-3.5" /> Tickets &amp; QR sent here
+              </span>
+            </div>
             <div className="flex">
               <span className="grid place-items-center rounded-l-xl border border-r-0 border-white/15 bg-white/5 px-3.5 text-sm font-bold text-yellow">+91</span>
               <input
@@ -426,7 +446,7 @@ export function RegisterFlow({
                 onChange={(e) => handlePhone(e.target.value)}
                 inputMode="numeric"
                 autoComplete="tel-national"
-                placeholder="10-digit number"
+                placeholder="10-digit WhatsApp number"
               />
             </div>
             {f.phone.length > 0 && f.phone.length < 10 && (
@@ -439,6 +459,43 @@ export function RegisterFlow({
                 Mobile number must start with 6, 7, 8, or 9 (do not enter leading 0)
               </span>
             )}
+            <span className="mt-1.5 block text-[11px] text-white/50">
+              Your official ticket pass, entry QR code, and updates will be delivered directly to this WhatsApp number.
+            </span>
+          </label>
+
+          {/* 2. Calling Number (Optional) */}
+          <label className="block">
+            <div className="flex items-center justify-between mb-2">
+              <span className="block text-xs font-bold tracking-wider text-white/80 uppercase">
+                Calling Number <span className="text-white/40 font-normal lowercase">(optional)</span>
+              </span>
+              <span className="text-[11px] text-white/50">If different from WhatsApp</span>
+            </div>
+            <div className="flex">
+              <span className="grid place-items-center rounded-l-xl border border-r-0 border-white/15 bg-white/5 px-3.5 text-sm font-bold text-white/60">+91</span>
+              <input
+                className={`${input} rounded-l-none`}
+                value={f.callingPhone ?? ""}
+                onChange={(e) => handleCallingPhone(e.target.value)}
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="10-digit calling number (if different)"
+              />
+            </div>
+            {f.callingPhone && f.callingPhone.length > 0 && f.callingPhone.length < 10 && (
+              <span className="mt-1.5 block text-xs text-amber-400 font-medium">
+                10 digits required ({10 - f.callingPhone.length} more digit{10 - f.callingPhone.length > 1 ? "s" : ""})
+              </span>
+            )}
+            {f.callingPhone && f.callingPhone.length === 10 && !/^[6-9]\d{9}$/.test(f.callingPhone) && (
+              <span className="mt-1.5 block text-xs text-red-400 font-medium">
+                Calling number must start with 6, 7, 8, or 9
+              </span>
+            )}
+            <span className="mt-1.5 block text-[11px] text-white/50">
+              For ground staff voice calls regarding weigh-in, briefing, or schedule.
+            </span>
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold tracking-wider text-white/80 uppercase">Email</span>
@@ -491,7 +548,8 @@ export function RegisterFlow({
               ["Competes", champ.when],
               ["Name", f.name],
               ["Date of birth", f.dob.split("-").reverse().join("/")],
-              ["Mobile", "+91 " + f.phone],
+              ["WhatsApp", "+91 " + f.phone],
+              ...(f.callingPhone ? [["Calling No", "+91 " + f.callingPhone]] : []),
               ["Email", f.email],
               ["City", f.city + (f.association ? ` · ${f.association}` : "")],
             ].map(([k, v]) => (

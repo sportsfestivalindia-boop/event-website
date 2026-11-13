@@ -10,6 +10,7 @@ export type Entry = {
   name: string;
   dob: string;
   phone: string;
+  callingPhone?: string;
   email: string;
   city: string;
   association?: string;
@@ -46,6 +47,12 @@ export function checkEntry(e: Partial<Entry>): { ok: true; fee: number; label: s
   if (dobDate < new Date("1920-01-01")) return { ok: false, error: "Please enter a valid date of birth." };
 
   if (!/^[6-9]\d{9}$/.test(e.phone ?? "")) return { ok: false, error: "Please enter a valid 10-digit mobile number." };
+  if (e.callingPhone && e.callingPhone.trim()) {
+    const cleanCalling = e.callingPhone.replace(/\D/g, "").slice(-10);
+    if (!/^[6-9]\d{9}$/.test(cleanCalling)) {
+      return { ok: false, error: "Please enter a valid 10-digit calling number or leave it blank." };
+    }
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email ?? "")) return { ok: false, error: "Please enter a valid email address." };
   if (!e.city || e.city.trim().length < 2) return { ok: false, error: "Please enter your city." };
   if (div.id === "masters" && dobDate > new Date("1981-12-04")) return { ok: false, error: "Masters is for athletes aged 45 and above." };

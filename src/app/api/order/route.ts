@@ -136,6 +136,7 @@ export async function POST(req: Request) {
       name: isTest ? `[TEST] ${entry.name!.trim()}` : entry.name!.trim(),
       dob: entry.dob || "2000-01-01",
       phone: entry.phone!,
+      callingPhone: entry.callingPhone?.trim() || undefined,
       email: entry.email!.trim().toLowerCase(),
       city: (entry.city || "Testing").trim(),
       association: (entry.association ?? "").trim(),
@@ -163,6 +164,7 @@ export async function POST(req: Request) {
       {
         name: entry.name!.trim(),
         phone: entry.phone!,
+        callingPhone: entry.callingPhone?.trim() || undefined,
         email: entry.email!.trim().toLowerCase(),
         category: label,
         amount: 0,

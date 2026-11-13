@@ -14,26 +14,31 @@ export async function POST(req: Request) {
 
   const action = String(b.action ?? "list");
 
-  // Action: Update Category / Name & Re-issue Ticket
+  // Action: Update Category / Name / Numbers & Re-issue Ticket
   if (action === "update") {
     const regId = String(b.regId ?? "").trim().toUpperCase();
     const newCategory = String(b.category ?? "").trim();
     const newName = String(b.name ?? "").trim();
+    const newPhone = String(b.phone ?? "").trim();
+    const newCallingPhone = String(b.callingPhone ?? "").trim();
 
     if (!regId) return Response.json({ error: "Missing Registration ID." }, { status: 400 });
-    if (!newCategory && !newName) return Response.json({ error: "No changes provided." }, { status: 400 });
+    if (!newCategory && !newName && !newPhone && !newCallingPhone) return Response.json({ error: "No changes provided." }, { status: 400 });
 
     const existing = await getRegistrationFromFirestore(regId);
     if (!existing) return Response.json({ error: "Athlete record not found in database." }, { status: 404 });
 
     const name = newName || existing.name;
     const category = newCategory || existing.category;
+    const phone = newPhone ? newPhone.replace(/\D/g, "").slice(-10) : existing.phone;
+    const callingPhone = newCallingPhone !== undefined ? newCallingPhone.replace(/\D/g, "").slice(-10) : (existing.callingPhone || "");
 
     // Issue updated ticket with force: true
     const issued = await issueTicket(
       {
         name,
-        phone: existing.phone,
+        phone,
+        callingPhone,
         category,
         amount: existing.fee || 5000,
         utr: existing.utr || regId,
@@ -50,6 +55,8 @@ export async function POST(req: Request) {
     await updateRegistrationInFirestore(regId, {
       name,
       category,
+      phone,
+      callingPhone: callingPhone || undefined,
       ticketNo,
       ticketUrl,
     });
@@ -59,9 +66,19 @@ export async function POST(req: Request) {
       regId,
       name,
       category,
+      phone,
+      callingPhone,
       ticketNo,
       ticketUrl,
     });
+  }
+
+  // Action: Cancel Duplicate Registration
+  if (action === "cancel") {
+    const regId = String(b.regId ?? "").trim().toUpperCase();
+    if (!regId) return Response.json({ error: "Missing Registration ID." }, { status: 400 });
+    await updateRegistrationInFirestore(regId, { status: "Failed" });
+    return Response.json({ success: true, regId, status: "Cancelled" });
   }
 
   // Default Action: Return all registrations

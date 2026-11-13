@@ -102,6 +102,7 @@ function doPost(e) {
       set("Reg ID", d.regId); set("Created", new Date()); set("Name", d.name); set("DOB", d.dob); set("Mobile", d.phone);
       set("Email", d.email); set("City", d.city); set("Association", d.association); set("Category", d.category);
       set("Fee (₹)", d.fee); set("Status", d.status); set("Source", d.source);
+      if (d.callingPhone) set("Notes", "Call: " + d.callingPhone);
       sh.appendRow(row);
       const r = sh.getLastRow();
       sh.getRange(r, R["WhatsApp"]).setFormula(waFormula(sh, r));
@@ -201,6 +202,7 @@ function doPost(e) {
       asText(sh.getRange(r, R["UTR"]), d.utr);
       sh.getRange(r, R["Ticket"]).setValue(d.ticketUrl);
       sh.getRange(r, R["Status"]).setValue("Verified");
+      if (d.callingPhone) sh.getRange(r, R["Notes"]).setValue("Call: " + d.callingPhone);
       const bank = ss.getSheetByName("Bank");
       const b = findRow(bank, B["UTR"], d.utr);
       if (b) bank.getRange(b, B["Matched Reg ID"]).setValue(d.regId || d.name);

@@ -77,6 +77,7 @@ export interface RegistrationRecord {
   name: string;
   dob?: string;
   phone: string;
+  callingPhone?: string;
   email: string;
   city?: string;
   association?: string;
