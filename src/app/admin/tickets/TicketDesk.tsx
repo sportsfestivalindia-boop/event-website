@@ -59,7 +59,11 @@ export function TicketDesk() {
   }
 
   if (issued) {
+    const cleanPhone = (issued.phone || "").replace(/\D/g, "").slice(-10);
     const msg = `✅ Payment verified — ${EVENT.name} ${EVENT.year}\n\nHi ${issued.name}, your ticket is ready.\nTicket No: ${issued.ticketNo}\n${issued.category}\n\nOpen your ticket: ${issued.url}\n\nShow this ticket and your Government ID at check-in. ${EVENT.dateLabel} · ${EVENT.venue}, Bhubaneswar.\n— All Odisha Gym Association`;
+    const waUrl = cleanPhone
+      ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(msg)}`
+      : `https://api.whatsapp.com/send/?text=${encodeURIComponent(msg)}`;
     return (
       <div className="card p-6">
         <p className="label text-gold">Ticket issued</p>
@@ -67,8 +71,13 @@ export function TicketDesk() {
         <p className="mt-2 font-semibold">{issued.name}</p>
         <p className="text-sm text-muted">{issued.category}</p>
         <div className="mt-6 flex flex-col gap-3">
-          <a href={`https://wa.me/91${issued.phone}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener" className="btn w-full bg-wa text-white">
-            <WhatsAppGlyph className="size-6" /> Send ticket on WhatsApp
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn w-full bg-wa text-white flex items-center justify-center gap-2"
+          >
+            <WhatsAppGlyph className="size-6" /> Send ticket on WhatsApp {cleanPhone ? `(+91 ${cleanPhone})` : ""}
           </a>
           <a href={issued.url} target="_blank" rel="noopener" className="btn btn-line w-full">
             Open ticket

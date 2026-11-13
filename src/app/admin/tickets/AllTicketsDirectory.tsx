@@ -111,10 +111,7 @@ export function AllTicketsDirectory() {
             : a,
         ),
       );
-      setTimeout(() => {
-        setEditingAthlete(null);
-        setEditSuccess("");
-      }, 1500);
+      // keep editSuccess visible so staff can click Send WhatsApp if needed
     } catch (err) {
       setEditError((err as Error).message);
     } finally {
@@ -271,8 +268,12 @@ export function AllTicketsDirectory() {
               <tbody className="divide-y divide-line">
                 {filtered.map((a) => {
                   const isPaid = a.status === "Paid" || a.status === "Verified";
+                  const cleanPhone = (a.phone || "").replace(/\D/g, "").slice(-10);
                   const ticketLink = a.ticketUrl || `https://sportsfestivalindia.com/ticket/${a.regId}`;
                   const waText = `Hi ${a.name}, your registration for ${a.category} at ${EVENT.name} is confirmed! Open your ticket: ${ticketLink}`;
+                  const waUrl = cleanPhone
+                    ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(waText)}`
+                    : `https://api.whatsapp.com/send/?text=${encodeURIComponent(waText)}`;
 
                   return (
                     <tr key={a.regId} className="hover:bg-white/5 transition-colors">
@@ -309,11 +310,11 @@ export function AllTicketsDirectory() {
                                 View
                               </a>
                               <a
-                                href={`https://wa.me/91${a.phone}?text=${encodeURIComponent(waText)}`}
+                                href={waUrl}
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 className="btn bg-wa text-white text-xs py-1 px-2.5 inline-flex items-center gap-1"
-                                title="Send on WhatsApp"
+                                title={`Send to athlete WhatsApp (${cleanPhone || a.phone})`}
                               >
                                 <WhatsAppGlyph className="size-3.5" />
                               </a>
@@ -407,22 +408,42 @@ export function AllTicketsDirectory() {
               </label>
 
               {editError && <p className="text-xs text-red-400 bg-red-500/10 p-2 rounded">{editError}</p>}
-              {editSuccess && <p className="text-xs text-wa bg-wa/10 p-2 rounded">{editSuccess}</p>}
+              {editSuccess && (
+                <div className="space-y-2">
+                  <p className="text-xs text-wa bg-wa/10 p-2.5 rounded font-medium">{editSuccess}</p>
+                  {editingAthlete && (
+                    <a
+                      href={`https://api.whatsapp.com/send/?phone=91${(editingAthlete.phone || "").replace(/\D/g, "").slice(-10)}&text=${encodeURIComponent(
+                        `Hi ${editName}, your registration for ${editCategory} at ${EVENT.name} has been updated!\n\nOpen your updated ticket:\nhttps://sportsfestivalindia.com/ticket/${editingAthlete.regId}\n\n— All Odisha Gym Association`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn w-full bg-wa text-white text-xs py-2 inline-flex items-center justify-center gap-2 font-bold shadow"
+                    >
+                      <WhatsAppGlyph className="size-4" /> Send Updated Ticket to Athlete (+91 {(editingAthlete.phone || "").replace(/\D/g, "").slice(-10)})
+                    </a>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setEditingAthlete(null)}
+                  onClick={() => {
+                    setEditingAthlete(null);
+                    setEditSuccess("");
+                    setEditError("");
+                  }}
                   className="btn btn-line flex-1 text-sm"
                 >
-                  Cancel
+                  {editSuccess ? "Done / Close" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit}
                   className="btn btn-gold flex-1 text-sm font-bold"
                 >
-                  {savingEdit ? "Updating & Re-issuing…" : "Save & Re-issue Ticket"}
+                  {savingEdit ? "Updating & Re-issuing…" : editSuccess ? "Save Again" : "Save & Re-issue Ticket"}
                 </button>
               </div>
             </form>

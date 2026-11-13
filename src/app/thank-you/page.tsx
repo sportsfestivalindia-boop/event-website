@@ -170,10 +170,10 @@ export default async function ThankYouPage({
             <ThankYouActions
               regId={regId}
               name={record?.name || "Athlete"}
+              phone={record?.phone || ""}
               ticketDownloadUrl={ticketDownloadUrl}
               receiptDownloadUrl={receiptDownloadUrl}
               imageDownloadUrl={imageDownloadUrl}
-              phone={record?.phone || ""}
             />
           </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, FileText, Image as ImageIcon, Share2, MessageCircle, RefreshCw, Check, AlertCircle } from "lucide-react";
+import { EVENT } from "@/data/festival";
 
 interface ThankYouActionsProps {
   regId: string;
@@ -97,8 +98,16 @@ export function ThankYouActions({
     }
   };
 
-  const waOfficialUrl = `https://wa.me/918018958655?text=${encodeURIComponent(
-    `Hi, my Client ID is ${regId}, please share my ticket for India's Biggest Sports Festival 2026.`
+  const cleanPhone = (phone || "").replace(/\D/g, "").slice(-10);
+  const ticketLink = `https://sportsfestivalindia.com/ticket/${regId}`;
+  const athleteWaMsg = `✅ Your Ticket is Confirmed — ${EVENT.name}\n\nHi ${name || "Athlete"}, your athlete registration (${regId}) is confirmed!\n\nOpen & Download your ticket:\n${ticketLink}\n\nShow this ticket and your Government ID at check-in desk.\n${EVENT.datesFull} · ${EVENT.venue}, Bhubaneswar.\n— All Odisha Gym Association`;
+
+  const athleteWaUrl = cleanPhone
+    ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(athleteWaMsg)}`
+    : `https://api.whatsapp.com/send/?text=${encodeURIComponent(athleteWaMsg)}`;
+
+  const waHelpUrl = `https://api.whatsapp.com/send/?phone=918018958655&text=${encodeURIComponent(
+    `Hi, my Client ID is ${regId}, I need help with my ticket for India's Biggest Sports Festival 2026.`
   )}`;
 
   return (
@@ -147,16 +156,28 @@ export function ThankYouActions({
         )}
       </div>
 
-      {/* WhatsApp Organiser Chat Link */}
+      {/* Direct WhatsApp Ticket Button to Athlete's Number */}
       <a
-        href={waOfficialUrl}
+        href={athleteWaUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 text-xs font-bold transition flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm transition flex items-center justify-center gap-2 shadow-lg cursor-pointer"
       >
-        <MessageCircle className="w-4 h-4 shrink-0" />
-        <span>Get ticket directly on WhatsApp (Organiser Desk)</span>
+        <MessageCircle className="w-5 h-5 shrink-0" />
+        <span>📲 Send Ticket to WhatsApp {cleanPhone ? `(+91 ${cleanPhone})` : ""}</span>
       </a>
+
+      {/* Organiser Help Desk link */}
+      <div className="text-center pt-1">
+        <a
+          href={waHelpUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] text-white/50 hover:text-gold transition inline-flex items-center gap-1"
+        >
+          <span>Need help? WhatsApp Organiser Desk (+91 80189 58655)</span>
+        </a>
+      </div>
 
       {/* Resend Action */}
       <div className="pt-2 text-center">

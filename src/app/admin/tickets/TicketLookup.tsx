@@ -33,9 +33,13 @@ export function TicketLookup() {
     finally { setBusy(false); }
   }
 
+  const cleanPhone = result?.phone ? String(result.phone).replace(/\D/g, "").slice(-10) : "";
   const waMsg = result
     ? `✅ Payment verified — ${EVENT.name} ${EVENT.year}\n\nHi ${result.name}, your ticket is ready.\n${result.category}\n\nOpen your ticket: ${result.ticketUrl}\n\nShow this ticket and your Government ID at check-in. ${EVENT.dateLabel} · ${EVENT.venue}, Bhubaneswar.\n— All Odisha Gym Association`
     : "";
+  const waUrl = cleanPhone
+    ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(waMsg)}`
+    : `https://api.whatsapp.com/send/?text=${encodeURIComponent(waMsg)}`;
 
   return (
     <div className="space-y-4">
@@ -76,12 +80,12 @@ export function TicketLookup() {
               Open ticket
             </a>
             <a
-              href={`https://wa.me/91${result.phone}?text=${encodeURIComponent(waMsg)}`}
+              href={waUrl}
               target="_blank"
-              rel="noopener"
-              className="btn w-full bg-wa text-white"
+              rel="noopener noreferrer"
+              className="btn w-full bg-wa text-white flex items-center justify-center gap-2"
             >
-              <WhatsAppGlyph className="size-5" /> Send on WhatsApp to {result.phone}
+              <WhatsAppGlyph className="size-5" /> Send on WhatsApp {cleanPhone ? `(+91 ${cleanPhone})` : ""}
             </a>
             <button
               onClick={() => navigator.clipboard?.writeText(result.ticketUrl)}

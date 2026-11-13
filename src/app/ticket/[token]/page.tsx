@@ -6,7 +6,7 @@ import { inr } from "@/lib/format";
 import { unseal, whenFor, ticketNo, Ticket } from "@/lib/ticket";
 import { getRegistrationFromFirestore } from "@/lib/firebase";
 import { toSheet } from "@/lib/sheet";
-import { Icon, Wordmark } from "@/components/icons";
+import { Icon, Wordmark, WhatsAppGlyph } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Your ticket · Sports Festival 2026", robots: { index: false, follow: false } };
 
@@ -30,6 +30,7 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
         a: dbRec.fee || 5000,
         u: dbRec.utr || "",
         r: dbRec.regId || lookupId,
+        p: dbRec.phone ? dbRec.phone.replace(/\D/g, "").slice(-10) : undefined,
         i: typeof dbRec.createdAt === "string" ? dbRec.createdAt : new Date().toISOString(),
         isTest: dbRec.isTest,
       };
@@ -45,9 +46,18 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
           a: Number(sheetRec.fee) || 5000,
           u: String(sheetRec.utr || ""),
           r: String(sheetRec.regId || lookupId),
+          p: sheetRec.phone ? String(sheetRec.phone).replace(/\D/g, "").slice(-10) : undefined,
           i: new Date().toISOString(),
         };
       }
+    }
+  }
+
+  // If token was unsealed from legacy token without phone, look up phone
+  if (t && !t.p && t.r) {
+    const dbRec = await getRegistrationFromFirestore(t.r).catch(() => null);
+    if (dbRec?.phone) {
+      t.p = dbRec.phone.replace(/\D/g, "").slice(-10);
     }
   }
 
@@ -65,6 +75,13 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
   const isTest = Boolean(t.isTest || t.c.includes("TEST"));
   const qr = await QRCode.toDataURL(`${t.t} · ${t.n} · ${t.c}`, { margin: 1, width: 360 });
   const issued = new Date(t.i).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+
+  const cleanPhone = t.p ? t.p.replace(/\D/g, "").slice(-10) : "";
+  const ticketPermLink = `https://sportsfestivalindia.com/ticket/${t.r || token}`;
+  const waTicketMsg = `✅ Official Athlete Ticket — ${EVENT.name}\n\nHi ${t.n}, your ticket (${t.t}) is ready!\nCategory: ${t.c}\nRegistration ID: ${t.r || t.t}\n\nOpen & Download your ticket:\n${ticketPermLink}\n\nShow this ticket and your Government ID at check-in desk.\n${EVENT.datesFull} · ${EVENT.venue}, Bhubaneswar.\n— All Odisha Gym Association`;
+  const waTicketUrl = cleanPhone
+    ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(waTicketMsg)}`
+    : `https://api.whatsapp.com/send/?text=${encodeURIComponent(waTicketMsg)}`;
 
   return (
     <main className="t-ink min-h-[100svh] px-5 py-10">
@@ -122,6 +139,15 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
         </div>
         <a href={`/ticket/${token}/image`} download className="btn btn-gold mt-6 w-full">
           Download ticket
+        </a>
+        <a
+          href={waTicketUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn mt-3 w-full bg-wa text-white hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer font-bold text-sm py-3 rounded-xl shadow-lg"
+        >
+          <WhatsAppGlyph className="size-5" />
+          <span>📲 Send Ticket to WhatsApp {cleanPhone ? `(+91 ${cleanPhone})` : ""}</span>
         </a>
         <p className="mt-3 text-center text-xs text-muted">
           {isTest ? "This is a test pass generated for live payment confirmation." : "Show this ticket (screenshot is fine) and your Government ID at the check-in desk."}

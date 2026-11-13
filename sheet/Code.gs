@@ -445,7 +445,11 @@ function asText(range, value) {
 
 function waFormula(sh, r) {
   const v = (h) => sh.getRange(r, R[h]).getValue();
-  const text = `✅ Confirmed — ${EVENT.name}\nReg ID: ${v("Reg ID")}\n${v("Category")}\n${EVENT.dates} · ${EVENT.venue}\nPlease bring your Government ID and documents. See you there! — AOGA`;
-  const url = `https://wa.me/91${v("Mobile")}?text=${encodeURIComponent(text)}`;
-  return `=HYPERLINK("${url.replace(/"/g, '""')}","Send ✅")`;
+  const cleanMobile = String(v("Mobile") || "").replace(/\D/g, "").slice(-10);
+  const ticketLink = v("Ticket") || `https://sportsfestivalindia.com/ticket/${v("Reg ID")}`;
+  const text = `✅ Confirmed — ${EVENT.name}\n\nHi ${v("Name")}, your registration is confirmed!\nReg ID: ${v("Reg ID")}\nCategory: ${v("Category")}\n\n🎟️ Open & Download your Ticket Pass:\n${ticketLink}\n\nDates: ${EVENT.dates}\nVenue: ${EVENT.venue}\nPlease bring your Government ID and documents.\n— All Odisha Gym Association`;
+  const url = cleanMobile
+    ? `https://api.whatsapp.com/send/?phone=91${cleanMobile}&text=${encodeURIComponent(text)}`
+    : `https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`;
+  return `=HYPERLINK("${url.replace(/"/g, '""')}","📲 Send WhatsApp")`;
 }

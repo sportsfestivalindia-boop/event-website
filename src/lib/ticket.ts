@@ -21,6 +21,7 @@ export type Ticket = {
   a: number; // amount paid (₹)
   u: string; // UTR
   r?: string; // registration ID
+  p?: string; // mobile number
   i: string; // issued (ISO)
   isTest?: boolean;
 };
@@ -105,6 +106,7 @@ export async function issueTicket(
     a: p.amount,
     u: p.utr,
     r: p.regId || undefined,
+    p: p.phone ? p.phone.replace(/\D/g, "").slice(-10) : undefined,
     i: new Date().toISOString(),
     isTest: isTest || undefined,
   });
