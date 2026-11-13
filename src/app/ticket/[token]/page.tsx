@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import { DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { unseal, whenFor, ticketNo, Ticket } from "@/lib/ticket";
-import { getRegistrationFromFirestore } from "@/lib/firebase";
+import { getRegistrationFromFirestore, getAllRegistrationsFromFirestore } from "@/lib/firebase";
 import { toSheet } from "@/lib/sheet";
 import { Icon, Wordmark, WhatsAppGlyph } from "@/components/icons";
 
@@ -19,11 +19,24 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
     const regMatch = raw.match(/SF26-[0-9A-Z]{6}/i);
     const lookupId = regMatch ? regMatch[0].toUpperCase() : raw.toUpperCase();
 
-    // 1. Try Firestore
-    const dbRec = await getRegistrationFromFirestore(lookupId).catch(() => null);
+    // 1. Try Firestore direct lookup
+    let dbRec = await getRegistrationFromFirestore(lookupId).catch(() => null);
+
+    // If not found directly, search all records for matching ticketNo, phone or ticketUrl
+    if (!dbRec) {
+      const all = await getAllRegistrationsFromFirestore().catch(() => []);
+      dbRec = all.find(
+        (r) =>
+          r.regId === lookupId ||
+          r.ticketNo === lookupId ||
+          (raw.length > 10 && r.phone === raw) ||
+          (token.length > 20 && r.ticketUrl && r.ticketUrl.includes(token.slice(0, 20)))
+      ) || null;
+    }
+
     if (dbRec && (dbRec.status === "Paid" || dbRec.status === "Verified")) {
       t = {
-        t: dbRec.ticketNo || ticketNo(dbRec.utr || lookupId),
+        t: dbRec.ticketNo || ticketNo(dbRec.utr || dbRec.regId || lookupId),
         n: dbRec.name,
         c: dbRec.category,
         w: whenFor(dbRec.category),
