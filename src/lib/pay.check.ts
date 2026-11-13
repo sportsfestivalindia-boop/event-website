@@ -13,6 +13,8 @@ const box = checkEntry({ ...base, sport: "boxing", division: "boxing-open", cls:
 assert.ok(box.ok && box.fee === 1000, "Boxing costs ₹1,000");
 const classic = checkEntry({ ...base, division: "classic-physique", cls: "Above 70 kg" });
 assert.ok(classic.ok && classic.fee === 5000, "Classic Physique 70 kg classes open at ₹5,000");
+const wf = checkEntry({ ...base, division: "womens-fitness", cls: "Open" });
+assert.ok(wf.ok && wf.fee === 5000, "Women's Fitness Model costs ₹5,000");
 const star = checkEntry({ ...base, division: "star", cls: "Open" });
 assert.ok(star.ok && star.fee === 0, "Star category is free");
 assert.equal(checkEntry({ ...base, cls: "999 kg" }).ok, false, "unknown class rejected");
@@ -66,13 +68,16 @@ import("./ticket").then(({ seal, unseal, ticketNo, isAdmin }) => {
   .then(async () => {
     const { sendTicketWhatsApp } = await import("./whatsapp");
     const t = { phone: "9876543210", name: "Test Athlete", amount: 600, category: "Marathon · Open", ticketNo: "SFT-1234ABCD", url: "https://x.test/ticket/abc" };
-    assert.equal(await sendTicketWhatsApp(t), false, "WhatsApp off until AISENSY_API_KEY is set");
+    const resOff = await sendTicketWhatsApp(t);
+    assert.equal(resOff.success, true, "WhatsApp skipped cleanly when AISENSY_API_KEY is not set");
     process.env.AISENSY_API_KEY = "test-key";
     let sent: Record<string, unknown> = {};
     globalThis.fetch = (async (_u: unknown, init?: RequestInit) => ((sent = JSON.parse(String(init?.body))), new Response("{}"))) as typeof fetch;
-    assert.equal(await sendTicketWhatsApp(t), true, "WhatsApp sent");
+    const resOn = await sendTicketWhatsApp(t);
+    assert.equal(resOn.success, true, "WhatsApp sent");
     assert.equal(sent.destination, "919876543210", "to the registered mobile with 91");
     assert.deepEqual(sent.templateParams, ["Test Athlete", "600", "Marathon · Open", "SFT-1234ABCD", "https://x.test/ticket/abc"], "template values in order");
-    assert.equal(await sendTicketWhatsApp({ ...t, phone: "12345" }), false, "bad number skipped");
+    const resBad = await sendTicketWhatsApp({ ...t, phone: "12345" });
+    assert.equal(resBad.success, false, "bad number skipped");
     console.log("pay.check: all passed");
   });

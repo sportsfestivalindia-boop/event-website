@@ -122,8 +122,6 @@ export const CHAMPIONSHIPS: Championship[] = [
         name: "Women’s Fitness Model",
         classes: ["Open"],
         prizes: OPEN_1L,
-        fee: 0,
-        note: "Free Registration",
       },
     ],
   },
