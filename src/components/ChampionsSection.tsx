@@ -88,6 +88,7 @@ const GUESTS_DATA: ChampionPerson[] = [
     role: "Olympic Weightlifter · Commonwealth Games Gold Medallist · Arjuna Awardee",
     tag: "Olympic Legend",
     tagIcon: Medal,
+    image: "/img/vip-k-ravi-kumar.jpg",
     alt: "K. Ravi Kumar, Olympian, Commonwealth Games gold medallist and Arjuna awardee",
     badgeVariant: "gold",
     indexStr: "03",

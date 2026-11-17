@@ -376,6 +376,7 @@ export const SPECIAL_GUESTS = [
     name: "K. Ravi Kumar",
     role: "Olympic Weightlifter · Commonwealth Games Gold Medallist · Arjuna Awardee",
     tag: "Olympic Legend",
+    image: "/img/vip-k-ravi-kumar.jpg",
   },
   {
     name: "Afroz Khan",
