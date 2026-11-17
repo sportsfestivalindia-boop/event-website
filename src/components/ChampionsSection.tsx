@@ -121,6 +121,7 @@ const GUESTS_DATA: ChampionPerson[] = [
     role: "Honourable Vidhayak (MLA) · Ekamra Bhubaneswar",
     tag: "State Dignitary",
     tagIcon: Landmark,
+    image: "/img/vip-babu-singh.jpg",
     alt: "Babu Singh, Honourable Vidhayak (MLA) Ekamra Bhubaneswar",
     badgeVariant: "gold",
     indexStr: "06",

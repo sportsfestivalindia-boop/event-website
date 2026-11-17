@@ -394,6 +394,7 @@ export const SPECIAL_GUESTS = [
     name: "Babu Singh",
     role: "Honourable Vidhayak (MLA) · Ekamra Bhubaneswar",
     tag: "State Dignitary",
+    image: "/img/vip-babu-singh.jpg",
   },
   {
     name: "Suryabanshi Suraj",
