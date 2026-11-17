@@ -26,7 +26,7 @@ assert.ok(checkEntry({ ...base, division: "masters", cls: "Open", dob: "1975-01-
 
 const firm = { stall: "s50x30", company: "Acme Nutrition", contact: "Test Person", phone: "9876543210", email: "a@b.in" };
 const big = checkStall(firm);
-assert.ok(big.ok && big.price === 10_00_000, "50x30 stall costs ₹10,00,000");
+assert.ok(big.ok && big.price === 15_00_000, "50x30 stall costs ₹15,00,000");
 assert.equal(checkStall({ ...firm, stall: "s1x1" }).ok, false, "unknown stall rejected");
 assert.equal(checkStall({ ...firm, gstin: "BADGST" }).ok, false, "bad GSTIN rejected");
 assert.ok(checkStall({ ...firm, gstin: "21AABCU9603R1ZM" }).ok, "valid GSTIN accepted");

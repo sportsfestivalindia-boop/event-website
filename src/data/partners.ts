@@ -15,11 +15,11 @@ export const SECTORS = ["Nutrition", "Fitness", "Sportswear", "Healthcare", "Hos
 
 export const STALLS = [
   { id: "s10x10", size: "10 ft × 10 ft", sqft: 100, price: 70_000 },
-  { id: "s20x10", size: "20 ft × 10 ft", sqft: 200, price: 1_20_000 },
-  { id: "s20x15", size: "20 ft × 15 ft", sqft: 300, price: 1_50_000 },
-  { id: "s25x20", size: "25 ft × 20 ft", sqft: 500, price: 5_00_000 },
-  { id: "s50x20", size: "50 ft × 20 ft", sqft: 1000, price: 8_00_000 },
-  { id: "s50x30", size: "50 ft × 30 ft", sqft: 1500, price: 10_00_000 },
+  { id: "s20x10", size: "20 ft × 10 ft", sqft: 200, price: 1_35_000 },
+  { id: "s20x15", size: "20 ft × 15 ft", sqft: 300, price: 1_65_000 },
+  { id: "s20x25", size: "20 ft × 25 ft", sqft: 500, price: 5_00_000 },
+  { id: "s50x20", size: "50 ft × 20 ft", sqft: 1000, price: 10_00_000 },
+  { id: "s50x30", size: "50 ft × 30 ft", sqft: 1500, price: 15_00_000 },
 ];
 
 export const PARTNER_WHY = [
