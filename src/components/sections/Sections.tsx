@@ -113,7 +113,7 @@ export function FinalCall() {
 export function Footer() {
   const links = [...POLICY_LINKS, ["Partner with us", "/partner"]];
   return (
-    <footer className="t-ink border-t border-line w-full page-gutter pt-14 pb-32 md:pb-14">
+    <footer id="footer" className="t-ink border-t border-line w-full page-gutter pt-14 pb-16 md:pb-14">
       <div className="content-contain mx-auto grid w-full gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <Wordmark />

@@ -152,12 +152,14 @@ export function Chrome() {
         es.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
         setHide(seen.size > 0);
       },
-      { threshold: 0.15 },
+      { threshold: 0.05 },
     );
-    ["register", "final"].forEach((id) => {
+    ["register", "final", "footer"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) io2.observe(el);
     });
+    const footerTag = document.querySelector("footer");
+    if (footerTag) io2.observe(footerTag);
     return () => {
       io1.disconnect();
       io2.disconnect();

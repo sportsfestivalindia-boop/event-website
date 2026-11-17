@@ -90,10 +90,13 @@ export function Finder() {
   const fee = division?.fee ?? EVENT.fee;
   const hasClasses = (division?.classes.length ?? 0) > 1;
 
-  // Monitor visibility of the summary card on mobile to show/hide sticky bottom bar
+  // Monitor visibility of the summary card on mobile to show/hide sticky bottom bar only when inside the Arena section
+  const [isInArena, setIsInArena] = useState(false);
+
   useEffect(() => {
     const cardEl = cardContainerRef.current;
-    if (!cardEl) return;
+    const secEl = sectionRef.current;
+    if (!cardEl || !secEl) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -102,7 +105,19 @@ export function Finder() {
       { threshold: 0.1 }
     );
     observer.observe(cardEl);
-    return () => observer.disconnect();
+
+    const secObserver = new IntersectionObserver(
+      ([entry]) => {
+        setIsInArena(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    secObserver.observe(secEl);
+
+    return () => {
+      observer.disconnect();
+      secObserver.disconnect();
+    };
   }, []);
 
   return (
@@ -186,10 +201,10 @@ export function Finder() {
         </div>
       </div>
 
-      {/* Mobile Sticky Registration Bar: appears only when main register button is scrolled out of view */}
+      {/* Mobile Sticky Registration Bar: appears only when inside Arena AND main register button is scrolled out of view */}
       <div
         className={`fixed inset-x-0 bottom-0 z-50 border-t border-white/15 bg-black/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-lg transition-transform duration-300 lg:hidden ${
-          !isMobileCardVisible ? "translate-y-0 shadow-2xl" : "translate-y-full pointer-events-none"
+          isInArena && !isMobileCardVisible ? "translate-y-0 shadow-2xl" : "translate-y-full pointer-events-none"
         }`}
       >
         <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
