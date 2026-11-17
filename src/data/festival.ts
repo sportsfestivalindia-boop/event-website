@@ -359,6 +359,55 @@ export const LEGENDS = [
   { name: "Dutee Chand", title: "Olympian · 2× Asian Games silver medallist (2018) · National 100m record holder", line: "Dutee’s Marathon", face: "/img/pfp-dutee.webp" },
 ];
 
+export const SPECIAL_GUESTS = [
+  {
+    name: "Sahil Khan",
+    role: "India's Youth Fitness Icon · Actor & Fitness Pioneer",
+    tag: "Celebrity Guest",
+    image: "/img/vip-sahil-khan.webp",
+  },
+  {
+    name: "Dutee Chand",
+    role: "Olympic Sprinter · 2× Asian Games Silver Medallist · National 100m Record Holder",
+    tag: "Olympic Legend",
+    image: "/img/pfp-dutee.webp",
+  },
+  {
+    name: "K. Ravi Kumar",
+    role: "Olympic Weightlifter · Commonwealth Games Gold Medallist · Arjuna Awardee",
+    tag: "Olympic Legend",
+  },
+  {
+    name: "Afroz Khan",
+    role: "Celebrity Fitness Icon & Champion Bodybuilder",
+    tag: "Celebrity Guest",
+  },
+  {
+    name: "Sulochana Das",
+    role: "Honourable Mayor · Bhubaneswar Municipal Corporation (BMC)",
+    tag: "State Dignitary",
+  },
+  {
+    name: "Babu Singh",
+    role: "Honourable Vidhayak (MLA) · Ekamra Bhubaneswar",
+    tag: "State Dignitary",
+  },
+  {
+    name: "Suryabanshi Suraj",
+    role: "Minister of Sports & Youth Services, Government of Odisha",
+    tag: "Honourable Minister",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169643/MR.SURYABANSHI_SURAJ.jpg",
+  },
+  {
+    name: "Nipun Agarwal",
+    role: "Social Media Influencer · Voice of Athletes",
+    tag: "Voice of Athletes",
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169638/MR.NIPUN_AGARWAL.jpg",
+  },
+];
+
+export const GUESTS = SPECIAL_GUESTS;
+
 // Refund rules — one source for the FAQ, the Register section and the /refund policy page.
 export const REFUND = {
   partialUntil: "31 October 2026",

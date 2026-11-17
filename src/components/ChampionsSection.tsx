@@ -2,7 +2,17 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Gavel, Megaphone, Award, Radio, ShieldCheck } from "lucide-react";
+import {
+  Gavel,
+  Megaphone,
+  Award,
+  Radio,
+  ShieldCheck,
+  Trophy,
+  Landmark,
+  Flame,
+  Medal,
+} from "lucide-react";
 import { useReplayOnScroll } from "@/hooks/useReplayOnScroll";
 import { SpecialFeatureCards } from "./SpecialFeatureCards";
 
@@ -11,10 +21,11 @@ export interface ChampionPerson {
   role: string;
   tag: string;
   tagIcon: React.ComponentType<{ className?: string }>;
-  image: string;
+  image?: string;
   alt: string;
   badgeVariant?: "gold" | "orange";
   indexStr: string;
+  category?: "voice" | "dignitary" | "olympian" | "celebrity";
 }
 
 // Group 1 - JUDGES (3 in one line)
@@ -48,27 +59,91 @@ const JUDGES_DATA: ChampionPerson[] = [
   },
 ];
 
-// Group 2 - SPECIAL GUESTS (2 VIP Spotlight Cards with Different UI & Animations)
+// Group 2 - SPECIAL GUESTS (Distinguished VIP Guests & Dignitaries)
 const GUESTS_DATA: ChampionPerson[] = [
   {
+    name: "SAHIL KHAN",
+    role: "India's Youth Fitness Icon · Actor & Fitness Pioneer",
+    tag: "Celebrity Guest",
+    tagIcon: Flame,
+    image: "/img/vip-sahil-khan.webp",
+    alt: "Sahil Khan, India's youth fitness icon and actor",
+    badgeVariant: "gold",
+    indexStr: "01",
+    category: "celebrity",
+  },
+  {
+    name: "DUTEE CHAND",
+    role: "Olympic Sprinter · 2× Asian Games Silver Medallist · National 100m Record Holder",
+    tag: "Olympic Legend",
+    tagIcon: Trophy,
+    image: "/img/pfp-dutee.webp",
+    alt: "Dutee Chand, Olympian, Asian Games silver medallist and national 100m record holder",
+    badgeVariant: "gold",
+    indexStr: "02",
+    category: "olympian",
+  },
+  {
+    name: "K. RAVI KUMAR",
+    role: "Olympic Weightlifter · Commonwealth Games Gold Medallist · Arjuna Awardee",
+    tag: "Olympic Legend",
+    tagIcon: Medal,
+    alt: "K. Ravi Kumar, Olympian, Commonwealth Games gold medallist and Arjuna awardee",
+    badgeVariant: "gold",
+    indexStr: "03",
+    category: "olympian",
+  },
+  {
+    name: "AFROZ KHAN",
+    role: "Celebrity Fitness Icon & Champion Bodybuilder · Fitness Motivator",
+    tag: "Celebrity Guest",
+    tagIcon: Flame,
+    alt: "Afroz Khan, celebrity fitness icon and champion bodybuilder",
+    badgeVariant: "orange",
+    indexStr: "04",
+    category: "celebrity",
+  },
+  {
+    name: "SULOCHANA DAS",
+    role: "Honourable Mayor · Bhubaneswar Municipal Corporation (BMC)",
+    tag: "State Dignitary",
+    tagIcon: Landmark,
+    alt: "Sulochana Das, Honourable Mayor of Bhubaneswar Municipal Corporation",
+    badgeVariant: "gold",
+    indexStr: "05",
+    category: "dignitary",
+  },
+  {
+    name: "BABU SINGH",
+    role: "Honourable Vidhayak (MLA) · Ekamra Bhubaneswar",
+    tag: "State Dignitary",
+    tagIcon: Landmark,
+    alt: "Babu Singh, Honourable Vidhayak (MLA) Ekamra Bhubaneswar",
+    badgeVariant: "gold",
+    indexStr: "06",
+    category: "dignitary",
+  },
+  {
+    name: "SURYABANSHI SURAJ",
+    role: "Minister of Sports & Youth Services, Government of Odisha",
+    tag: "Honourable Minister",
+    tagIcon: ShieldCheck,
+    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169643/MR.SURYABANSHI_SURAJ.jpg",
+    alt: "Suryabanshi Suraj, Minister of Sports & Youth Services, Government of Odisha",
+    badgeVariant: "gold",
+    indexStr: "07",
+    category: "dignitary",
+  },
+  {
     name: "NIPUN AGARWAL",
-    role: "Social Media Influencer",
+    role: "Social Media Influencer · Voice of Athletes",
     tag: "Voice of Athletes",
     tagIcon: Megaphone,
     image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169638/MR.NIPUN_AGARWAL.jpg",
     alt: "Nipun Agarwal, social media influencer and voice of athletes",
     badgeVariant: "orange",
-    indexStr: "01",
-  },
-  {
-    name: "SURYABANSHI SURAJ",
-    role: "Minister of Sports & Youth Services, Government of Odisha",
-    tag: "Honourable Guest",
-    tagIcon: Award,
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169643/MR.SURYABANSHI_SURAJ.jpg",
-    alt: "Suryabanshi Suraj, Minister of Sports & Youth Services, Government of Odisha",
-    badgeVariant: "gold",
-    indexStr: "02",
+    indexStr: "08",
+    category: "voice",
   },
 ];
 
@@ -161,7 +236,7 @@ function JudgesSection({ isReduced }: { isReduced: boolean }) {
               <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#0d0d0d]">
                 {/* 100% UNCUT IMAGE: Full Head & Full Body with ample headroom */}
                 <Image
-                  src={person.image}
+                  src={person.image || ""}
                   alt={person.alt}
                   fill
                   priority={idx === 0}
@@ -230,7 +305,7 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
         <div className="flex items-center gap-3">
           <span aria-hidden="true" className="h-0.5 w-6 rounded-full ch-gradient-bg" />
           <p className="text-xs font-semibold tracking-[0.25em] text-white/85 uppercase">
-            SPECIAL GUESTS
+            SPECIAL GUESTS & DIGNITARIES
           </p>
         </div>
 
@@ -239,24 +314,23 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
           className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#FF9A00]"
         >
           <span className="size-1.5 rounded-full bg-[#FF9A00] animate-ping" />
-          <span>VIP Prestige Stage · 02</span>
+          <span>VIP Prestige Stage · 08 Distinguished Guests</span>
         </div>
       </div>
 
-      {/* 2-Column VIP Executive Dossier Suites (Different UI: Horizontal Split Layout) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+      {/* 2-Column VIP Executive Dossier Suites (Horizontal Split Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full">
         {GUESTS_DATA.map((guest, idx) => {
           const TagIcon = guest.tagIcon;
           const isGold = guest.badgeVariant === "gold";
-          const isVoice = guest.tag === "Voice of Athletes";
 
           return (
             <article
               key={guest.name}
               style={{
-                transitionDelay: hasEntered && !isReduced ? `${idx * 180}ms` : "0ms",
+                transitionDelay: hasEntered && !isReduced ? `${(idx % 4) * 120}ms` : "0ms",
               }}
-              className={`group relative rounded-3xl overflow-hidden border border-white/12 bg-gradient-to-br from-[#161616] via-[#0E0E0E] to-[#050505] p-5 sm:p-6 lg:p-7 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) hover:-translate-y-2.5 hover:border-[#FF9A00]/50 ${
+              className={`group relative rounded-3xl overflow-hidden border border-white/12 bg-gradient-to-br from-[#161616] via-[#0E0E0E] to-[#050505] p-5 sm:p-6 lg:p-7 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) hover:-translate-y-2 hover:border-[#FF9A00]/50 ${
                 isGold
                   ? "hover:shadow-[0_24px_60px_rgba(245,158,11,0.22)]"
                   : "hover:shadow-[0_24px_60px_rgba(249,115,22,0.22)]"
@@ -287,29 +361,60 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
               {/* Two-Column Internal Layout: Left = Framed Master Portrait Bay, Right = VIP Credentials Bay */}
               <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 lg:gap-7 h-full">
                 {/* Master Framed Portrait Bay: Exact 4:5 Aspect Ratio (NO HEAD CUT, NO BODY CUT) */}
-                <div className="relative w-full sm:w-[230px] lg:w-[250px] shrink-0 aspect-[4/5] rounded-2xl overflow-hidden border border-white/15 bg-black shadow-2xl">
-                  {/* Photo with 100% Uncut Head & Body */}
-                  <Image
-                    src={guest.image}
-                    alt={guest.alt}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 250px, 100vw"
-                    className="object-cover object-[center_top] transition-transform duration-700 cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105"
-                  />
+                <div className="relative w-full sm:w-[200px] lg:w-[220px] shrink-0 aspect-[4/5] rounded-2xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#1b1b1b] to-black shadow-2xl flex items-center justify-center">
+                  {guest.image ? (
+                    <>
+                      {/* Photo with 100% Uncut Head & Body */}
+                      <Image
+                        src={guest.image}
+                        alt={guest.alt}
+                        fill
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 220px, 100vw"
+                        className="object-cover object-[center_top] transition-transform duration-700 cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105"
+                      />
+                      {/* Gentle vignette around edges */}
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20 pointer-events-none"
+                      />
+                    </>
+                  ) : (
+                    /* Executive VIP Monogram & Seal Fallback Bay */
+                    <div className="relative w-full h-full flex flex-col items-center justify-center p-5 text-center select-none overflow-hidden bg-gradient-to-b from-[#1c1a16] via-[#12110e] to-black">
+                      {/* Background radial gold aura */}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,154,0,0.18),transparent_70%)]" />
+
+                      {/* Concentric rings */}
+                      <div className="absolute -inset-8 rounded-full border border-white/[0.05] pointer-events-none" />
+                      <div className="absolute -inset-3 rounded-full border border-amber-500/10 pointer-events-none" />
+
+                      {/* Gold Crest Monogram Shield */}
+                      <div className="relative z-10 size-20 rounded-2xl border-2 border-amber-400/40 bg-gradient-to-br from-amber-500/20 via-black/80 to-amber-950/40 backdrop-blur-md flex flex-col items-center justify-center shadow-[0_12px_28px_rgba(245,158,11,0.25)] group-hover:border-amber-300 transition-all duration-500 group-hover:scale-105">
+                        <TagIcon className="size-7 text-amber-300 mb-1 drop-shadow" />
+                        <span className="font-mono text-xs font-black tracking-widest text-white/90">
+                          {guest.name.split(" ").map(w => w[0]).join("").slice(0, 3)}
+                        </span>
+                      </div>
+
+                      {/* VIP Seal Subtext */}
+                      <div className="relative z-10 mt-3 flex flex-col items-center">
+                        <span className="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase font-semibold">
+                          Honoured VIP
+                        </span>
+                        <span className="text-[11px] text-white/40 tracking-wider mt-0.5">
+                          Festival 2026
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Micro VIP Corner Monogram Tag */}
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-mono tracking-widest uppercase text-[#FF9A00] font-bold shadow-md pointer-events-none">
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-white/20 text-[10px] font-mono tracking-widest uppercase text-[#FF9A00] font-bold shadow-md pointer-events-none z-20">
                     VIP · {guest.indexStr}
                   </div>
-
-                  {/* Gentle vignette around edges */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20 pointer-events-none"
-                  />
                 </div>
 
-                {/* VIP Credentials & Dynamic Audio / Leadership Bay */}
+                {/* VIP Credentials & Dynamic Badges Bay */}
                 <div className="flex-1 flex flex-col justify-between py-1 w-full text-left">
                   {/* Top: VIP Status Pill Badge & Numeric Indicator */}
                   <div className="flex items-center justify-between gap-3">
@@ -335,7 +440,7 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
                     {/* Golden accent indicator */}
                     <div className="h-0.5 w-10 group-hover:w-20 ch-gradient-bg rounded-full transition-all duration-500 mb-2.5" />
 
-                    <h3 className="display text-2xl sm:text-3xl lg:text-[2.2rem] text-white tracking-tight uppercase group-hover:text-[#FFE600] transition-colors duration-300 leading-[1.05]">
+                    <h3 className="display text-2xl sm:text-3xl text-white tracking-tight uppercase group-hover:text-[#FFE600] transition-colors duration-300 leading-[1.08]">
                       {guest.name}
                     </h3>
 
@@ -344,9 +449,9 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
                     </p>
                   </div>
 
-                  {/* Bottom: BESPOKE SIGNATURE ANIMATIONS (Distinct per guest!) */}
-                  {isVoice ? (
-                    /* ANIMATION 3: Dynamic Live Soundwave Equalizer for Voice of Athletes */
+                  {/* Bottom: Signature Badges per Guest */}
+                  {guest.category === "voice" ? (
+                    /* Dynamic Live Soundwave Equalizer for Voice of Athletes */
                     <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-1.5 h-6">
                         <span className="w-1 bg-[#FF9A00] rounded-full sg-bar-1" />
@@ -363,19 +468,49 @@ function SpecialGuestsShowcase({ isReduced }: { isReduced: boolean }) {
                         <span>Voice of Athletes</span>
                       </div>
                     </div>
-                  ) : (
-                    /* ANIMATION 4: State Leadership Energy Ray for Minister Suraj */
+                  ) : guest.category === "olympian" ? (
+                    /* Olympian Olympic Glory Energy Beam */
                     <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
                       <div className="relative h-1 w-full bg-white/10 rounded-full overflow-hidden">
                         <div className="absolute top-0 bottom-0 w-1/3 ch-gradient-bg rounded-full sg-beam-glide" />
                       </div>
 
                       <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-widest uppercase text-white/60">
-                        <span className="flex items-center gap-1.5 text-amber-300/90">
-                          <ShieldCheck className="size-3.5 text-amber-400" />
-                          <span>Government of Odisha</span>
+                        <span className="flex items-center gap-1.5 text-amber-300/90 font-semibold">
+                          <Trophy className="size-3.5 text-amber-400" />
+                          <span>Olympic Glory</span>
                         </span>
-                        <span>Sports Leadership</span>
+                        <span>National Pride</span>
+                      </div>
+                    </div>
+                  ) : guest.category === "dignitary" ? (
+                    /* Civic & State Leadership Energy Ray */
+                    <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
+                      <div className="relative h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div className="absolute top-0 bottom-0 w-1/3 ch-gradient-bg rounded-full sg-beam-glide" />
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-widest uppercase text-white/60">
+                        <span className="flex items-center gap-1.5 text-amber-300/90 font-semibold">
+                          <Landmark className="size-3.5 text-amber-400" />
+                          <span>Honoured Dignitary</span>
+                        </span>
+                        <span>Odisha Leadership</span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Celebrity Youth Icon Pulse */
+                    <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
+                      <div className="relative h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div className="absolute top-0 bottom-0 w-1/3 ch-gradient-bg rounded-full sg-beam-glide" />
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-widest uppercase text-white/60">
+                        <span className="flex items-center gap-1.5 text-orange-400 font-semibold">
+                          <Flame className="size-3.5 text-orange-400" />
+                          <span>Fitness Icon</span>
+                        </span>
+                        <span>Youth Inspiration</span>
                       </div>
                     </div>
                   )}
@@ -447,7 +582,7 @@ function AssociationSection({ isReduced }: { isReduced: boolean }) {
               <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#0d0d0d]">
                 {/* 100% UNCUT IMAGE: Full Head & Full Body with ample headroom */}
                 <Image
-                  src={person.image}
+                  src={person.image || ""}
                   alt={person.alt}
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
