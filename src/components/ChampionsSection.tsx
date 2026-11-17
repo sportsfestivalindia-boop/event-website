@@ -99,6 +99,7 @@ const GUESTS_DATA: ChampionPerson[] = [
     role: "Celebrity Fitness Icon & Champion Bodybuilder · Fitness Motivator",
     tag: "Celebrity Guest",
     tagIcon: Flame,
+    image: "/img/vip-afroz-khan.jpg",
     alt: "Afroz Khan, celebrity fitness icon and champion bodybuilder",
     badgeVariant: "orange",
     indexStr: "04",

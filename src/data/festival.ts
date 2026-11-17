@@ -382,6 +382,7 @@ export const SPECIAL_GUESTS = [
     name: "Afroz Khan",
     role: "Celebrity Fitness Icon & Champion Bodybuilder",
     tag: "Celebrity Guest",
+    image: "/img/vip-afroz-khan.jpg",
   },
   {
     name: "Sulochana Das",
