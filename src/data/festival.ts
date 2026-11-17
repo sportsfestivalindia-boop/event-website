@@ -388,6 +388,7 @@ export const SPECIAL_GUESTS = [
     name: "Sulochana Das",
     role: "Honourable Mayor · Bhubaneswar Municipal Corporation (BMC)",
     tag: "State Dignitary",
+    image: "/img/vip-sulochana-das.jpg",
   },
   {
     name: "Babu Singh",

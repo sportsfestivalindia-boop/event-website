@@ -110,6 +110,7 @@ const GUESTS_DATA: ChampionPerson[] = [
     role: "Honourable Mayor · Bhubaneswar Municipal Corporation (BMC)",
     tag: "State Dignitary",
     tagIcon: Landmark,
+    image: "/img/vip-sulochana-das.jpg",
     alt: "Sulochana Das, Honourable Mayor of Bhubaneswar Municipal Corporation",
     badgeVariant: "gold",
     indexStr: "05",
