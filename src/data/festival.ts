@@ -74,7 +74,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Anil Gochhikar Classic",
     level: "International",
     tagline: "The flagship. Eight divisions, one Champion of Champions.",
-    when: "Prelims Sat 5 Dec · Finals Sun 6 Dec, from 5 PM",
+    when: "Prejudging Sat 5 Dec, 5 PM · Finals Sun 6 Dec, 6 PM (Spot Reg: 5 Dec 8 AM–1 PM)",
     divisions: [
       {
         id: "mens-bb",
@@ -131,7 +131,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Ranu National Powerlifting Championship - 2026",
     level: "National",
     tagline: "Strong Man and Strong Woman titles.",
-    when: "Fri 4 Dec, from 11 AM",
+    when: "Starts Fri 4 Dec, 11 AM · Continues 5 & 6 Dec (9 AM–9 PM)",
     divisions: [
       {
         id: "pl-men",
@@ -155,7 +155,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Arm Wrestling Championship",
     level: "National",
     tagline: "Top three in every class, plus a Champion of Champions.",
-    when: "Fri 4 Dec, from 11 AM",
+    when: "Starts Fri 4 Dec, 11 AM · Continues 5 & 6 Dec (9 AM–9 PM)",
     divisions: [
       {
         id: "aw-men",
@@ -179,7 +179,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Utkal Kesari Dangal",
     level: "Heritage",
     tagline: "After 25 years, the Dangal returns — for men and women.",
-    when: "Fri 4 Dec, from 11 AM",
+    when: "Starts Fri 4 Dec, 11 AM · Continues 5 & 6 Dec (9 AM–9 PM)",
     divisions: [
       {
         id: "kesari",
@@ -207,7 +207,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Boxing Championship",
     level: "National",
     tagline: "Gloves on in Bhubaneswar.",
-    when: "Fri 4 Dec, from 11 AM",
+    when: "Starts Fri 4 Dec, 11 AM · Continues 5 & 6 Dec (9 AM–9 PM)",
     divisions: [
       {
         id: "boxing-open",
@@ -228,7 +228,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Dutee’s Marathon",
     level: "National",
     tagline: "Run with the spirit of champions.",
-    when: "Fri 4 Dec, 5:30 AM start",
+    when: "Fri 4 Dec, 3:30 AM start (Spot Reg: Wed 3 Dec, 8 AM at Baramunda)",
     divisions: [
       { id: "21km", name: "21 KM (Half Marathon)", classes: ["Open"], prizes: [100000, 50000], fee: MARATHON_FEE },
       { id: "10km", name: "10 KM", classes: ["Open"], prizes: [50000, 25000], fee: MARATHON_FEE },
@@ -271,31 +271,54 @@ export const VALUE: { title: string; body: string; icon: string }[] = [
   { title: "Hotel & travel help", body: "Special athlete rates at partner hotels in Bhubaneswar.", icon: "hotel" },
 ];
 
+export const SCHEDULE_PRE_EVENT = {
+  date: "Wed · 3 Dec",
+  time: "8:00 AM onwards",
+  venue: "Baramunda Ground Field (Bermunda Field)",
+  title: "Marathon Spot Registration & Bib Collection",
+  description: "Spot registration and official kit collection for all Marathon distance categories (21K, 10K, 5K, 2K).",
+};
+
 export const DAYS = [
   {
     day: "Day 1",
     date: "Fri · 4 Dec",
-    title: "Strength Day",
+    title: "Marathon & Games Kick-Off",
     items: [
-      "5:30 AM — Dutee’s Marathon start",
-      "8–10 AM — Athlete spot registration",
-      "10 AM — Athlete check-in",
-      "11 AM onwards — Boxing, Powerlifting, Arm Wrestling, Matti Kusti",
-      "5 PM — Cultural programme",
-      "7 PM — Stage inauguration & marathon prizes",
+      "3:30 AM — Marathon race flag-off (all distances)",
+      "8:00–10:00 AM — Registrations for all games",
+      "8:00–11:00 AM — Breakfast for officials and athletes (Baramunda Field)",
+      "11:00 AM onwards — Games start: Boxing, Dangal, Arm Wrestling, Powerlifting",
+      "2:00 PM — Lunch for officials and athletes",
+      "5:00 PM — Grand Opening Ceremony",
+      "9:00 PM — Dinner",
     ],
   },
   {
     day: "Day 2",
     date: "Sat · 5 Dec",
-    title: "Bodybuilding Prelims",
-    items: ["8 AM — Registration / check-in, strength-sport competitions", "5 PM — Bodybuilding preliminary rounds", "Cultural programme"],
+    title: "Bodybuilding Prejudging & Non-Stop Games",
+    items: [
+      "8:00 AM — Breakfast for officials and athletes",
+      "8:00 AM – 1:00 PM — Bodybuilding spot registrations & weigh-in",
+      "9:00 AM – 9:00 PM — Games continue: Arm Wrestling, Dangal, Boxing, Powerlifting",
+      "2:00 PM — Lunch for officials and athletes",
+      "5:00 PM — Bodybuilding prejudging starts",
+      "9:00 PM — Dinner",
+    ],
   },
   {
     day: "Day 3",
     date: "Sun · 6 Dec",
-    title: "The Grand Finale",
-    items: ["5 PM — Bodybuilding finals", "Championship finals & Champion of Champions", "Prize distribution & closing ceremony"],
+    title: "Championship Finals & Mega Prize Distribution",
+    items: [
+      "8:00 AM — Breakfast for officials and athletes",
+      "9:00 AM – 9:00 PM — All games continue: Arm Wrestling, Powerlifting, Boxing, Dangal",
+      "2:00 PM — Lunch for officials and athletes",
+      "4:00 PM — Grand Closing Ceremony begins",
+      "6:00 PM — Bodybuilding finals & all games prize distribution",
+      "9:00 PM — Dinner",
+    ],
   },
 ];
 
