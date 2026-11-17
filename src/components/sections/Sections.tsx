@@ -101,7 +101,7 @@ export function FinalCall() {
           <CountdownBoxes glass />
         </div>
         <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3">
-          <Cta wide micro={false} label={`Register now — from ${inr(minFee)}`} />
+          <Cta wide micro={false} label={`REGISTER NOW — FROM ${inr(minFee)}`} />
           <WhatsAppLink label="Need help? WhatsApp us" />
         </div>
       </div>

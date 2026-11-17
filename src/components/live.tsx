@@ -204,8 +204,8 @@ export function Chrome() {
             </a>
 
             {/* Desktop Register Button */}
-            <Link href={registerHref()} className="btn btn-gold hidden !min-h-10 !px-5 !text-xs font-extrabold uppercase tracking-wider md:inline-flex shadow-md">
-              Register now
+            <Link href={registerHref()} className="btn btn-gold hidden !min-h-11 !px-6 !text-sm lg:!text-base !font-black uppercase tracking-wider md:inline-flex shadow-lg hover:scale-105 transition-transform">
+              REGISTER NOW
             </Link>
 
             {/* Mobile Hamburger / Close Menu Toggle Button */}
@@ -302,9 +302,9 @@ export function Chrome() {
           <Link
             href={registerHref()}
             onClick={() => setMobileMenuOpen(false)}
-            className="btn btn-gold w-full !py-3.5 flex items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-wider shadow-xl"
+            className="btn btn-gold w-full !py-4 flex items-center justify-center gap-2 text-base font-black uppercase tracking-wider shadow-xl"
           >
-            <span>Register now — from {inr(600)}</span>
+            <span>REGISTER NOW — FROM {inr(600)}</span>
             <Icon name="arrow" className="size-4" />
           </Link>
 
@@ -358,9 +358,9 @@ export function Chrome() {
           <a href={EVENT.whatsappHref} target="_blank" rel="noopener" aria-label="WhatsApp us" className="grid size-12 shrink-0 place-items-center rounded-md bg-wa text-white" tabIndex={showBar ? 0 : -1}>
             <WhatsAppGlyph className="size-6" />
           </a>
-          <Link href={registerHref()} className="btn btn-gold !min-h-12 !px-4 !text-sm" tabIndex={showBar ? 0 : -1}>
-            Register
-            <Icon name="arrow" className="arr size-4" />
+          <Link href={registerHref()} className="btn btn-gold !min-h-12 !px-5 !text-sm sm:!text-base !font-black uppercase tracking-wider" tabIndex={showBar ? 0 : -1}>
+            REGISTER NOW
+            <Icon name="arrow" className="arr size-4 stroke-[3]" />
           </Link>
         </div>
       </div>

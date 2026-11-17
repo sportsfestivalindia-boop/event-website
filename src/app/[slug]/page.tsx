@@ -24,8 +24,8 @@ export default async function InfoPage({ params }: PageProps<"/[slug]">) {
           <Link href="/" aria-label="Sports Festival — home">
             <Wordmark />
           </Link>
-          <Link href={registerHref()} className="btn btn-gold ml-auto !min-h-10 shrink-0 !px-4 !text-xs md:!min-h-11 md:!px-5 md:!text-sm">
-            Register
+          <Link href={registerHref()} className="btn btn-gold ml-auto !min-h-11 shrink-0 !px-5 !text-xs sm:!text-sm !font-black uppercase tracking-wider md:!min-h-12 md:!px-6 md:!text-base">
+            REGISTER NOW
           </Link>
         </div>
       </header>

@@ -129,11 +129,11 @@ export function Hero() {
             <Link
               id="hero-cta"
               href={registerHref()}
-              className="btn btn-gold hero-shimmer hero-cta-glow relative group w-full sm:w-auto px-7 py-3.5 min-h-[50px] flex items-center justify-center gap-2.5 text-sm sm:text-base font-extrabold uppercase tracking-wider transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="btn btn-gold hero-shimmer hero-cta-glow relative group w-full sm:w-auto px-8 sm:px-10 py-4 min-h-[56px] flex items-center justify-center gap-3 text-base sm:text-lg md:text-xl !font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] whitespace-nowrap shadow-2xl"
               data-cta="hero-cta"
             >
-              <span>Register now</span>
-              <Icon name="arrow" className="size-5 transition-transform duration-300 group-hover:translate-x-1.5 shrink-0" />
+              <span>REGISTER NOW</span>
+              <Icon name="arrow" className="size-5 sm:size-6 transition-transform duration-300 group-hover:translate-x-1.5 shrink-0 stroke-[2.5]" />
             </Link>
 
             <a

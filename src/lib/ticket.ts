@@ -56,6 +56,8 @@ export function seal(t: Ticket) {
 }
 
 export function unseal(token: string): Ticket | null {
+  if (!token || typeof token !== "string") return null;
+
   const keys = [
     secret(),
     "996650ffcbe99ef17789607492e0cbb361d4fdd2be885a6f48d0b2f154efa5cf",
@@ -63,22 +65,38 @@ export function unseal(token: string): Ticket | null {
     "test-salt",
   ].filter(Boolean) as string[];
 
-  let raw: Buffer;
-  try {
-    raw = Buffer.from(token, "base64url");
-    if (raw.length < 28) raw = Buffer.from(token, "base64");
-  } catch {
-    return null;
-  }
-  if (raw.length < 28) return null;
+  // Support variations: raw, decoded, standard base64 (/ and +), and base64url (_ and -)
+  const variants = Array.from(
+    new Set([
+      token,
+      decodeURIComponent(token),
+      token.replace(/\//g, "_").replace(/\+/g, "-"),
+      token.replace(/_/g, "/").replace(/-/g, "+"),
+    ])
+  );
 
-  for (const k of keys) {
-    try {
-      const d = createDecipheriv("aes-256-gcm", aesKey(k), raw.subarray(0, 12));
-      d.setAuthTag(raw.subarray(raw.length - 16));
-      return JSON.parse(Buffer.concat([d.update(raw.subarray(12, raw.length - 16)), d.final()]).toString("utf8")) as Ticket;
-    } catch {
-      // try next key
+  for (const v of variants) {
+    for (const enc of ["base64url", "base64"] as const) {
+      let raw: Buffer;
+      try {
+        raw = Buffer.from(v, enc);
+      } catch {
+        continue;
+      }
+      if (raw.length < 28) continue;
+
+      for (const k of keys) {
+        try {
+          const d = createDecipheriv("aes-256-gcm", aesKey(k), raw.subarray(0, 12));
+          d.setAuthTag(raw.subarray(raw.length - 16));
+          const res = JSON.parse(
+            Buffer.concat([d.update(raw.subarray(12, raw.length - 16)), d.final()]).toString("utf8")
+          ) as Ticket;
+          if (res && res.t && res.n) return res;
+        } catch {
+          // try next candidate
+        }
+      }
     }
   }
   return null;
@@ -129,7 +147,8 @@ export async function issueTicket(
     isTest: isTest || undefined,
   });
 
-  const url = new URL(`/ticket/${token}`, origin).toString();
+  // Prefer the clean, permanent Reg ID link (e.g. /ticket/SF26-XXXXXX) so ticket URLs never wrap or truncate on WhatsApp
+  const url = new URL(`/ticket/${p.regId || token}`, origin).toString();
   const sheet = await toSheet("ticket", {
     regId: p.regId ?? "",
     utr: p.utr,

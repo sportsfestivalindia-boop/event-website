@@ -173,7 +173,7 @@ export function AllTicketsDirectory() {
       a.fee || "",
       a.status,
       a.ticketNo || "",
-      a.ticketUrl || `https://sportsfestivalindia.com/ticket/${a.regId}`,
+      a.regId ? `https://sportsfestivalindia.com/ticket/${a.regId}` : (a.ticketUrl || ""),
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -290,7 +290,7 @@ export function AllTicketsDirectory() {
                 {filtered.map((a) => {
                   const isPaid = a.status === "Paid" || a.status === "Verified";
                   const cleanPhone = (a.phone || "").replace(/\D/g, "").slice(-10);
-                  const ticketLink = a.ticketUrl || `https://sportsfestivalindia.com/ticket/${a.regId}`;
+                  const ticketLink = a.regId ? `https://sportsfestivalindia.com/ticket/${a.regId}` : (a.ticketUrl || `https://sportsfestivalindia.com/ticket/${a.ticketNo || ""}`);
                   const waText = `Hi ${a.name}, your registration for ${a.category} at ${EVENT.name} is confirmed! Open your ticket: ${ticketLink}`;
                   const waUrl = cleanPhone
                     ? `https://api.whatsapp.com/send/?phone=91${cleanPhone}&text=${encodeURIComponent(waText)}`

@@ -18,23 +18,42 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
     const raw = decodeURIComponent(token).trim();
     const regMatch = raw.match(/SF26-[0-9A-Z]{6}/i);
     const lookupId = regMatch ? regMatch[0].toUpperCase() : raw.toUpperCase();
+    const cleanDigits = raw.replace(/\D/g, "");
 
-    // 1. Try Firestore direct lookup
+    // 1. Try Firestore direct lookup by Reg ID
     let dbRec = await getRegistrationFromFirestore(lookupId).catch(() => null);
 
-    // If not found directly, search all records for matching ticketNo, phone or ticketUrl
+    // If not found directly, search all records for matching ticketNo, phone, UTR, or token substring
     if (!dbRec) {
       const all = await getAllRegistrationsFromFirestore().catch(() => []);
-      dbRec = all.find(
-        (r) =>
-          r.regId === lookupId ||
-          r.ticketNo === lookupId ||
-          (raw.length > 10 && r.phone === raw) ||
-          (token.length > 20 && r.ticketUrl && r.ticketUrl.includes(token.slice(0, 20)))
-      ) || null;
+      // Split raw token by non-alphanumeric chars (like / or _ or -) into substantial segments
+      const tokenChunks = raw.split(/[/+_\-.]/).filter((s) => s.length >= 12);
+
+      dbRec =
+        all.find((r) => {
+          if (!r) return false;
+          if (r.regId && r.regId.toUpperCase() === lookupId) return true;
+          if (r.ticketNo && r.ticketNo.toUpperCase() === lookupId) return true;
+          if (cleanDigits.length === 10 && r.phone && r.phone.replace(/\D/g, "").slice(-10) === cleanDigits) return true;
+          if (cleanDigits.length >= 10 && r.utr && r.utr.includes(cleanDigits)) return true;
+          if (r.ticketUrl) {
+            for (const chunk of tokenChunks) {
+              if (r.ticketUrl.includes(chunk)) return true;
+            }
+            if (raw.length >= 16 && r.ticketUrl.includes(raw.slice(0, 16))) return true;
+          }
+          return false;
+        }) || null;
     }
 
-    if (dbRec && (dbRec.status === "Paid" || dbRec.status === "Verified")) {
+    const isPaid =
+      dbRec &&
+      (dbRec.status?.toLowerCase() === "paid" ||
+        dbRec.status?.toLowerCase() === "verified" ||
+        dbRec.status?.toLowerCase() === "confirmed" ||
+        Boolean(dbRec.ticketNo));
+
+    if (dbRec && isPaid) {
       t = {
         t: dbRec.ticketNo || ticketNo(dbRec.utr || dbRec.regId || lookupId),
         n: dbRec.name,
@@ -50,7 +69,8 @@ export default async function TicketPage({ params }: PageProps<"/ticket/[token]"
     } else {
       // 2. Try Google Sheet lookup
       const sheetRec = (await toSheet("lookup", { regId: lookupId }).catch(() => null)) as Record<string, unknown> | null;
-      if (sheetRec?.ok && (sheetRec.status === "Verified" || sheetRec.status === "Paid")) {
+      const sheetStatus = String(sheetRec?.status || "").toLowerCase();
+      if (sheetRec?.ok && (sheetStatus === "verified" || sheetStatus === "paid" || sheetRec.ticketNo)) {
         t = {
           t: (sheetRec.ticketNo as string) || ticketNo((sheetRec.utr as string) || lookupId),
           n: String(sheetRec.name || "Athlete"),

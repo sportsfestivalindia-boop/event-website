@@ -5,7 +5,7 @@ import { inr } from "@/lib/format";
 import { Icon, WhatsAppGlyph } from "./icons";
 
 export function Cta({
-  label = "Register now",
+  label = "REGISTER NOW",
   href = registerHref(),
   micro = true,
   tone = "gold",
@@ -23,9 +23,9 @@ export function Cta({
 }) {
   return (
     <div className={`flex flex-col gap-3 ${wide ? "w-full" : "w-full sm:w-fit"} ${className}`}>
-      <Link id={id} href={href} className={`btn btn-${tone} ${wide ? "w-full" : "w-full sm:min-w-[260px]"}`} data-cta={id ?? label}>
+      <Link id={id} href={href} className={`btn btn-${tone} !text-base sm:!text-lg !font-black uppercase tracking-wider ${wide ? "w-full" : "w-full sm:min-w-[260px]"}`} data-cta={id ?? label}>
         {label}
-        <Icon name="arrow" className="arr size-5" />
+        <Icon name="arrow" className="arr size-5 stroke-[2.5]" />
       </Link>
       {micro && <p className="text-xs text-muted">{PAY_LINE}</p>}
     </div>
