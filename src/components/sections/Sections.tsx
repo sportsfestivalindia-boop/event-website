@@ -90,11 +90,14 @@ export function FinalCall() {
   const ref = useRef<HTMLElement>(null);
   const play = useReplayOnScroll(ref);
   return (
-    <section ref={ref} data-play={play} id="final" className="t-ink relative isolate overflow-hidden w-full page-gutter py-12 md:py-20 lg:py-24">
+    <section ref={ref} data-play={play} id="final" className="t-ink relative isolate overflow-hidden w-full page-gutter py-12 md:py-24 lg:py-32">
       <div aria-hidden className="slash absolute inset-0 -z-10 opacity-35 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]" />
       <div className="content-contain mx-auto w-full text-center">
-        <p className="label text-gold tracking-widest uppercase">Last call · 4–6 December 2026</p>
-        <div className="mx-auto mt-6 max-w-xl">
+        <p className="label text-gold">Last call · 4–6 December 2026</p>
+        <h2 className="display mx-auto mt-4 max-w-[16ch] text-[clamp(3rem,9vw,7.5rem)]">
+          <span className="text-gold">Six championships.</span> One stage. Your name.
+        </h2>
+        <div className="mx-auto mt-10 max-w-xl">
           <CountdownBoxes glass />
         </div>
         <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3">
