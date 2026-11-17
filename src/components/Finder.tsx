@@ -70,6 +70,21 @@ export function Finder() {
     track("viewSport", c.sport);
   };
 
+  // Listen to sport selection requests from Championships section pop-ups
+  useEffect(() => {
+    const handlePickSport = (e: Event) => {
+      const customEvent = e as CustomEvent<{ sportId: string }>;
+      const targetId = customEvent.detail?.sportId;
+      const c = CHAMPIONSHIPS.find((x) => x.id === targetId);
+      if (c) {
+        setPicked(selFor(c));
+        track("viewSport", c.sport);
+      }
+    };
+    window.addEventListener("pick-arena-sport", handlePickSport);
+    return () => window.removeEventListener("pick-arena-sport", handlePickSport);
+  }, []);
+
   const champ = CHAMPIONSHIPS.find((c) => c.id === sport)!;
   const division = champ.divisions.find((d) => d.id === div);
   const fee = division?.fee ?? EVENT.fee;
