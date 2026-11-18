@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Accessibility, ArrowRight, Swords } from "lucide-react";
+import { Accessibility, ArrowRight, Swords, Trophy, Medal } from "lucide-react";
 import { registerHref } from "@/data/festival";
 import { useReplayOnScroll } from "@/hooks/useReplayOnScroll";
 
@@ -95,52 +95,75 @@ export function SpecialFeatureCards() {
           </svg>
         )}
 
-        {/* Top: Eyebrow label */}
-        <div className={`relative z-10 flex items-center ${hasEntered && !isReduced ? "uf-seq-1" : ""}`}>
-          <span className="size-2 rounded-full uf-gradient-bg mr-2.5 inline-block shrink-0 shadow-sm shadow-orange-500/50" />
-          <p className="text-xs font-semibold tracking-[0.25em] text-white/85 uppercase">
-            Utkal Kesari 2026 · Dangal
-          </p>
+        {/* Top: Eyebrow label + matching top-right badge */}
+        <div className={`relative z-10 flex items-center justify-between ${hasEntered && !isReduced ? "uf-seq-1" : ""}`}>
+          <div className="flex items-center">
+            <span className="size-2 rounded-full uf-gradient-bg mr-2.5 inline-block shrink-0 shadow-sm shadow-orange-500/50" />
+            <p className="text-xs font-bold tracking-[0.25em] text-[#FFE600] uppercase">
+              Utkal Kesari 2026 · Dangal (Matti Kusti)
+            </p>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 text-[11px] font-black uppercase tracking-wider text-[#FF6A00]">
+            <Trophy className="size-3.5 stroke-[2.5]" />
+            <span>Royal Enfield Bullet</span>
+          </span>
         </div>
 
-        {/* Middle: Big Headline "25 YEARS" with liquid fill + Subtitle */}
-        <div className="relative z-10 my-6 sm:my-8">
-          <h3 className="display leading-[0.9] tracking-tight text-white uppercase">
-            <span
-              className={`block text-[clamp(3.5rem,11vw,8.5rem)] font-normal leading-[0.9] ${
-                hasEntered && !isReduced ? "uf-liquid-active" : "uf-gradient-text"
-              }`}
-            >
-              25 years
+        {/* Middle: Big Headline "25 YEARS" + Subtitle + Highlights */}
+        <div className="relative z-10 my-5 sm:my-7">
+          <h3 className="display tracking-tight text-white uppercase">
+            <span className="block text-[clamp(3.5rem,10vw,7.5rem)] font-black leading-[0.95] text-transparent bg-clip-text bg-gradient-to-r from-[#FFE600] via-[#FF9A00] to-[#FF6A00] drop-shadow-[0_4px_30px_rgba(255,106,0,0.45)]">
+              25 YEARS
             </span>
-            <span className="block text-[clamp(1.4rem,3.2vw,2.6rem)] text-white font-normal mt-2 leading-tight">
-              later, the Dangal returns
+            <span className="block text-[clamp(1.3rem,2.8vw,2.4rem)] text-white font-black mt-2 leading-tight tracking-wide">
+              LATER, THE DANGAL RETURNS
             </span>
           </h3>
 
-          {/* Short gradient line between heading and paragraph */}
+          {/* Short gradient divider */}
           <span
             aria-hidden="true"
-            className={`mt-4 sm:mt-5 block h-1 w-20 rounded-full uf-gradient-bg ${
-              hasEntered && !isReduced ? "uf-seq-2" : ""
-            }`}
+            className="mt-3.5 sm:mt-4 block h-1 w-20 rounded-full uf-gradient-bg"
           />
 
-          {/* Paragraph text with bold and gradient underline on Royal Enfield Bullet */}
-          <p
-            className={`mt-4 sm:mt-5 max-w-2xl text-base md:text-lg text-white/70 leading-relaxed font-normal ${
-              hasEntered && !isReduced ? "uf-seq-3" : ""
-            }`}
-          >
-            Utkal Kesari (men) winner takes home a{" "}
-            <b className="text-white font-bold uf-gradient-underline">Royal Enfield Bullet</b> and the
-            Gada. Women’s Utkal Kesari winner wins ₹1,00,000 and the Gada. Plus weight-category bouts
-            for men and women — entry just ₹1,000.
+          {/* Quick Prize Highlights Pill Badges */}
+          <div className="mt-4 sm:mt-5 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 text-xs sm:text-sm font-bold text-[#FFE600]">
+              <Trophy className="size-3.5 sm:size-4 shrink-0 text-[#FFE600]" />
+              <span>Men&apos;s Winner: <b>Royal Enfield Bullet + Gada</b></span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 bg-white/5 text-xs sm:text-sm font-semibold text-white/90">
+              <Medal className="size-3.5 sm:size-4 shrink-0 text-[#FF6A00]" />
+              <span>Women&apos;s Winner: <b>₹1,00,000 + Gada</b></span>
+            </span>
+          </div>
+
+          {/* Paragraph text */}
+          <p className="mt-3.5 text-sm sm:text-base text-white/75 leading-relaxed font-normal max-w-2xl">
+            Rooted in India’s wrestling tradition. Traditional mud wrestling (Matti Kusti) returns to Odisha after a quarter of a century. Plus weight-category bouts for men and women across all divisions — entry fee just ₹1,000.
           </p>
         </div>
 
-        {/* Bottom spacer for equal height alignment */}
-        <div className="relative z-10" />
+        {/* Bottom: Register for Dangal CTA */}
+        <div className="relative z-10 pt-2 flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href={registerHref("dangal")}
+            className="group relative inline-flex items-center justify-between w-full sm:w-auto min-h-[48px] h-12 sm:h-12 px-1 rounded-full p-[1px] uf-gradient-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9A00] select-none"
+          >
+            <span className="flex items-center justify-between gap-3 w-full h-full px-5 rounded-full bg-[#0A0A0A] group-hover:bg-[#0A0A0A]/85 transition-colors duration-300">
+              <span className="text-sm sm:text-base font-bold text-white tracking-wide">
+                Register for Dangal
+              </span>
+              <span className="size-7 rounded-full uf-gradient-bg flex items-center justify-center text-black shrink-0 transition-transform duration-300 group-hover:translate-x-1 shadow-sm shadow-orange-500/30">
+                <ArrowRight className="size-4 stroke-[2.5]" />
+              </span>
+            </span>
+          </Link>
+
+          <span className="text-xs font-semibold text-white/50 uppercase tracking-widest hidden sm:inline">
+            Baramunda Ground · 4–6 Dec 2026
+          </span>
+        </div>
       </article>
 
       {/* ============================================================== */}
@@ -209,17 +232,13 @@ export function SpecialFeatureCards() {
           </p>
         </div>
 
-        {/* Middle: Big Headline "FREE" with stamp effect + Subtitle */}
+        {/* Middle: Big Headline "FREE" + Subtitle */}
         <div className="relative z-10 my-6 sm:my-8">
           <h3 className="display leading-[0.85] tracking-tight text-white uppercase">
-            <span
-              className={`block text-[clamp(4rem,13vw,9rem)] font-normal leading-[0.85] ${
-                hasEntered && !isReduced ? "uf-liquid-active uf-stamp-active" : "uf-gradient-text"
-              }`}
-            >
-              Free
+            <span className="block text-[clamp(4rem,13vw,9rem)] font-black leading-[0.85] text-transparent bg-clip-text bg-gradient-to-r from-[#FFE600] to-[#FF9A00] drop-shadow-[0_4px_24px_rgba(255,230,0,0.35)]">
+              FREE
             </span>
-            <span className="block text-[clamp(1.2rem,2.6vw,2rem)] text-white font-normal mt-2 leading-tight">
+            <span className="block text-[clamp(1.2rem,2.6vw,2rem)] text-white font-black mt-2 leading-tight uppercase">
               registration · ₹2,10,000 prizes
             </span>
           </h3>
