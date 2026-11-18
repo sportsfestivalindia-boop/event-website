@@ -1,24 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Montserrat } from "next/font/google";
 import Script from "next/script";
 import { ScrollTopOnLoad } from "./ScrollTopOnLoad";
 import { FirebaseAnalytics } from "@/components/FirebaseAnalytics";
 import "./globals.css";
-
-// Anton: display for all primary headings; Montserrat: all body and normal text
-const anton = Anton({
-  variable: "--font-anton",
-  weight: "400",
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-});
 
 const title = "India’s Biggest Sports Festival 2026 · Bodybuilding, Powerlifting, Dangal & more · Bhubaneswar";
 const description =
@@ -45,7 +29,7 @@ export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${anton.variable} ${montserrat.variable} antialiased`} suppressHydrationWarning>
+    <html lang="en" className="antialiased" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
