@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Swords,
   HandFist,
@@ -30,6 +31,7 @@ interface SportItem {
   desc: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   highlight: string;
+  image: string;
 }
 
 const SPORTS: SportItem[] = [
@@ -42,6 +44,7 @@ const SPORTS: SportItem[] = [
     desc: "Rooted in India's rich tradition of wrestling, Dangal is a powerful display of strength, technique, courage, and determination. The competition celebrates traditional wrestling culture while bringing talented wrestlers together to showcase their skills and competitive excellence.",
     icon: Swords,
     highlight: "Winner takes home a Royal Enfield Bullet motorcycle and the GADA (mace)",
+    image: "/img/sport-dangal.jpg",
   },
   {
     no: "02",
@@ -52,6 +55,7 @@ const SPORTS: SportItem[] = [
     desc: "An electrifying combat sport where speed, precision, agility, and strategy take centre stage. Boxing brings together skilled fighters who demonstrate discipline, resilience, defensive techniques, and fighting spirit in every round.",
     icon: HandFist,
     highlight: "Best Boxer & Best Loser win official motorcycles + cash prizes",
+    image: "/img/sport-boxing.jpg",
   },
   {
     no: "03",
@@ -62,6 +66,7 @@ const SPORTS: SportItem[] = [
     desc: "A celebration of stamina, perseverance, and mental strength. The marathon brings together runners from different backgrounds to challenge their limits, embrace the spirit of fitness, and demonstrate that every step forward is a victory in itself.",
     icon: Footprints,
     highlight: "21 KM Half Marathon · 10 KM · 5 KM · 2 KM with ₹1,00,000 top cash prize",
+    image: "/img/sport-marathon.jpg",
   },
   {
     no: "04",
@@ -72,6 +77,7 @@ const SPORTS: SportItem[] = [
     desc: "A spectacular showcase of muscular development, symmetry, conditioning, and physical excellence. Bodybuilding brings together dedicated athletes who demonstrate years of discipline, rigorous training, and commitment to achieving peak physical performance.",
     icon: BicepsFlexed,
     highlight: "Champion of Champions: ₹20,00,000 · Runner-up: ₹5,00,000",
+    image: "/img/sport-bodybuilding.jpg",
   },
   {
     no: "05",
@@ -82,6 +88,7 @@ const SPORTS: SportItem[] = [
     desc: "A true test of raw strength, technique, and determination. Athletes compete across three fundamental lifts – Squat, Bench Press, and Deadlift – pushing their physical limits to lift extraordinary weights and establish new benchmarks of strength.",
     icon: Dumbbell,
     highlight: "Strong Man & Strong Woman Titles with ₹1,00,000 each",
+    image: "/img/sport-powerlifting.jpg",
   },
   {
     no: "06",
@@ -92,6 +99,7 @@ const SPORTS: SportItem[] = [
     desc: "More than just a battle of hands, arm wrestling combines grip strength, technique, strategy, and endurance. Competitors go head-to-head in intense matchups, showcasing exceptional upper-body strength, control, and competitive spirit.",
     icon: Handshake,
     highlight: "Men's & Women's Champion of Champions: ₹1,00,000 each",
+    image: "/img/sport-arm-wrestling.jpg",
   },
 ];
 
@@ -192,41 +200,55 @@ export function Championships() {
                 onClick={() => setSelectedSport(s)}
                 className="cp-card group relative flex aspect-square sm:aspect-auto h-full w-full sm:min-h-[290px] flex-col justify-between overflow-hidden rounded-2xl border border-white/15 bg-black p-3.5 min-[380px]:p-4 sm:p-7 text-left transition-all duration-300 hover:-translate-y-2 hover:border-[#FFE600] hover:shadow-[0_24px_60px_-24px_rgba(255,230,0,0.55)] cursor-pointer"
               >
-                {/* Yellow fill (hover par) */}
+                {/* Subtle warm golden ambient sheen on hover */}
                 <span
                   aria-hidden
-                  className="absolute inset-0 origin-bottom scale-y-0 bg-[#FFE600] transition-transform duration-500 ease-out group-hover:scale-y-100"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#FFE600]/25 via-[#FFE600]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10"
                 />
+
+                {/* Sport background image - High clarity & sharp display */}
+                <span aria-hidden className="absolute inset-0 overflow-hidden rounded-2xl">
+                  <Image
+                    src={s.image}
+                    alt=""
+                    fill
+                    className="object-cover object-center opacity-80 sm:opacity-85 transition-all duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
+                    priority={i < 3}
+                  />
+                  {/* Bottom dark gradient so text is razor sharp & readable, leaving top/center 100% clear */}
+                  <span className="absolute inset-0 bg-gradient-to-t from-black via-black/60 via-45% to-transparent" />
+                </span>
 
                 {/* Big outline number */}
                 <span
                   aria-hidden
-                  className="cp-num pointer-events-none absolute -right-1 -top-2 sm:-right-3 sm:-top-6 select-none text-[4.5rem] min-[380px]:text-[5rem] sm:text-[9rem] font-black leading-none"
+                  className="cp-num pointer-events-none absolute -right-1 -top-2 sm:-right-3 sm:-top-6 select-none text-[4.5rem] min-[380px]:text-[5rem] sm:text-[9rem] font-black leading-none z-10"
                 >
                   {s.no}
                 </span>
 
                 {/* Top: sport icon */}
-                <div className="relative z-10 flex size-8 min-[380px]:size-9 sm:size-12 items-center justify-center rounded-lg sm:rounded-xl bg-[#FF6A00] text-black transition-colors duration-300 group-hover:bg-black group-hover:text-[#FFE600]">
+                <div className="relative z-10 flex size-8 min-[380px]:size-9 sm:size-12 items-center justify-center rounded-lg sm:rounded-xl bg-[#FF6A00] text-black transition-all duration-300 group-hover:bg-[#FFE600] group-hover:text-black group-hover:shadow-[0_0_20px_rgba(255,230,0,0.5)]">
                   <s.icon className="size-4 min-[380px]:size-4.5 sm:size-6" strokeWidth={2.2} />
                 </div>
 
                 {/* Bottom: sport name, sub, and Know More button */}
                 <div className="relative z-10 w-full">
-                  <h3 className="display text-xl min-[380px]:text-2xl font-black uppercase leading-none text-white transition-colors duration-300 group-hover:text-black sm:text-5xl">
+                  <h3 className="display text-xl min-[380px]:text-2xl font-black uppercase leading-none text-white transition-colors duration-300 group-hover:text-[#FFE600] sm:text-5xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     {s.name}
                   </h3>
-                  <p className="mt-1 sm:mt-2 text-[10px] min-[380px]:text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest text-white/60 transition-colors duration-300 group-hover:text-black/75 font-semibold truncate">
+                  <p className="mt-1 sm:mt-2 text-[10px] min-[380px]:text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest text-white/80 transition-colors duration-300 group-hover:text-white font-semibold truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                     {s.sub}
                   </p>
 
                   {/* Know More Action Button */}
                   <div className="mt-2.5 sm:mt-4 flex items-center justify-between gap-1.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-white transition-all duration-300 group-hover:bg-black group-hover:text-[#FFE600] group-hover:shadow-md">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-white transition-all duration-300 group-hover:bg-[#FFE600] group-hover:text-black group-hover:shadow-[0_0_15px_rgba(255,230,0,0.5)]">
                       <span>Know More</span>
                       <ArrowUpRight className="size-3.5 sm:size-4 transition-transform duration-300 group-hover:rotate-45" />
                     </span>
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-white/50 group-hover:text-black/60 transition-colors uppercase tracking-wider hidden min-[400px]:inline">
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-white/70 group-hover:text-white transition-colors uppercase tracking-wider hidden min-[400px]:inline drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                       View details
                     </span>
                   </div>

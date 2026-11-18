@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Montserrat } from "next/font/google";
 import Script from "next/script";
 import { ScrollTopOnLoad } from "./ScrollTopOnLoad";
+import { FirebaseAnalytics } from "@/components/FirebaseAnalytics";
 import "./globals.css";
 
 // Anton: display for all primary headings; Montserrat: all body and normal text
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="t-ink">
         <ScrollTopOnLoad />
+        <FirebaseAnalytics />
         {children}
         {/* Meta Pixel + ad attribution, supplied by the ads team. Do not add a second pixel snippet. */}
         <Script src="/aoga-tracking.js" strategy="afterInteractive" />

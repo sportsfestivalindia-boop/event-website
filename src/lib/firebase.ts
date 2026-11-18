@@ -16,16 +16,17 @@ import { getAuth, type Auth } from "firebase/auth";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const apiKey =
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBymHtFOCyJYXcwqB0_nEUIBz838fYTxts";
 
 const firebaseConfig = {
-  apiKey: apiKey || "placeholder-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "aoga-9e496.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "aoga-9e496",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "aoga-9e496.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "564346120463",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:564346120463:web:2e8d2f393558bc999d367a",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-NJYM0CT3TM",
+  apiKey: apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "aoga-1a77c.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "aoga-1a77c",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "aoga-1a77c.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1069037013912",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1069037013912:web:4510c0ca2ee51d868179ed",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-T1KEGMWKE5",
 };
 
 // Safe initialization that never crashes during builds or test runs
