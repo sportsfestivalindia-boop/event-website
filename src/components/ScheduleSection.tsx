@@ -301,18 +301,18 @@ export function ScheduleSection() {
           <div className="lg:col-span-7">
             <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-[#FFE600] mb-2 flex items-center gap-2">
               <Calendar className="size-4" />
-              <span>Official Festival Timetable · 3–6 December 2026</span>
+              <span>Official Festival Timetable · 4–6 December 2026</span>
             </p>
             <h2
               id="tk-heading"
               className="display text-[clamp(2.8rem,7.5vw,8.5rem)] font-black leading-[0.9] tracking-tight uppercase"
             >
               <span className="sr-only">
-                FESTIVAL SCHEDULE. FIND YOUR DAY.
+                3 DAYS OF ACTION. FIND YOUR DAY.
               </span>
               <span aria-hidden="true" className="block">
                 <span className="block">
-                  <span className="tk-neon-word tk-neon-w1 mr-[0.25em]">4</span>
+                  <span className="tk-neon-word tk-neon-w1 mr-[0.25em]">3</span>
                   <span className="tk-neon-word tk-neon-w2 mr-[0.25em]">DAYS</span>
                   <span className="tk-neon-word tk-neon-w3 mr-[0.25em]">OF</span>
                   <span className="tk-neon-word tk-neon-w4">ACTION.</span>
@@ -332,7 +332,7 @@ export function ScheduleSection() {
                 className="block h-1 w-20 rounded-full pk-gradient-bg mb-4"
               />
               <p className="text-sm sm:text-base lg:text-lg text-white/80 font-normal leading-relaxed">
-                Pre-event marathon registration opens on 3rd December. Full festival events run from 4th to 6th December 2026 at Baramunda Ground Field (Bermunda Field), Bhubaneswar.
+                Full festival championship events run from 4th to 6th December 2026 at Baramunda Ground Field, Bhubaneswar. (Pre-event marathon spot registration opens 3rd Dec).
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <a
