@@ -104,6 +104,33 @@ export interface NotificationFailureRecord {
   timestamp: string;
 }
 
+export interface StallRecord {
+  bookingId: string;
+  stall: string;
+  price: number;
+  company: string;
+  contact: string;
+  phone: string;
+  email: string;
+  gstin?: string;
+  sector?: string;
+  status: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface EnquiryRecord {
+  company: string;
+  contact: string;
+  phone: string;
+  email?: string;
+  tier?: string;
+  budget?: string;
+  note?: string;
+  status: string;
+  createdAt?: unknown;
+}
+
 /** Record failed notification in notificationFailures collection */
 export async function recordNotificationFailure(record: NotificationFailureRecord) {
   if (!db) return false;
@@ -116,6 +143,39 @@ export async function recordNotificationFailure(record: NotificationFailureRecor
     return true;
   } catch (err) {
     console.error("Firestore recordNotificationFailure error:", err);
+    return false;
+  }
+}
+
+/** Save a stall booking to Firestore in real-time */
+export async function saveStallBookingToFirestore(record: StallRecord) {
+  if (!db) return false;
+  try {
+    const ref = doc(db, "stalls", record.bookingId);
+    await setDoc(ref, {
+      ...record,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.error("Firestore saveStallBooking error:", err);
+    return false;
+  }
+}
+
+/** Save a sponsorship enquiry to Firestore in real-time */
+export async function saveEnquiryToFirestore(record: EnquiryRecord) {
+  if (!db) return false;
+  try {
+    const ref = doc(collection(db, "enquiries"));
+    await setDoc(ref, {
+      ...record,
+      createdAt: serverTimestamp(),
+    });
+    return true;
+  } catch (err) {
+    console.error("Firestore saveEnquiry error:", err);
     return false;
   }
 }

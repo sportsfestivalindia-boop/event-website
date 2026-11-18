@@ -1,24 +1,42 @@
 import { checkStall, stallId, type StallEntry } from "@/lib/pay";
 import { istNow, toSheet } from "@/lib/sheet";
+import { saveStallBookingToFirestore } from "@/lib/firebase";
 
-/** Stall booking: validate against our price list, issue a booking ID and record it in AOGA's sheet. The brand then sends it to AOGA on WhatsApp (stall amounts exceed UPI limits). */
+/** Stall booking: validate against our price list, issue a booking ID and record it in AOGA's sheet & Firestore. */
 export async function POST(req: Request) {
   const e = (await req.json().catch(() => ({}))) as Partial<StallEntry>;
   const check = checkStall(e);
   if (!check.ok) return Response.json({ error: check.error }, { status: 400 });
   const id = stallId();
-  await toSheet("stall", {
-    bookingId: id,
-    created: istNow(),
-    stall: check.label,
-    price: check.price,
-    company: e.company!.trim(),
-    contact: e.contact!.trim(),
-    phone: e.phone!,
-    email: e.email!.trim(),
-    gstin: e.gstin ?? "",
-    sector: e.sector ?? "",
-    status: "New",
-  });
+
+  // Save to Firestore & Google Sheet in parallel
+  await Promise.allSettled([
+    saveStallBookingToFirestore({
+      bookingId: id,
+      stall: check.label,
+      price: check.price,
+      company: e.company!.trim(),
+      contact: e.contact!.trim(),
+      phone: e.phone!,
+      email: e.email!.trim(),
+      gstin: e.gstin ?? "",
+      sector: e.sector ?? "",
+      status: "New",
+    }),
+    toSheet("stall", {
+      bookingId: id,
+      created: istNow(),
+      stall: check.label,
+      price: check.price,
+      company: e.company!.trim(),
+      contact: e.contact!.trim(),
+      phone: e.phone!,
+      email: e.email!.trim(),
+      gstin: e.gstin ?? "",
+      sector: e.sector ?? "",
+      status: "New",
+    }),
+  ]);
+
   return Response.json({ bookingId: id, amount: check.price, label: check.label });
 }

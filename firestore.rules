@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Athlete registrations and tickets
+    match /registrations/{regId} {
+      allow read, write: if true;
+    }
+
+    // Stall / Exhibitor bookings
+    match /stalls/{bookingId} {
+      allow read, write: if true;
+    }
+
+    // Sponsorship enquiries
+    match /enquiries/{enquiryId} {
+      allow read, write: if true;
+    }
+
+    // Notification delivery failure logs
+    match /notificationFailures/{docId} {
+      allow read, write: if true;
+    }
+
+    // Default deny for anything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
