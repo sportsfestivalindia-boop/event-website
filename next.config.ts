@@ -10,17 +10,6 @@ const nextConfig: NextConfig = {
   },
   images: {
     qualities: [75, 90, 100],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-        pathname: "/jxvpizz0/**",
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-    ],
   },
   // one canonical address: www → sportsfestivalindia.com
   async redirects() {

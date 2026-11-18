@@ -84,7 +84,7 @@ export function HeroVideo({ active }: { active?: boolean }) {
   return (
     <video
       ref={videoRef}
-      src="https://res.cloudinary.com/jxvpizz0/video/upload/v1793168732/hero_section_video.mp4"
+      src="/video/hero_section_video.mp4"
       muted
       playsInline
       preload="auto"

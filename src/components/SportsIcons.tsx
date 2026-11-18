@@ -57,7 +57,7 @@ export function SportsIcons() {
         {/* Background image (full width, original ratio, full quality) */}
         <div className="si-zoom absolute inset-0">
           <Image
-            src="https://res.cloudinary.com/jxvpizz0/image/upload/v1793168940/after-hero.jpg"
+            src="/img/after-hero.jpg"
             alt="India’s Biggest Sports Festival 2026 sports icons"
             fill
             quality={100}
@@ -183,7 +183,7 @@ export function SportsIcons() {
           <div className="relative w-full aspect-[2576/1449] rounded-2xl overflow-hidden border border-white/15 bg-black shadow-[0_16px_40px_rgba(0,0,0,0.8)]">
             <div className="si-zoom absolute inset-0">
               <Image
-                src="https://res.cloudinary.com/jxvpizz0/image/upload/v1793168940/after-hero.jpg"
+                src="/img/after-hero.jpg"
                 alt="India’s Biggest Sports Festival 2026 sports icons"
                 fill
                 quality={100}

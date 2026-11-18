@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 const SHOW_EVERY_LOAD = true;
 
-const VIDEO_URL = "https://res.cloudinary.com/jxvpizz0/video/upload/f_auto,q_auto/v1793168532/BULL_LOADING.mp4";
-const VIDEO_FALLBACK_URL = "https://res.cloudinary.com/jxvpizz0/video/upload/v1793168532/BULL_LOADING.mp4";
+const VIDEO_URL = "/video/BULL_LOADING.mp4";
+const VIDEO_FALLBACK_URL = "/video/BULL_LOADING.mp4";
 
 if (typeof window !== "undefined") {
   (window as any).__hasBullIntro = true;

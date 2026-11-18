@@ -326,22 +326,22 @@ export const ORGANISERS = [
   {
     name: "Rosaleen Nayak",
     role: "Chairman",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793424239/Rosaleen_Nayak.jpg",
+    image: "/img/Rosaleen_Nayak.jpg",
   },
   {
     name: "Santosh Mohanty",
     role: "President",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/SANTOSH_MOHANTY.png",
+    image: "/img/SANTOSH_MOHANTY.png",
   },
   {
     name: "Anil Gochhikar",
     role: "Senior Vice-President",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/Anil_gochhikar.jpg",
+    image: "/img/Anil_gochhikar.jpg",
   },
   {
     name: "Dwiti Krishna Behera",
     role: "Secretary",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793193881/Dwiti_Krushna_Behera.jpg",
+    image: "/img/Dwiti_Krushna_Behera.jpg",
   },
 ];
 
@@ -400,13 +400,13 @@ export const SPECIAL_GUESTS = [
     name: "Suryabanshi Suraj",
     role: "Minister of Sports & Youth Services, Government of Odisha",
     tag: "Honourable Minister",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169643/MR.SURYABANSHI_SURAJ.jpg",
+    image: "/img/MR.SURYABANSHI_SURAJ.jpg",
   },
   {
     name: "Nipun Agarwal",
     role: "Social Media Influencer · Voice of Athletes",
     tag: "Voice of Athletes",
-    image: "https://res.cloudinary.com/jxvpizz0/image/upload/v1793169638/MR.NIPUN_AGARWAL.jpg",
+    image: "/img/MR.NIPUN_AGARWAL.jpg",
   },
 ];
 
