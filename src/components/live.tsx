@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { EVENT, registerHref } from "@/data/festival";
 import { inr } from "@/lib/format";
 import { FacebookGlyph, Icon, InstagramGlyph, WhatsAppGlyph, Wordmark } from "./icons";
+import { PayUQrModal } from "./PayUQrModal";
 
 /** One observer for every [data-reveal] / [data-rule] element on the page. */
 export function Reveal() {
@@ -124,6 +125,7 @@ export function Chrome() {
   const [past, setPast] = useState(false);
   const [hide, setHide] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Lock scroll when mobile menu is open
   useEffect(() => {
@@ -192,6 +194,22 @@ export function Chrome() {
           </nav>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* PayU Scan to Pay QR Button */}
+            <button
+              type="button"
+              onClick={() => setQrModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gold/40 bg-gold/10 text-gold text-xs font-bold hover:bg-gold hover:text-black transition-all cursor-pointer shadow-sm"
+              title="Official PayU QR Code"
+            >
+              <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span>Scan to Pay</span>
+            </button>
+
             {/* WhatsApp Direct Link */}
             <a
               href={EVENT.whatsappHref}
@@ -301,6 +319,17 @@ export function Chrome() {
 
         {/* Mobile Menu Action CTAs */}
         <div className="pt-6 mt-4 flex flex-col gap-3 border-t border-white/15">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setQrModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gold/50 bg-gold/15 text-gold hover:bg-gold hover:text-black transition-all text-xs font-black uppercase tracking-wider cursor-pointer"
+          >
+            <span>📱 Scan to Pay (PayU QR)</span>
+          </button>
+
           <Link
             href={registerHref()}
             onClick={() => setMobileMenuOpen(false)}
@@ -377,6 +406,13 @@ export function Chrome() {
         <WhatsAppGlyph className="size-6" />
         Chat with us
       </a>
+      {/* Desktop & Mobile PayU QR Modal */}
+      <PayUQrModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        title="Official PayU Bharat QR"
+        subtitle="India Sports Festival 2026 · All UPI Apps Accepted"
+      />
     </>
   );
 }

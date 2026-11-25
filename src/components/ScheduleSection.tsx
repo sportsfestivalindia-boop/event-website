@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { PayUQrModal } from "@/components/PayUQrModal";
 import {
   Dumbbell,
   BicepsFlexed,
@@ -254,6 +256,7 @@ export function ScheduleSection() {
   type ScheduleView = "days" | "sports" | "meals" | "registration" | "ceremonies";
   const [activeView, setActiveView] = useState<ScheduleView>("days");
   const [selectedDayFilter, setSelectedDayFilter] = useState<"all" | "day1" | "day2" | "day3">("all");
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Prefers reduced motion detection
   useEffect(() => {
@@ -821,7 +824,8 @@ export function ScheduleSection() {
         {/* VIEW 4: SPOT REGISTRATIONS                                        */}
         {/* ================================================================= */}
         {activeView === "registration" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Marathon Spot Reg */}
             <div className="rounded-2xl border border-[#FFE600]/40 bg-gradient-to-b from-[#FFE600]/10 to-transparent p-6 sm:p-7 shadow-xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFE600]/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[#FFE600] mb-3">
@@ -888,6 +892,45 @@ export function ScheduleSection() {
               </Link>
             </div>
           </div>
+
+          {/* PayU Spot Registration Official QR Card */}
+          <div className="mb-10 rounded-2xl border border-[#FFE600]/40 bg-gradient-to-r from-[#FFE600]/15 via-black to-[#FF6A00]/15 p-6 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+              <div className="p-3 bg-white rounded-2xl border-2 border-[#FFE600] shadow-xl shrink-0">
+                <Image
+                  src="/img/payu-qr.png"
+                  alt="Official PayU Spot QR"
+                  width={140}
+                  height={140}
+                  className="size-32 object-contain"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className="rounded-full bg-[#FFE600] px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-black">
+                    Official On-Ground QR
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#FFE600]">
+                    PayU MID: 13824564
+                  </span>
+                </div>
+                <h4 className="text-xl font-black uppercase text-white">
+                  PayU Spot Registration &amp; Kit Collection QR
+                </h4>
+                <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
+                  Athletes arriving at Baramunda Ground Field can scan this official PayU QR directly using Google Pay, PhonePe, Paytm, or BHIM for instant on-spot verification.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQrModalOpen(true)}
+              className="btn btn-gold !min-h-[46px] !px-6 !text-xs font-black uppercase tracking-wider shadow-lg shrink-0 cursor-pointer"
+            >
+              View Full QR Code
+            </button>
+          </div>
+        </div>
         )}
 
         {/* ================================================================= */}
@@ -961,6 +1004,14 @@ export function ScheduleSection() {
           </a>
         </div>
       </div>
+
+      {/* PayU Spot QR Modal */}
+      <PayUQrModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        title="Spot Registration PayU QR"
+        subtitle="Baramunda Ground Field · Bhubaneswar"
+      />
     </section>
   );
 }

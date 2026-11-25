@@ -1,6 +1,6 @@
 import { toSheet } from "@/lib/sheet";
 
-export function parseBankSms(text: string): { amount: number; utr: string; payer: string } {
+function parseBankSms(text: string): { amount: number; utr: string; payer: string } {
   if (!text) return { amount: 0, utr: "", payer: "" };
 
   // 1. Amount Extraction (supports Rs. 1,000, INR 1000, ₹1000, credited with 1000, etc.)

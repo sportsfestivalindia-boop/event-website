@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useState } from "react";
-import { TEST_CHAMPIONSHIP, TEST_SPORT_ID, TEST_CATEGORY_LABEL, TEST_FEE } from "@/lib/test-entry";
+import { TEST_CHAMPIONSHIP, TEST_SPORT_ID, TEST_CATEGORY_LABEL, TEST_FEE } from "@/lib/test-entry-constants";
 import { getSortedPayUBanks } from "@/data/payuBanks";
 import { CHAMPIONSHIPS, DOCUMENTS, EVENT } from "@/data/festival";
 import { inr } from "@/lib/format";
@@ -635,6 +636,48 @@ export function RegisterFlow({
                   </button>
                 </div>
               </div>
+
+              {/* PayU Official Dynamic QR Card when UPI is selected */}
+              {payMethod === "upi" && (
+                <div className="rounded-2xl border border-yellow/40 bg-gradient-to-b from-yellow/15 via-black to-black p-5 sm:p-6 shadow-2xl">
+                  <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
+                    <div className="relative p-3 bg-white rounded-2xl border-2 border-yellow shadow-xl shrink-0">
+                      <Image
+                        src="/img/payu-qr.png"
+                        alt="Official PayU QR Code"
+                        width={180}
+                        height={180}
+                        className="size-40 sm:size-44 object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="space-y-2 text-center sm:text-left">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <span className="rounded-full bg-yellow px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-black">
+                          PayU Official QR
+                        </span>
+                        <span className="text-xs font-mono font-bold text-yellow">
+                          MID: 13824564
+                        </span>
+                      </div>
+                      <h4 className="text-base sm:text-lg font-black uppercase text-white leading-tight">
+                        Scan &amp; Pay with Any UPI App
+                      </h4>
+                      <p className="text-xs text-white/70 leading-relaxed max-w-sm">
+                        Scan directly using <b>Google Pay, PhonePe, Paytm, BHIM</b> or any UPI app.
+                      </p>
+                      <div className="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
+                        <span className="rounded-md bg-white/10 px-2 py-0.5 text-white/80 font-semibold">
+                          Beneficiary: India Sport Festival
+                        </span>
+                        <span className="rounded-md bg-yellow/20 px-2 py-0.5 text-yellow font-black">
+                          Amount: {inr(fee)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Net Banking Dropdown when Net Banking is selected */}
               {payMethod === "nb" && (

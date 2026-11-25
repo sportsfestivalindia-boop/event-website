@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { EVENT } from "@/data/festival";
 import { SECTORS, STALLS, TIERS } from "@/data/partners";
@@ -76,6 +77,25 @@ export function StallBooking() {
             {f.company} · {f.contact}
           </p>
         </div>
+
+        {/* PayU Stall Advance QR Code */}
+        <div className="mt-6 rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-transparent p-5 text-center">
+          <div className="mx-auto w-fit p-3 bg-white rounded-2xl border-2 border-gold shadow-lg mb-3">
+            <Image
+              src="/img/payu-qr.png"
+              alt="Official PayU QR"
+              width={160}
+              height={160}
+              className="size-36 object-contain"
+            />
+          </div>
+          <span className="rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-black">
+            Official PayU Bharat QR
+          </span>
+          <p className="mt-2 text-xs font-bold text-white">Scan to Pay Stall Advance via UPI</p>
+          <p className="text-[11px] text-muted font-mono mt-0.5">PayU MID: 13824564 · Ref: {done.id}</p>
+        </div>
+
         <a href={waTo(summary(done.id))} target="_blank" rel="noopener" className="btn mt-6 w-full bg-wa text-white">
           <WhatsAppGlyph className="size-6" /> Send booking on WhatsApp
         </a>
@@ -155,6 +175,14 @@ export function StallBooking() {
           <Icon name="arrow" className="arr size-5" />
         </button>
         <p className="mt-3 text-center text-xs text-muted">AOGA confirms availability on WhatsApp and shares payment details (bank transfer or UPI).</p>
+
+        <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-xs text-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="text-gold">🛡️</span>
+            <span>Official PayU Payment Partner</span>
+          </span>
+          <span className="font-mono text-gold font-semibold">MID: 13824564</span>
+        </div>
       </div>
     </div>
   );
