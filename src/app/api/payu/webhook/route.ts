@@ -3,11 +3,13 @@
 // We verify reverse hash AND confirm via PayU verify_payment API, then issue the ticket if status=success.
 // Fully idempotent: if return URL or webhook already marked this registration Paid, no duplicates.
 
-import { verifyPayuResponse, verifyPaymentWithPayuApi } from "@/lib/payu";
+import { verifyPayuResponse, verifyPaymentWithPayuApi, PAYU_KEY } from "@/lib/payu";
 import { issueTicket } from "@/lib/ticket";
+import { toSheet } from "@/lib/sheet";
 import {
   getRegistrationFromFirestore,
   updateRegistrationInFirestore,
+  saveScannerPaymentToFirestore,
 } from "@/lib/firebase";
 
 export async function POST(req: Request) {
@@ -38,10 +40,55 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, status });
   }
 
-  // Validate txnid format
-  if (!/^SF26-[0-9A-F]{6}$/.test(cleanTxnid)) {
-    console.error("[PayU Webhook] Unexpected txnid format:", cleanTxnid);
-    return Response.json({ error: "Unknown txnid" }, { status: 400 });
+  const isWebsiteOrder = /^SF26-[0-9A-F]{6}$/.test(cleanTxnid);
+
+  // -------------------------------------------------------------
+  // Direct PayU Scanner (SBQR / Bharat QR / VPA) Payment Handler
+  // -------------------------------------------------------------
+  if (!isWebsiteOrder) {
+    const rawUtr = String(
+      params.bank_ref_num ||
+      params.bank_ref_no ||
+      params.field9 ||
+      params.mihpayid ||
+      ""
+    ).replace(/\D/g, "");
+    const utr = rawUtr.length >= 12 ? rawUtr.slice(-12) : rawUtr.padStart(12, "0");
+    const parsedAmount = Math.round(parseFloat(amount ?? "0"));
+    const payerName = String(firstname || params.name_on_card || "PayU Scanner Payer").trim();
+    const payerPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+
+    console.log(`[PayU Webhook] SBQR Scanner payment received: ₹${parsedAmount}, UTR: ${utr}, Txn: ${cleanTxnid}`);
+
+    // 1. Immediately log into Google Sheet "Bank" tab
+    const sheetRes = await toSheet("bank", {
+      amount: parsedAmount,
+      utr,
+      payer: `${payerName}${payerPhone ? ` (${payerPhone})` : ""}`,
+      source: "PayU QR Scanner",
+      raw: `PayU SBQR Txn: ${cleanTxnid}, Mode: ${params.mode || "UPI"}, BankRef: ${params.bank_ref_num || ""}, Date: ${params.addedon || ""}`,
+    });
+
+    // 2. Also save into Firestore payu_scanner_payments collection for live tracking
+    await saveScannerPaymentToFirestore({
+      amount: parsedAmount,
+      utr,
+      txnid: cleanTxnid,
+      payerName,
+      payerPhone,
+      mode: params.mode || "UPI",
+      status: "success",
+      sheetSync: Boolean(sheetRes?.ok),
+      rawParams: params,
+    });
+
+    return Response.json({
+      ok: true,
+      type: "scanner_payment",
+      utr,
+      amount: parsedAmount,
+      sheet: sheetRes,
+    });
   }
 
   // 3. Confirm status and amount via verify_payment API

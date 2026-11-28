@@ -197,6 +197,34 @@ export async function saveRegistrationToFirestore(record: RegistrationRecord) {
   }
 }
 
+/** Save PayU Standalone Scanner / Bharat QR payment */
+export async function saveScannerPaymentToFirestore(record: {
+  utr: string;
+  txnid: string;
+  amount: number;
+  payerName: string;
+  payerPhone: string;
+  mode?: string;
+  status: string;
+  sheetSync: boolean;
+  rawParams?: Record<string, string>;
+}) {
+  if (!db) return false;
+  try {
+    const docId = record.utr || record.txnid || `SCAN-${Date.now()}`;
+    const ref = doc(db, "payu_scanner_payments", docId);
+    await setDoc(ref, {
+      ...record,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.error("Firestore saveScannerPayment error:", err);
+    return false;
+  }
+}
+
 /** Update registration payment status and ticket details */
 export async function updateRegistrationInFirestore(
   regId: string,
