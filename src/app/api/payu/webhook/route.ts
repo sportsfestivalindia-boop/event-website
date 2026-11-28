@@ -9,8 +9,11 @@ import { toSheet } from "@/lib/sheet";
 import {
   getRegistrationFromFirestore,
   updateRegistrationInFirestore,
+  saveRegistrationToFirestore,
   saveScannerPaymentToFirestore,
+  findRegistrationByPhoneOrUtr,
 } from "@/lib/firebase";
+import { randomBytes } from "node:crypto";
 
 export async function POST(req: Request) {
   let params: Record<string, string> = {};
@@ -99,10 +102,26 @@ export async function POST(req: Request) {
     ).replace(/\D/g, "");
     const utr = rawUtr.length >= 12 ? rawUtr.slice(-12) : rawUtr.padStart(12, "0");
     const parsedAmount = Math.round(parseFloat(amount ?? "0"));
-    const payerName = String(firstname || params.name_on_card || "PayU Scanner Payer").trim();
+    const rawPayerName = String(firstname || params.name_on_card || "").trim();
+    const payerName = rawPayerName && rawPayerName.toLowerCase() !== "null" ? rawPayerName : "Scanner Athlete";
     const payerPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+    const payerEmail = String(params.email || "").trim();
 
-    console.log(`[PayU Webhook] SBQR Scanner payment received: ₹${parsedAmount}, UTR: ${utr}, Txn: ${cleanTxnid}`);
+    console.log(`[PayU Webhook] SBQR Scanner payment received: ₹${parsedAmount}, UTR: ${utr}, Txn: ${cleanTxnid}, Payer: ${payerName}`);
+
+    // Map entry category from the paid amount
+    let category = "Sports Festival 2026 Entry";
+    if (parsedAmount === 600) {
+      category = "Marathon 21 km / Strength Games";
+    } else if (parsedAmount === 1000) {
+      category = "Bodybuilding / Dangal Wrestling";
+    } else if (parsedAmount === 5000) {
+      category = "Dangal Star Category (Open Weight)";
+    } else if (parsedAmount === 1) {
+      category = "[TEST] Scanner Test Entry";
+    } else if (params.productinfo && params.productinfo !== "default") {
+      category = params.productinfo;
+    }
 
     // 1. Immediately log into Google Sheet "Bank" tab
     const sheetRes = await toSheet("bank", {
@@ -113,13 +132,65 @@ export async function POST(req: Request) {
       raw: `PayU SBQR Txn: ${cleanTxnid}, Mode: ${params.mode || "UPI"}, BankRef: ${params.bank_ref_num || ""}, Date: ${params.addedon || ""}`,
     });
 
-    // 2. Also save into Firestore payu_scanner_payments collection for live tracking
+    // 2. Check if athlete already registered online (matched by mobile or UTR)
+    const existing = await findRegistrationByPhoneOrUtr(payerPhone, utr);
+    const targetRegId = existing?.regId || `SF26-${randomBytes(3).toString("hex").toUpperCase()}`;
+    const athleteName = existing?.name || payerName;
+    const athletePhone = existing?.phone || payerPhone;
+    const athleteEmail = existing?.email || payerEmail;
+    const athleteCategory = existing?.category || category;
+
+    // If new athlete (scanned QR directly without filling website form first), create Firestore record
+    if (!existing) {
+      await saveRegistrationToFirestore({
+        regId: targetRegId,
+        name: athleteName,
+        phone: athletePhone,
+        email: athleteEmail,
+        category: athleteCategory,
+        fee: parsedAmount,
+        status: "Verified",
+        source: "PayU QR Scanner",
+        utr,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // 3. Issue ticket and write directly into Google Sheet "Registrations" tab with Status = Verified
+    const origin = process.env.NEXT_PUBLIC_BASE_URL || "https://sportsfestivalindia.com";
+    const ticketResult = await issueTicket(
+      {
+        name: athleteName,
+        phone: athletePhone,
+        email: athleteEmail,
+        category: athleteCategory,
+        amount: parsedAmount,
+        utr,
+        regId: targetRegId,
+        paymentMode: params.mode || "PayU QR Scanner",
+        force: true,
+      },
+      origin,
+    );
+
+    const ticketNo = "ticketNo" in ticketResult ? ticketResult.ticketNo : undefined;
+    const ticketUrl = "url" in ticketResult ? ticketResult.url : `https://sportsfestivalindia.com/ticket/${targetRegId}`;
+
+    await updateRegistrationInFirestore(targetRegId, {
+      status: "Verified",
+      utr,
+      ticketNo,
+      ticketUrl,
+    });
+
+    // 4. Also save into Firestore payu_scanner_payments collection for live audit tracking
     await saveScannerPaymentToFirestore({
       amount: parsedAmount,
       utr,
       txnid: cleanTxnid,
-      payerName,
-      payerPhone,
+      payerName: athleteName,
+      payerPhone: athletePhone,
       mode: params.mode || "UPI",
       status: "success",
       sheetSync: Boolean(sheetRes?.ok),
@@ -129,8 +200,10 @@ export async function POST(req: Request) {
     return Response.json({
       ok: true,
       type: "scanner_payment",
+      regId: targetRegId,
       utr,
       amount: parsedAmount,
+      ticketUrl,
       sheet: sheetRes,
     });
   }

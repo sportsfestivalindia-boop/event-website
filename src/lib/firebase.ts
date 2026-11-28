@@ -301,6 +301,40 @@ export async function getRegistrationsByEmail(email: string): Promise<Registrati
   }
 }
 
+/** Find registration by phone or UTR */
+export async function findRegistrationByPhoneOrUtr(
+  phone?: string,
+  utr?: string
+): Promise<RegistrationRecord | null> {
+  if (!db) return null;
+  try {
+    const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+    const cleanUtr = String(utr || "").replace(/\D/g, "");
+
+    if (cleanUtr && cleanUtr.length >= 6) {
+      const qUtr = query(collection(db, "registrations"), where("utr", "==", cleanUtr));
+      const snapUtr = await getDocs(qUtr);
+      if (!snapUtr.empty) {
+        return snapUtr.docs[0].data() as RegistrationRecord;
+      }
+    }
+
+    if (cleanPhone.length === 10) {
+      const qPhone = query(collection(db, "registrations"), where("phone", "==", cleanPhone));
+      const snapPhone = await getDocs(qPhone);
+      if (!snapPhone.empty) {
+        const records = snapPhone.docs.map((d) => d.data() as RegistrationRecord);
+        const pending = records.find((r) => r.status !== "Verified" && r.status !== "Paid");
+        return pending || records[0];
+      }
+    }
+    return null;
+  } catch (err) {
+    console.error("Firestore findRegistrationByPhoneOrUtr error:", err);
+    return null;
+  }
+}
+
 /** Claim an existing registration by Client ID + mobile and link to user email */
 export async function claimRegistration(
   regId: string,
