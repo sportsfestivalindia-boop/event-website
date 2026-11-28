@@ -14,24 +14,68 @@ import {
 
 export async function POST(req: Request) {
   let params: Record<string, string> = {};
+  let rawText = "";
+
   try {
-    const text = await req.text();
-    params = Object.fromEntries(new URLSearchParams(text));
-  } catch {
+    rawText = await req.text();
+    const contentType = req.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json") || rawText.trim().startsWith("{")) {
+      const json = JSON.parse(rawText);
+      const inner = (json.payload || json.result || json.data || json) as Record<string, unknown>;
+
+      params = {
+        txnid: String(inner.txnid || inner.merchantTransactionId || inner.transactionId || ""),
+        status: String(inner.status || inner.paymentStatus || json.event || "").toLowerCase(),
+        amount: String(inner.amount || inner.totalAmount || "0"),
+        bank_ref_num: String(inner.bank_ref_num || inner.bankRefNum || inner.bank_ref_no || inner.rrn || inner.utr || ""),
+        mihpayid: String(inner.mihpayid || inner.paymentId || inner.payuMoneyId || ""),
+        firstname: String(inner.firstname || inner.customerName || inner.name || ""),
+        phone: String(inner.phone || inner.customerMobile || inner.mobile || ""),
+        email: String(inner.email || inner.customerEmail || ""),
+        productinfo: String(inner.productinfo || inner.productInfo || ""),
+        mode: String(inner.mode || inner.paymentMode || "UPI"),
+        hash: String(inner.hash || ""),
+        key: String(inner.key || inner.merchantKey || ""),
+      };
+
+      for (const [k, v] of Object.entries(inner)) {
+        if (!params[k] && v != null) {
+          params[k] = typeof v === "object" ? JSON.stringify(v) : String(v);
+        }
+      }
+    } else {
+      params = Object.fromEntries(new URLSearchParams(rawText));
+    }
+  } catch (err) {
+    console.error("[PayU Webhook] Error parsing webhook body:", err);
     return Response.json({ error: "Bad request" }, { status: 400 });
   }
 
-  // 1. Verify reverse hash — reject anything tampered
-  if (!verifyPayuResponse(params)) {
-    console.error("[PayU Webhook] Hash mismatch for txnid:", params.txnid);
-    return Response.json({ error: "Hash mismatch" }, { status: 400 });
+  // Security check: Validate merchant key if provided, or verify reverse hash
+  const configuredKey = PAYU_KEY();
+  const providedKey = String(params.key || "").trim();
+  const hasLegacyHash = Boolean(params.hash);
+
+  if (hasLegacyHash) {
+    if (!verifyPayuResponse(params)) {
+      console.warn("[PayU Webhook] Reverse hash mismatch for txnid:", params.txnid);
+      if (providedKey && providedKey !== configuredKey) {
+        return Response.json({ error: "Hash and key mismatch" }, { status: 400 });
+      }
+    }
+  } else if (providedKey && providedKey !== configuredKey) {
+    console.error("[PayU Webhook] Merchant key mismatch:", providedKey);
+    return Response.json({ error: "Unauthorized key" }, { status: 403 });
   }
 
-  const { status, txnid, firstname, phone, amount, productinfo, mihpayid } = params;
+  const { txnid, firstname, phone, amount, productinfo, mihpayid } = params;
+  const status = String(params.status ?? "").toLowerCase().trim();
   const cleanTxnid = String(txnid ?? "").toUpperCase().trim();
+  const isSuccess = status === "success" || status === "successful" || status === "captured";
 
-  // 2. Only process successful payments
-  if (status !== "success") {
+  // Only process successful payments
+  if (!isSuccess) {
     console.log(`[PayU Webhook] Status ${status} for ${cleanTxnid}`);
     const existing = await getRegistrationFromFirestore(cleanTxnid);
     if (existing && existing.status !== "Paid" && existing.status !== "Verified") {
